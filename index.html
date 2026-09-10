@@ -402,6 +402,36 @@
             </select>
           </div>
 
+          <hr class="divider">
+
+          <h2 style="margin-top:15px;">Tariff / Import Exposure</h2>
+          <div class="field">
+            <label>Country/Region of Manufacture</label>
+            <input type="text" id="cp-origin" value="" placeholder="e.g. China, Vietnam, USA">
+          </div>
+          <div class="field">
+            <label>Estimated Tariff / Duty Rate (%)</label>
+            <input type="number" id="cp-tariff-rate" value="0" min="0" oninput="calculateCustomPartBreakdown()">
+            <p style="color:var(--text-mid); font-size:0.8em; margin-top:4px;">Applied to base unit cost as a rough estimate — confirm the actual HTS classification and rate before relying on this number.</p>
+          </div>
+          <div class="field">
+            <label>Shipping Term (Incoterm)</label>
+            <select id="cp-incoterm" onchange="calculateCustomPartBreakdown()">
+              <option value="unknown">Unknown / Not Specified</option>
+              <option value="exw">EXW — Ex Works</option>
+              <option value="fca">FCA — Free Carrier</option>
+              <option value="fas">FAS — Free Alongside Ship</option>
+              <option value="fob">FOB — Free on Board</option>
+              <option value="cfr">CFR — Cost and Freight</option>
+              <option value="cif">CIF — Cost, Insurance, and Freight</option>
+              <option value="cpt">CPT — Carriage Paid To</option>
+              <option value="cip">CIP — Carriage and Insurance Paid To</option>
+              <option value="dap">DAP — Delivered at Place</option>
+              <option value="dpu">DPU — Delivered at Place Unloaded</option>
+              <option value="ddp">DDP — Delivered Duty Paid</option>
+            </select>
+          </div>
+
           <button class="btn-action" onclick="calculateCustomPartBreakdown()">Run Cost &amp; Risk Analysis</button>
         </div>
 
@@ -419,6 +449,14 @@
           <div class="readout">
             <div class="rlabel">Tooling Amortization Burden per Unit</div>
             <div class="rvalue" id="out-tooling-unit">$50.00 / unit</div>
+          </div>
+          <div class="readout" id="out-tariff-row" style="display:none;">
+            <div class="rlabel">Estimated Tariff Cost per Unit</div>
+            <div class="rvalue" id="out-tariff-unit">$0.00 / unit</div>
+          </div>
+          <div class="readout" id="out-landed-row" style="display:none;">
+            <div class="rlabel">Tariff-Adjusted Effective Unit Price</div>
+            <div class="rvalue" id="out-landed-unit" style="color:var(--amber);">$0.00</div>
           </div>
 
           <hr class="divider">
@@ -464,7 +502,19 @@
         <div class="panel">
           <h2>Supplier's Quote &amp; Your Requirement</h2>
 
-          <div class="field"><label>Supplier's Quoted Lead Time (Days, as stated in the quote)</label><input type="number" id="lt-supplier-quoted" value="58" min="0" oninput="calculateLeadTime()"></div>
+          <div class="field">
+            <label>Supplier's Quoted Lead Time (as stated in the quote)</label>
+            <div style="display:flex; gap:8px;">
+              <input type="number" id="lt-supplier-quoted" value="8" min="0" step="any" oninput="calculateLeadTime()" style="flex:2;">
+              <select id="lt-supplier-quoted-unit" onchange="calculateLeadTime()" style="flex:1;">
+                <option value="days">Calendar Days</option>
+                <option value="business-days">Business Days</option>
+                <option value="weeks" selected>Weeks</option>
+                <option value="months">Months</option>
+                <option value="years">Years</option>
+              </select>
+            </div>
+          </div>
           <div class="field">
             <label>When Does the Supplier's Lead-Time Clock Start?</label>
             <select id="lt-clock-start" onchange="calculateLeadTime()">
@@ -474,7 +524,24 @@
               <option value="tooling">Tooling Complete</option>
             </select>
           </div>
-          <div class="field"><label>Your Required Schedule (Days Until Parts Needed)</label><input type="number" id="lt-required-days" value="60" min="0" oninput="calculateLeadTime()"></div>
+          <div class="field">
+            <label>Your Required Schedule (Until Parts Needed)</label>
+            <div style="display:flex; gap:8px;">
+              <input type="number" id="lt-required-days" value="60" min="0" step="any" oninput="calculateLeadTime()" style="flex:2;">
+              <select id="lt-required-unit" onchange="calculateLeadTime()" style="flex:1;">
+                <option value="days" selected>Calendar Days</option>
+                <option value="business-days">Business Days</option>
+                <option value="weeks">Weeks</option>
+                <option value="months">Months</option>
+                <option value="years">Years</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label>Known Holidays / Plant Shutdowns in This Window (Calendar Days)</label>
+            <input type="number" id="lt-holiday-days" value="0" min="0" step="any" oninput="calculateLeadTime()">
+            <p style="color:var(--text-mid); font-size:0.8em; margin-top:4px;">E.g. Chinese New Year, Golden Week, or a plant's annual shutdown — these commonly add real time that isn't reflected in a supplier's stated lead time.</p>
+          </div>
 
           <hr class="divider">
 
@@ -844,6 +911,9 @@ function calculateCustomPartBreakdown() {
   const matShare = Math.max(parseFloat(document.getElementById('cp-mat-share').value) || 0, 0);
   const toolingOwner = (document.getElementById('cp-tooling-owner') || {}).value || 'unknown';
   const futureVolume = (document.getElementById('cp-future-volume') || {}).value || 'unknown';
+  const origin = ((document.getElementById('cp-origin') || {}).value || '').trim();
+  const tariffRate = Math.max(parseFloat(document.getElementById('cp-tariff-rate').value) || 0, 0);
+  const incoterm = (document.getElementById('cp-incoterm') || {}).value || 'unknown';
 
   const setupPerUnit = setup / qty;
   const toolingPerUnit = tooling / qty;
@@ -853,6 +923,20 @@ function calculateCustomPartBreakdown() {
   document.getElementById('out-effective-unit').innerText = '$' + effectiveUnit.toFixed(2);
   document.getElementById('out-setup-unit').innerText = '$' + setupPerUnit.toFixed(2) + ' / unit';
   document.getElementById('out-tooling-unit').innerText = '$' + toolingPerUnit.toFixed(2) + ' / unit';
+
+  const tariffPerUnit = baseUnit * (tariffRate / 100);
+  const landedUnit = effectiveUnit + tariffPerUnit;
+  const tariffRow = document.getElementById('out-tariff-row');
+  const landedRow = document.getElementById('out-landed-row');
+  if (tariffRate > 0) {
+    if (tariffRow) tariffRow.style.display = '';
+    if (landedRow) landedRow.style.display = '';
+    document.getElementById('out-tariff-unit').innerText = '$' + tariffPerUnit.toFixed(2) + ' / unit';
+    document.getElementById('out-landed-unit').innerText = '$' + landedUnit.toFixed(2);
+  } else {
+    if (tariffRow) tariffRow.style.display = 'none';
+    if (landedRow) landedRow.style.display = 'none';
+  }
 
   const riskList = document.getElementById('risk-flags-list');
   const questionsList = document.getElementById('supplier-questions-list');
@@ -892,6 +976,30 @@ function calculateCustomPartBreakdown() {
   // --- Tooling ownership unspecified, regardless of amount ---
   if (tooling > 0 && toolingOwner === 'unknown') {
     questions.push(`Get tooling ownership in writing — most quotes don't state this explicitly, and it materially changes your exposure if you don't reorder.`);
+  }
+
+  // --- Tariff / import exposure, refined by Incoterm where known ---
+  const incotermLabels = {
+    unknown: 'an unspecified term', exw: 'EXW', fca: 'FCA', fas: 'FAS', fob: 'FOB',
+    cfr: 'CFR', cif: 'CIF', cpt: 'CPT', cip: 'CIP', dap: 'DAP', dpu: 'DPU', ddp: 'DDP'
+  };
+  const incotermLabel = incotermLabels[incoterm] || 'an unspecified term';
+
+  if (tariffRate > 0) {
+    if (incoterm === 'ddp') {
+      flags.push(`<strong>Tariff Exposure (Likely Seller-Paid):</strong> Under DDP terms, the supplier is responsible for duties — the estimated ${tariffRate}% rate${origin ? ` for parts from ${origin}` : ''} should already be reflected in their quoted price, not added on top.`);
+      questions.push(`Confirm the quoted price already includes the ${tariffRate}% duty under DDP terms, so it isn't double-counted or unexpectedly passed through later.`);
+    } else {
+      flags.push(`<strong>Tariff Exposure:</strong> At an estimated ${tariffRate}% duty rate${origin ? ` on parts sourced from ${origin}` : ''} under ${incotermLabel} terms, tariffs add roughly $${tariffPerUnit.toFixed(2)}/unit — bringing the effective landed price to about $${landedUnit.toFixed(2)}/unit, since the buyer typically bears duties under this term.`);
+      questions.push(`Confirm you (the buyer) are responsible for duties under ${incotermLabel} terms, and get the ${tariffRate}% rate verified against the correct HTS classification before relying on it.`);
+    }
+  } else if (origin && !/^(usa|u\.s\.a\.?|united states|domestic)$/i.test(origin)) {
+    questions.push(`You've listed the country of manufacture as ${origin} but haven't entered an estimated tariff rate — confirm whether duties apply to this part and at what rate before finalizing cost comparisons.`);
+  }
+
+  if (incoterm === 'exw') {
+    flags.push(`<strong>EXW Terms — Buyer Bears Full Logistics Burden:</strong> Under EXW, you're responsible for export clearance, all freight, insurance, and import duties from the supplier's dock onward — costs many buyers assume the supplier is handling.`);
+    questions.push(`Confirm whether you have (or need) a freight forwarder to handle export clearance and transport under EXW, since none of that is the supplier's responsibility at this term.`);
   }
 
   if (flags.length === 0) {
@@ -934,13 +1042,27 @@ function calculateShouldCost() {
 }
 
 function calculateLeadTime() {
+  const DAYS_PER_UNIT = { days: 1, 'business-days': 7 / 5, weeks: 7, months: 30, years: 365 };
+
   const admin = Math.max(parseFloat(document.getElementById('lt-admin').value) || 0, 0);
   const mat = Math.max(parseFloat(document.getElementById('lt-mat').value) || 0, 0);
   const mfg = Math.max(parseFloat(document.getElementById('lt-mfg').value) || 0, 0);
   const transit = Math.max(parseFloat(document.getElementById('lt-transit').value) || 0, 0);
   const bufPct = Math.max(parseFloat(document.getElementById('lt-buf').value) || 0, 0) / 100;
-  const requiredDays = Math.max(parseFloat(document.getElementById('lt-required-days').value) || 0, 0);
-  const supplierQuoted = Math.max(parseFloat(document.getElementById('lt-supplier-quoted').value) || 0, 0);
+
+  const requiredRaw = Math.max(parseFloat(document.getElementById('lt-required-days').value) || 0, 0);
+  const requiredUnit = (document.getElementById('lt-required-unit') || {}).value || 'days';
+  const requiredDays = requiredRaw * (DAYS_PER_UNIT[requiredUnit] || 1);
+
+  const supplierRaw = Math.max(parseFloat(document.getElementById('lt-supplier-quoted').value) || 0, 0);
+  const supplierUnit = (document.getElementById('lt-supplier-quoted-unit') || {}).value || 'days';
+  const supplierQuotedBase = supplierRaw * (DAYS_PER_UNIT[supplierUnit] || 1);
+
+  const holidayDays = Math.max(parseFloat(document.getElementById('lt-holiday-days').value) || 0, 0);
+  // Known shutdowns extend the real delivery date even when the supplier's
+  // stated number doesn't mention them — fold them into the committed time.
+  const supplierQuoted = supplierQuotedBase + holidayDays;
+
   const clockStart = (document.getElementById('lt-clock-start') || {}).value || 'po';
 
   const baseLT = admin + mat + mfg + transit;
@@ -951,8 +1073,18 @@ function calculateLeadTime() {
   // not your own component estimate — that's the real commitment on paper.
   const gap = requiredDays - supplierQuoted;
 
-  document.getElementById('lt-out-quoted').innerText = Math.round(supplierQuoted) + ' Days';
-  document.getElementById('lt-out-required').innerText = Math.round(requiredDays) + ' Days';
+  const unitLabel = (raw, unit) => {
+    const singular = { days: 'Calendar Day', 'business-days': 'Business Day', weeks: 'Week', months: 'Month', years: 'Year' };
+    const plural = { days: 'Calendar Days', 'business-days': 'Business Days', weeks: 'Weeks', months: 'Months', years: 'Years' };
+    const label = raw === 1 ? singular[unit] : plural[unit];
+    return `${raw} ${label}`;
+  };
+  const dayWord = (n) => n === 1 ? 'day' : 'days';
+
+  document.getElementById('lt-out-quoted').innerText = holidayDays > 0
+    ? `${unitLabel(supplierRaw, supplierUnit)} + ${Math.round(holidayDays)} holiday days (~${Math.round(supplierQuoted)} days)`
+    : `${unitLabel(supplierRaw, supplierUnit)} (~${Math.round(supplierQuoted)} days)`;
+  document.getElementById('lt-out-required').innerText = `${unitLabel(requiredRaw, requiredUnit)} (~${Math.round(requiredDays)} days)`;
   document.getElementById('lt-out-base').innerText = Math.round(baseLT) + ' Days';
   document.getElementById('lt-out-buffer').innerText = Math.round(buffer) + ' Days';
   document.getElementById('lt-out-total').innerText = Math.round(estimatedTotal) + ' Days';
@@ -989,7 +1121,7 @@ function calculateLeadTime() {
   }
 
   if (gap < 0) {
-    flags.push(`<strong>Schedule Gap:</strong> The supplier's quoted lead time (${Math.round(supplierQuoted)} days) exceeds your available schedule (${Math.round(requiredDays)} days) by <strong>${Math.round(Math.abs(gap))} days</strong>. As quoted, this build will miss your required date.`);
+    flags.push(`<strong>Schedule Gap:</strong> The supplier's quoted lead time (${Math.round(supplierQuoted)} days) exceeds your available schedule (${Math.round(requiredDays)} days) by <strong>${Math.round(Math.abs(gap))} ${dayWord(Math.round(Math.abs(gap)))}</strong>. As quoted, this build will miss your required date.`);
     questions.push(`Request a recovery schedule before PO release — ask what specific steps (overtime, expedited freight, split shipments, parallel material/tooling procurement) could close the ${Math.round(Math.abs(gap))}-day gap.`);
   } else if (gap < 10) {
     flags.push(`<strong>Tight Schedule Margin:</strong> Only <strong>${Math.round(gap)} days</strong> of buffer exist between the supplier's quoted lead time and your required date. Any slippage will likely miss the date.`);
@@ -1015,6 +1147,15 @@ function calculateLeadTime() {
   }
 
   questions.push(`Confirm what specific event starts the lead-time clock — you've indicated <strong>${clockLabel}</strong> — and get that in writing rather than assuming.`);
+
+  if (holidayDays > 0) {
+    flags.push(`<strong>Holiday/Shutdown Exposure:</strong> You've flagged ${Math.round(holidayDays)} known holiday/shutdown ${dayWord(Math.round(holidayDays))} in this window, added on top of the supplier's stated lead time.`);
+    questions.push(`Confirm whether the supplier's quoted lead time already accounts for the known shutdown period, or whether it needs to be added on top as you've assumed here.`);
+  }
+
+  if (supplierUnit === 'business-days' || requiredUnit === 'business-days') {
+    questions.push(`Confirm which side's business-day calendar is being used — holidays and working-week definitions can differ by country, especially for overseas suppliers.`);
+  }
 
   if (clockStart === 'po') {
     questions.push(`Ask whether material can be procured or reserved before PO release to compress the effective schedule.`);
