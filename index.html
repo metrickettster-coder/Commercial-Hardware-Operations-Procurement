@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Commercial Hardware Lifecycle &amp; Procurement Suite</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<!-- Document Upload & Parsing Libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script>
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+</script>
+
+<style>
+  :root{
+    --ink:        #0b131e;
+    --panel:      #132236;
+    --panel-2:    #1a2d47;
+    --grid-line:  #253e61;
+    --text-hi:    #eef2f7;
+    --text-mid:   #a9b8cc;
+    --text-dim:   #6f829c;
+    --amber:      #e0a52c;
+    --green:      #3fb27f;
+    --red:        #d9584f;
+    --focus:      #6fb3ff;
+    --radius:     8px;
+  }
+
+  *{ box-sizing:border-box; }
+  body{ margin:0; padding:0; background:var(--ink); color:var(--text-hi); font-family:'Inter',sans-serif; min-height:100vh; }
+  .shell{ max-width:1450px; margin:0 auto; padding:20px 20px 60px; }
+
+  header.top{ display:flex; justify-content:space-between; align-items:center; padding-bottom:14px; margin-bottom:16px; border-bottom:1px solid var(--grid-line); flex-wrap:wrap; gap:10px; }
+  .brand .mark{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--amber); border:1px solid rgba(224,165,44,0.4); padding:2px 6px; border-radius:4px; margin-right:8px; }
+  .brand .name{ font-weight:800; font-size:17px; }
+
+  .export-controls{ display:flex; gap:8px; }
+  .btn-export{ background:var(--panel-2); border:1px solid var(--grid-line); color:var(--text-hi); font-family:'IBM Plex Mono',monospace; font-size:11px; padding:6px 12px; border-radius:6px; cursor:pointer; transition:all 0.15s ease; }
+  .btn-export:hover{ border-color:var(--amber); color:var(--amber); }
+
+  /* Upload & Scanner UI Styling */
+  .upload-zone { background: var(--panel); border: 2px dashed var(--grid-line); border-radius: var(--radius); padding: 24px; text-align: center; margin-bottom: 20px; cursor: pointer; transition: border-color 0.2s, background-color 0.2s; }
+  .upload-zone:hover, .upload-zone.dragover { border-color: var(--amber); background-color: var(--panel-2); }
+
+  /* Primary Lifecycle Stage Nav */
+  nav.pillar-nav{ display:grid; grid-template-columns: repeat(5, 1fr); gap:8px; margin-bottom:16px; }
+  @media(max-width: 900px){ nav.pillar-nav{ grid-template-columns: repeat(3, 1fr); } }
+  @media(max-width: 600px){ nav.pillar-nav{ grid-template-columns: repeat(2, 1fr); } }
+
+  .pillar-btn{ background:var(--panel); border:1px solid var(--grid-line); color:var(--text-mid); padding:12px 8px; text-align:center; border-radius:var(--radius); cursor:pointer; transition:all 0.15s ease; }
+  .pillar-btn:hover{ border-color:var(--text-dim); }
+  .pillar-btn.active{ background:var(--panel-2); border-color:var(--amber); color:var(--amber); font-weight:700; }
+  .pillar-btn .title{ font-size:12px; font-weight:700; display:block; }
+
+  /* Sub-Tool Nav Bar */
+  .subnav-bar{ background:var(--panel); border:1px solid var(--grid-line); padding:8px; border-radius:var(--radius); margin-bottom:20px; display:flex; gap:6px; flex-wrap:wrap; }
+  .sub-btn{ background:transparent; border:1px solid transparent; color:var(--text-dim); padding:6px 12px; font-size:11.5px; border-radius:5px; cursor:pointer; font-weight:600; transition:all 0.15s ease; }
+  .sub-btn:hover{ color:var(--text-hi); background:rgba(255,255,255,0.03); }
+  .sub-btn.active{ background:var(--panel-2); border-color:var(--grid-line); color:var(--focus); }
+
+  /* Views */
+  .tab-pillar, .tool-view { display:none; }
+  .tab-pillar.active, .tool-view.active { display:block; }
+
+  .board{ display:grid; grid-template-columns: repeat(3, 1fr); gap:14px; margin-bottom:20px; }
+  @media (max-width: 720px){ .board{ grid-template-columns: 1fr; } }
+
+  .light-card{ background: linear-gradient(180deg, var(--panel-2), var(--panel)); border:1px solid var(--grid-line); border-radius: var(--radius); padding:16px; position:relative; }
+  .light-card::before{ content:""; position:absolute; inset:0 0 auto 0; height:3px; background:var(--status-color, var(--text-dim)); }
+  .light-row{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .light-dot{ width:9px; height:9px; border-radius:50%; background:var(--status-color, var(--text-dim)); }
+  .light-label{ font-family:'IBM Plex Mono', monospace; font-size:10.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-dim); }
+  .light-value{ font-family:'IBM Plex Mono', monospace; font-size:26px; font-weight:600; line-height:1; margin-bottom:4px; }
+  .light-status{ font-size:12px; color:var(--text-mid); }
+
+  .grid{ display:grid; grid-template-columns: 1fr 1fr; gap:18px; }
+  @media (max-width: 820px){ .grid{ grid-template-columns: 1fr; } }
+
+  .panel{ background: var(--panel); border:1px solid var(--grid-line); border-radius: var(--radius); padding:20px; }
+  .panel h2{ font-size:12px; font-family:'IBM Plex Mono', monospace; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-dim); margin:0 0 16px; }
+
+  .field{ margin-bottom:14px; }
+  .field label{ display:block; font-size:12.5px; font-weight:600; margin-bottom:4px; }
+  .field .hint{ font-size:11px; color:var(--text-dim); margin-bottom:4px; }
+  .field input, .field select, textarea{ width:100%; background:var(--ink); border:1px solid var(--grid-line); color:var(--text-hi); font-family:'IBM Plex Mono', monospace; font-size:13px; padding:8px 10px; border-radius:6px; outline:none; }
+  .field input:focus, textarea:focus, select:focus{ border-color: var(--focus); }
+  .prefix-wrap{ position:relative; }
+  .prefix-wrap span{ position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--text-dim); font-family:'IBM Plex Mono', monospace; }
+  .prefix-wrap input{ padding-left:22px; }
+
+  .readout{ display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--grid-line); gap:12px; }
+  .readout:last-child{ border-bottom:none; }
+  .readout .rlabel{ font-size:13px; color:var(--text-mid); }
+  .readout .rvalue{ font-family:'IBM Plex Mono', monospace; font-size:16px; font-weight:600; }
+
+  textarea{ height:160px; resize:vertical; }
+  .btn-action{ width:100%; margin-top:10px; background:var(--amber); color:var(--ink); font-weight:700; font-family:'IBM Plex Mono', monospace; font-size:13px; padding:10px; border:none; border-radius:6px; cursor:pointer; }
+  
+  .flag-badge { display:inline-block; background:rgba(224,165,44,0.15); color:var(--amber); border:1px solid var(--amber); padding:4px 8px; border-radius:4px; margin:2px; font-size:11px; font-family:'IBM Plex Mono', monospace; }
+  .risk-list { padding-left: 20px; color: var(--text-mid); font-size: 13px; }
+  .risk-list li { margin-bottom: 10px; line-height: 1.4; }
+  .divider { border: 0; border-top: 1px solid var(--grid-line); margin: 16px 0; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div class="shell" id="report-container">
+  <header class="top">
+    <div class="brand">
+      <span class="mark">COMMERCIAL//PROCUREMENT</span>
+      <span class="name">Hardware Operations Analytics Suite</span>
+    </div>
+    <div class="export-controls">
+      <button class="btn-export" onclick="exportCSV()">📥 Export CSV Data</button>
+      <button class="btn-export" onclick="exportPDF()">📄 Export PDF Report</button>
+    </div>
+  </header>
+
+  <!-- Commercial Quote Document Intake -->
+  <div class="upload-zone" id="dropzone">
+    <strong style="color:var(--amber); font-family:'IBM Plex Mono', monospace;">📂 CLICK OR DRAG TO UPLOAD SUPPLIER QUOTE OR SPECIFICATION (.PDF, .DOCX, .TXT)</strong>
+    <p style="font-size:12px; color:var(--text-dim); margin:6px 0 0 0;">Zero-Trust Processing: Parsed 100% locally in browser memory.</p>
+    <input type="file" id="fileInput" accept=".pdf,.docx,.txt" style="display:none;">
+  </div>
+
+  <div id="resultsCard" class="panel hidden" style="margin-bottom:20px;">
+    <h2>Quote Parsing &amp; Commercial Terms Extraction</h2>
+    <div id="flagsContainer"></div>
+    <pre id="redactedOutput" style="background:var(--ink); border:1px solid var(--grid-line); padding:12px; border-radius:6px; margin-top:12px; font-family:'IBM Plex Mono', monospace; font-size:12px; max-height:250px; overflow-y:auto; white-space:pre-wrap;"></pre>
+  </div>
+
+  <!-- 5 Stage Lifecycle Sub-Navigation -->
+  <nav class="pillar-nav">
+    <div class="pillar-btn active" onclick="switchPillar('concept', this)">
+      <span class="title">💡 1. Concept &amp; Feasibility</span>
+    </div>
+    <div class="pillar-btn" onclick="switchPillar('npi', this)">
+      <span class="title">🚀 2. NPI &amp; Stage-Gate Launch</span>
+    </div>
+    <div class="pillar-btn" onclick="switchPillar('sourcing', this)">
+      <span class="title">📦 3. Sourcing &amp; Costing</span>
+    </div>
+    <div class="pillar-btn" onclick="switchPillar('ops', this)">
+      <span class="title">⚙️ 4. Ops &amp; Quality Execution</span>
+    </div>
+    <div class="pillar-btn" onclick="switchPillar('sustaining', this)">
+      <span class="title">♻️ 5. Sustaining &amp; EOL Closeout</span>
+    </div>
+  </nav>
+
+  <!-- PILLAR 1: CONCEPT & FEASIBILITY -->
+  <div id="pillar-concept" class="tab-pillar active">
+    <div class="subnav-bar">
+      <button class="sub-btn active" onclick="switchTool('concept', 'tamsam', this)">TAM/SAM Analysis</button>
+      <button class="sub-btn" onclick="switchTool('concept', 'npvirr', this)">NPV/IRR Engine</button>
+      <button class="sub-btn" onclick="switchTool('concept', 'dtc', this)">Target Costing (DTC)</button>
+      <button class="sub-btn" onclick="switchTool('concept', 'techrisk', this)">Technical Risk Score</button>
+    </div>
+
+    <!-- TAM / SAM -->
+    <div id="tool-tamsam" class="tool-view active">
+      <h1>Total Addressable &amp; Serviceable Market (TAM/SAM/SOM)</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Calculate top-down market opportunity and realistic capture parameters.</p>
+      <div class="grid">
+        <div class="panel">
+          <h2>Market Sizing Inputs</h2>
+          <div class="field"><label>Total Potential Target Units (Global)</label><input type="number" id="ts-units" value="500000" oninput="calculateTAM()"></div>
+          <div class="field"><label>Average Selling Price (ASP)</label><div class="prefix-wrap"><span>$</span><input type="number" id="ts-asp" value="1200" oninput="calculateTAM()"></div></div>
+          <div class="field"><label>Serviceable Market Reach % (SAM Factor)</label><input type="number" id="ts-sam-pct" value="35" oninput="calculateTAM()"></div>
+          <div class="field"><label>Serviceable Obtainable Market % (SOM Target)</label><input type="number" id="ts-som-pct" value="10" oninput="calculateTAM()"></div>
+        </div>
+        <div class="panel">
+          <h2>Market Sizing Outputs</h2>
+          <div class="readout"><div class="rlabel">Total Addressable Market (TAM)</div><div class="rvalue" id="ts-out-tam" style="color:var(--amber);">$600,000,000</div></div>
+          <div class="readout"><div class="rlabel">Serviceable Addressable Market (SAM)</div><div class="rvalue" id="ts-out-sam">$210,000,000</div></div>
+          <div class="readout"><div class="rlabel">Serviceable Obtainable Market (SOM)</div><div class="rvalue" id="ts-out-som" style="color:var(--green);">$21,000,000</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NPV / IRR Engine -->
+    <div id="tool-npvirr" class="tool-view">
+      <h1>Financial Valuation: NPV &amp; Target IRR Model</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Assess initial capital investment against projected cash inflows over a 3-year product horizon.</p>
+      <div class="grid">
+        <div class="panel">
+          <h2>Investment &amp; Return Metrics</h2>
+          <div class="field"><label>Initial NRE &amp; Tooling Capex ($ Investment)</label><div class="prefix-wrap"><span>$</span><input type="number" id="npv-capex" value="1500000" oninput="calculateNPV()"></div></div>
+          <div class="field"><label>Discount Rate / Cost of Capital (%)</label><input type="number" id="npv-discount" value="10" oninput="calculateNPV()"></div>
+          <div class="field"><label>Year 1 Net Cash Flow</label><div class="prefix-wrap"><span>$</span><input type="number" id="npv-y1" value="400000" oninput="calculateNPV()"></div></div>
+          <div class="field"><label>Year 2 Net Cash Flow</label><div class="prefix-wrap"><span>$</span><input type="number" id="npv-y2" value="950000" oninput="calculateNPV()"></div></div>
+          <div class="field"><label>Year 3 Net Cash Flow</label><div class="prefix-wrap"><span>$</span><input type="number" id="npv-y3" value="1400000" oninput="calculateNPV()"></div></div>
+        </div>
+        <div class="panel">
+          <h2>Financial Feasibility Outputs</h2>
+          <div class="readout"><div class="rlabel">Net Present Value (NPV)</div><div class="rvalue" id="npv-out-val" style="color:var(--amber);">$699,850</div></div>
+          <div class="readout"><div class="rlabel">Simple Payback Period</div><div class="rvalue" id="npv-out-payback">2.1 Years</div></div>
+          <div class="readout"><div class="rlabel">Program Viability Status</div><div class="rvalue" id="npv-out-status" style="color:var(--green);">VIABLE</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Target Costing (DTC) -->
+    <div id="tool-dtc" class="tool-view">
+      <h1>Design-to-Cost (DTC) Allocator</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Derive maximum allowable BOM and assembly costs based on target MSRP and margin objectives.</p>
+      <div class="grid">
+        <div class="panel">
+          <h2>Financial Boundary Inputs</h2>
+          <div class="field"><label>Target Commercial Price / MSRP</label><div class="prefix-wrap"><span>$</span><input type="number" id="dtc-msrp" value="450" oninput="calculateDTC()"></div></div>
+          <div class="field"><label>Target Gross Margin (%)</label><input type="number" id="dtc-margin" value="40" oninput="calculateDTC()"></div>
+          <div class="field"><label>Estimated Logistics, Packaging &amp; Freight Allowance</label><div class="prefix-wrap"><span>$</span><input type="number" id="dtc-logistics" value="25" oninput="calculateDTC()"></div></div>
+        </div>
+        <div class="panel">
+          <h2>Max Allowable Cost Breakdown</h2>
+          <div class="readout"><div class="rlabel">Target COGS Limit</div><div class="rvalue" id="dtc-out-cogs">$270.00</div></div>
+          <div class="readout"><div class="rlabel">Max Allowable Manufactured BOM Cost</div><div class="rvalue" id="dtc-out-bom" style="color:var(--amber);">$245.00</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Technical Risk Score -->
+    <div id="tool-techrisk" class="tool-view">
+      <h1>Technical Risk Score Matrix</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Quantify architectural and technology readiness levels (TRL) prior to formal gate entry.</p>
+      <div class="grid">
+        <div class="panel">
+          <h2>Readiness Assessment (Score 1 to 5)</h2>
+          <div class="field"><label>Technology Readiness Level (1 = Concept, 5 = Proven Component)</label><input type="number" id="tr-trl" value="3" max="5" min="1" oninput="calculateTechRisk()"></div>
+          <div class="field"><label>Component Customization Level (1 = Off-shelf, 5 = Custom Tooling)</label><input type="number" id="tr-custom" value="4" max="5" min="1" oninput="calculateTechRisk()"></div>
+          <div class="field"><label>Manufacturing Process Maturity (1 = Mature, 5 = Unproven)</label><input type="number" id="tr-mfg" value="3" max="5" min="1" oninput="calculateTechRisk()"></div>
+        </div>
+        <div class="panel">
+          <h2>Feasibility Exposure</h2>
+          <div class="readout"><div class="rlabel">Composite Risk Score</div><div class="rvalue" id="tr-out-score">3.33 / 5.0</div></div>
+          <div class="readout"><div class="rlabel">Feasibility Gate Risk Level</div><div class="rvalue" id="tr-out-status" style="color:var(--amber);">MEDIUM RISK</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PILLAR 2: NPI & STAGE-GATE LAUNCH -->
+  <div id="pillar-npi" class="tab-pillar">
+    <div class="subnav-bar">
+      <button class="sub-btn active" onclick="switchTool('npi', 'stagegate', this)">Gate Exit Verification</button>
+      <button class="sub-btn" onclick="switchTool('npi', 'buildyields', this)">EVT/DVT/PVT Build Yields</button>
+      <button class="sub-btn" onclick="switchTool('npi', 'eco', this)">ECO Impact Analysis</button>
+    </div>
+
+    <!-- Gate Exit Verification -->
+    <div id="tool-stagegate" class="tool-view active">
+      <h1>Stage-Gate Launch Exit Checklist</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Verify mandatory operational gates to transition from prototype to volume production.</p>
+      <div class="grid">
+        <div class="panel">
+          <h2>Milestone Verification Gates</h2>
+          <div class="field"><label>1. EVT Completed &amp; Functional Spec Met?</label><select id="sg-1" onchange="calculateStageGate()"><option value="1">Passed</option><option value="0">Open</option></select></div>
+          <div class="field"><label>2. DVT Reliability &amp; Compliance Passed?</label><select id="sg-2" onchange="calculateStageGate()"><option value="1">Passed</option><option value="0">Open</option></select></div>
+          <div class="field"><label>3. PVT Tooling &amp; Factory Line Qualified?</label><select id="sg-3" onchange="calculateStageGate()"><option value="1">Passed</option><option value="0">Open</option></select></div>
+          <div class="field"><label>4. Mass Production (MP) Sourcing Secured?</label><select id="sg-4" onchange="calculateStageGate()"><option value="1">Passed</option><option value="0">Open</option></select></div>
+        </div>
+        <div class="panel">
+          <h2>Gate Exit Status</h2>
+          <div class="readout"><div class="rlabel">Completed Stage Milestones</div><div class="rvalue" id="sg-out-score">4 / 4</div></div>
+          <div class="readout"><div class="rlabel">Gate Release Approval</div><div class="rvalue" id="sg-out-status" style="color:var(--green);">APPROVED FOR MP</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EVT / DVT / PVT Build Yields -->
+    <div id="tool-buildyields" class="tool-view">
+      <h1>NPI Build Yield Tracker (EVT / DVT / PVT)</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Track prototype build performance across critical testing phases.</p>
+      <div class="grid">
+        <div class="panel">
+          <h2>Build Quantities &amp; Defects</h2>
+          <div class="field"><label>Target Build Phase</label><select id="by-phase"><option value="EVT">EVT Build</option><option value="DVT">DVT Build</option><option value="PVT">PVT Build</option></select></div>
+          <div class="field"><label>Total Units Started</label><input type="number" id="by-total" value="250" oninput="calculateBuildYields()"></div>
+          <div class="field"><label>Scrapped / Failed Units</label><input type="number" id="by-failed" value="18" oninput="calculateBuildYields()"></div>
+        </div>
+        <div class="panel">
+          <h2>Yield Metrics</h2>
+          <div class="readout"><div class="rlabel">First Pass Build Yield %</div><div class="rvalue" id="by-out-yield" style="color:var(--amber);">92.8%</div></div>
+          <div class="readout"><div class="rlabel">Phase Readiness Assessment</div><div class="rvalue" id="by-out-status">ACCEPTABLE</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ECO Impact Analysis -->
+    <div id="tool-eco" class="tool-view">
+      <h1>ECO (Engineering Change Order) Cost &amp; Impact Analysis</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Evaluate non-recurring engineering, drawing updates, and scrap implications of design changes.</p>
+      <div class="grid">
+        <div class="panel">
+          <h2>Change Parameters</h2>
+          <div class="field"><label>Design &amp; Drafting Hours</label><input type="number" id="eco-hrs" value="45" oninput="calculateECO()"></div>
+          <div class="field"><label>Engineering Labor Rate ($/hr)</label><div class="prefix-wrap"><span>$</span><input type="number" id="eco-rate" value="110" oninput="calculateECO()"></div></div>
+          <div class="field"><label>Scrapped Obsolete Inventory / WIP Value</label><div class="prefix-wrap"><span>$</span><input type="number" id="eco-scrap" value="6200" oninput="calculateECO()"></div></div>
+          <div class="field"><label>Tooling Modification / Re-qualification Fee</label><div class="prefix-wrap"><span>$</span><input type="number" id="eco-tooling" value="12000" oninput="calculateECO()"></div></div>
+        </div>
+        <div class="panel">
+          <h2>ECO Cost Output</h2>
+          <div class="readout"><div class="rlabel">Engineering NRE Cost</div><div class="rvalue" id="eco-out-nre">$4,950.00</div></div>
+          <div class="readout"><div class="rlabel">Total Financial Impact of ECO</div><div class="rvalue" id="eco-out-total" style="color:var(--red);">$23,150.00</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PILLAR 3: SOURCING & COSTING -->
+  <div id="pillar-sourcing" class="tab-pillar">
+    <div class="subnav-bar">
+      <button class="sub-btn active" onclick="switchTool('sourcing', 'landedcost', this)">Total Landed Cost Engine</button>
+      <button class="sub-btn" onclick="switchTool('sourcing', 'custom-part-breakdown', this)">Custom Part Risk Review</button>
+      <button class="sub-btn" onclick="switchTool('sourcing', 'shouldcost', this)">Bottom-Up Should-Cost</button>
+      <button class="sub-btn" onclick="switchTool('sourcing', 'leadtime', this)">Procurement Lead Time</button>
+    </div>
+
+    <!-- Total Landed Cost Engine -->
+    <div id="tool-landedcost" class="tool-view active">
+      <h1>Total Landed Cost Engine</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Aggregate EXW price, freight, tariffs, customs duties, and handling into unit landed cost.</p>
+      <div class="grid">
+        <div class="panel">
+          <h2>Cost Components (Per Unit)</h2>
+          <div class="field"><label>Factory Unit Price (EXW / FOB)</label><div class="prefix-wrap"><span>$</span><input type="number" id="tlc-unit" value="85.00" oninput="calculateLandedCost()"></div></div>
+          <div class="field"><label>Freight &amp; Logistics Costs per Unit</label><div class="prefix-wrap"><span>$</span><input type="number" id="tlc-freight" value="6.50" oninput="calculateLandedCost()"></div></div>
+          <div class="field"><label>Customs Duty / Import Tariff Rate (%)</label><input type="number" id="tlc-tariff" value="7.5" oninput="calculateLandedCost()"></div>
+          <div class="field"><label>Local Warehousing &amp; Port Handling per Unit</label><div class="prefix-wrap"><span>$</span><input type="number" id="tlc-handling" value="2.25" oninput="calculateLandedCost()"></div></div>
+        </div>
+        <div class="panel">
+          <h2>Landed Cost Summary</h2>
+          <div class="readout"><div class="rlabel">Tariff Duty Amount</div><div class="rvalue" id="tlc-out-tariff">$6.38</div></div>
+          <div class="readout"><div class="rlabel">Total Unit Landed Cost</div><div class="rvalue" id="tlc-out-total" style="color:var(--amber);">$100.13</div></div>
+          <div class="readout"><div class="rlabel">Landed Markup Burden %</div><div class="rvalue" id="tlc-out-burden">17.8%</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Custom Part Risk Review -->
+    <div id="tool-custom-part-breakdown" class="tool-view">
+      <h1>Custom Part &amp; NPI Quote Breakdown</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Analyze tooling amortization, small-batch setup penalties, and raw material sensitivity.</p>
+
+      <div class="grid">
+        <div class="panel">
+          <h2>Quote &amp; Process Parameters</h2>
+          
+          <div class="field">
+            <label>Part Description / Material</label>
+            <input type="text" id="cp-material" value="AL 6061-T6 (Custom CNC Part)" placeholder="e.g. AL 6061-T6">
+          </div>
+
+          <div class="field">
+            <label>Base Unit Production Cost ($/unit)</label>
+            <div class="prefix-wrap"><span>$</span><input type="number" id="cp-base-unit" value="35.00" oninput="calculateCustomPartBreakdown()"></div>
+          </div>
+
+          <div class="field">
+            <label>One-Time Setup Fee ($)</label>
+            <div class="prefix-wrap"><span>$</span><input type="number" id="cp-setup" value="600" oninput="calculateCustomPartBreakdown()"></div>
+          </div>
+
+          <div class="field">
+            <label>Fixture / Tooling NRE ($)</label>
+            <div class="prefix-wrap"><span>$</span><input type="number" id="cp-tooling" value="2500" oninput="calculateCustomPartBreakdown()"></div>
+          </div>
+
+          <div class="field">
+            <label>Current Quote Order Quantity (Units)</label>
+            <input type="number" id="cp-qty" value="50" oninput="calculateCustomPartBreakdown()">
+          </div>
+
+          <div class="field">
+            <label>Material Cost Share of Unit Price (%)</label>
+            <input type="number" id="cp-mat-share" value="35" oninput="calculateCustomPartBreakdown()">
+          </div>
+
+          <button class="btn-action" onclick="calculateCustomPartBreakdown()">Run Cost &amp; Risk Analysis</button>
+        </div>
+
+        <div class="panel">
+          <h2>Cost Drivers &amp; Risk Analysis</h2>
+          
+          <div class="readout">
+            <div class="rlabel">Effective Unit Price (at <span id="out-qty-label">50</span> units)</div>
+            <div class="rvalue" id="out-effective-unit" style="color:var(--amber);">$97.00</div>
+          </div>
+          <div class="readout">
+            <div class="rlabel">Setup Fee Burden per Unit</div>
+            <div class="rvalue" id="out-setup-unit">$12.00 / unit</div>
+          </div>
+          <div class="readout">
+            <div class="rlabel">Tooling Amortization Burden per Unit</div>
+            <div class="rvalue" id="out-tooling-unit">$50.00 / unit</div>
+          </div>
+
+          <hr class="divider">
+
+          <h2 style="color: var(--amber); margin-top: 15px;">⚠️ Flagged Risk Insights</h2>
+          <ul id="risk-flags-list" class="risk-list"></ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom-Up Should-Cost -->
+    <div id="tool-shouldcost" class="tool-view">
+      <h1>Bottom-Up Should-Cost Model</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Build a baseline pricing objective using raw material, labor, overhead, and margin structures.</p>
+      <div class="grid">
+        <div class="panel">
+          <h2>Cost Teardown Inputs</h2>
+          <div class="field"><label>Direct Material / Raw BOM Cost</label><div class="prefix-wrap"><span>$</span><input type="number" id="sc-bom" value="34.00" oninput="calculateShouldCost()"></div></div>
+          <div class="field"><label>Direct Assembly Labor Hours</label><input type="number" id="sc-hours" value="0.75" step="0.05" oninput="calculateShouldCost()"></div>
+          <div class="field"><label>Labor Rate ($/hr)</label><div class="prefix-wrap"><span>$</span><input type="number" id="sc-rate" value="28.00" oninput="calculateShouldCost()"></div></div>
+          <div class="field"><label>Factory Overhead Burden Rate (%)</label><input type="number" id="sc-oh" value="15" oninput="calculateShouldCost()"></div>
+          <div class="field"><label>Supplier Target Margin (%)</label><input type="number" id="sc-margin" value="12" oninput="calculateShouldCost()"></div>
+        </div>
+        <div class="panel">
+          <h2>Should-Cost Target</h2>
+          <div class="readout"><div class="rlabel">Direct Labor Cost</div><div class="rvalue" id="sc-out-labor">$21.00</div></div>
+          <div class="readout"><div class="rlabel">Total Cost Before Margin</div><div class="rvalue" id="sc-out-subtotal">$63.25</div></div>
+          <div class="readout"><div class="rlabel">Target Fair Unit Price</div><div class="rvalue" id="sc-out-total" style="color:var(--green);">$70.84</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Procurement Lead Time -->
+    <div id="tool-leadtime" class="tool-view">
+      <h1>Procurement Lead Time &amp; Critical Path Model</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Model operational buffers and transit risks for critical component sourcing.</p>
+      <div class="grid">
+        <div class="panel">
+          <h2>Lead Time Breakdown (Days)</h2>
+          <div class="field"><label>PO Admin &amp; Order Processing Time</label><input type="number" id="lt-admin" value="5" oninput="calculateLeadTime()"></div>
+          <div class="field"><label>Raw Material Procurement Lead Time</label><input type="number" id="lt-mat" value="30" oninput="calculateLeadTime()"></div>
+          <div class="field"><label>Manufacturing &amp; Assembly Cycle</label><input type="number" id="lt-mfg" value="25" oninput="calculateLeadTime()"></div>
+          <div class="field"><label>Overseas Transit &amp; Customs Clearance</label><input type="number" id="lt-transit" value="14" oninput="calculateLeadTime()"></div>
+          <div class="field"><label>Buffer Risk Adjustment (%)</label><input type="number" id="lt-buf" value="15" oninput="calculateLeadTime()"></div>
+        </div>
+        <div class="panel">
+          <h2>Total Schedule Commitment</h2>
+          <div class="readout"><div class="rlabel">Base Lead Time</div><div class="rvalue" id="lt-out-base">74 Days</div></div>
+          <div class="readout"><div class="rlabel">Buffer Allocation</div><div class="rvalue" id="lt-out-buffer">11 Days</div></div>
+          <div class="readout"><div class="rlabel">Committed Total Lead Time</div><div class="rvalue" id="lt-out-total" style="color:var(--amber);">85 Days</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PILLAR 4: OPS & QUALITY EXECUTION -->
+  <div id="pillar-ops" class="tab-pillar">
+    <div class="subnav-bar">
+      <button class="sub-btn active" onclick="switchTool('ops', 'evm', this)">Earned Value Management (EVM)</button>
+      <button class="sub-btn" onclick="switchTool('ops', 'eoq', this)">EOQ &amp; Reorder Point</button>
+      <button class="sub-btn" onclick="switchTool('ops', 'fpy', this)">First Pass Yield (FPY) / PPM</button>
+    </div>
+
+    <!-- EVM -->
+    <div id="tool-evm" class="tool-view active">
+      <h1>Earned Value Management System (EVMS)</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Track program performance using standard EVM cost and schedule variance indices.</p>
+      <div class="board">
+        <div class="light-card"><div class="light-row"><span class="light-dot" id="dot-cpi" style="background:var(--red);"></span><span class="light-label">Cost Efficiency</span></div><div class="light-value" id="val-cpi">0.90</div><div class="light-status">CPI Metric</div></div>
+        <div class="light-card"><div class="light-row"><span class="light-dot" id="dot-spi" style="background:var(--amber);"></span><span class="light-label">Schedule Efficiency</span></div><div class="light-value" id="val-spi">0.93</div><div class="light-status">SPI Metric</div></div>
+        <div class="light-card"><div class="light-row"><span class="light-dot" id="dot-overall" style="background:var(--red);"></span><span class="light-label">Overall Health</span></div><div class="light-value" id="val-overall">BEHIND</div><div class="light-status">Index Avg</div></div>
+      </div>
+      <div class="grid">
+        <div class="panel">
+          <h2>Program Execution Baseline</h2>
+          <div class="field"><label>Budget at Completion (BAC)</label><div class="prefix-wrap"><span>$</span><input type="number" id="bac" value="650000" oninput="calculateEVM()"></div></div>
+          <div class="field"><label>Planned Value (PV)</label><div class="prefix-wrap"><span>$</span><input type="number" id="pv" value="280000" oninput="calculateEVM()"></div></div>
+          <div class="field"><label>Earned Value (EV)</label><div class="prefix-wrap"><span>$</span><input type="number" id="ev" value="260000" oninput="calculateEVM()"></div></div>
+          <div class="field"><label>Actual Cost (AC)</label><div class="prefix-wrap"><span>$</span><input type="number" id="ac" value="288888" oninput="calculateEVM()"></div></div>
+        </div>
+        <div class="panel">
+          <h2>Variances &amp; Forecasts</h2>
+          <div class="readout"><div class="rlabel">Cost Variance (CV)</div><div class="rvalue" id="evm-cv" style="color:var(--red);">-$28,888</div></div>
+          <div class="readout"><div class="rlabel">Schedule Variance (SV)</div><div class="rvalue" id="evm-sv" style="color:var(--amber);">-$20,000</div></div>
+          <div class="readout"><div class="rlabel">Estimate at Completion (EAC)</div><div class="rvalue" id="evm-eac">$722,222</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EOQ & Reorder Point -->
+    <div id="tool-eoq" class="tool-view">
+      <h1>Economic Order Quantity (EOQ) &amp; Safety Stock Engine</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Optimize lot sizing, inventory holding costs, and automated stock replenishment points.</p>
+      <div class="grid">
+        <div class="panel">
+          <h2>Inventory Parameters</h2>
+          <div class="field"><label>Annual Unit Demand (D)</label><input type="number" id="eoq-demand" value="12000" oninput="calculateEOQ()"></div>
+          <div class="field"><label>Fixed Order Procurement Cost (S)</label><div class="prefix-wrap"><span>$</span><input type="number" id="eoq-setup" value="150" oninput="calculateEOQ()"></div></div>
+          <div class="field"><label>Annual Holding Cost per Unit (H)</label><div class="prefix-wrap"><span>$</span><input type="number" id="eoq-holding" value="8.50" oninput="calculateEOQ()"></div></div>
+          <div class="field"><label>Supplier Lead Time (Days)</label><input type="number" id="eoq-lead" value="21" oninput="calculateEOQ()"></div>
+          <div class="field"><label>Daily Demand Rate (d)</label><input type="number" id="eoq-daily" value="33" oninput="calculateEOQ()"></div>
+          <div class="field"><label>Safety Stock Days Buffer</label><input type="number" id="eoq-ss-days" value="10" oninput="calculateEOQ()"></div>
+        </div>
+        <div class="panel">
+          <h2>Lot Sizing &amp; Reorder Targets</h2>
+          <div class="readout"><div class="rlabel">Economic Order Quantity (EOQ)</div><div class="rvalue" id="eoq-out-qty" style="color:var(--amber);">651 Units</div></div>
+          <div class="readout"><div class="rlabel">Safety Stock Allocation</div><div class="rvalue" id="eoq-out-ss">330 Units</div></div>
+          <div class="readout"><div class="rlabel">Reorder Point (ROP)</div><div class="rvalue" id="eoq-out-rop" style="color:var(--green);">1,023 Units</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FPY / PPM -->
+    <div id="tool-fpy" class="tool-view">
+      <h1>Factory First Pass Yield (FPY) &amp; Defect Rate (PPM)</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Calculate cumulative yield across multi-stage assembly lines and convert to Parts Per Million defects.</p>
+      <div class="grid">
+        <div class="panel">
+          <h2>Stage Yield Inputs (%)</h2>
+          <div class="field"><label>Stage 1: SMT &amp; Board Assembly Yield %</label><input type="number" id="fpy-s1" value="98.5" oninput="calculateFPY()"></div>
+          <div class="field"><label>Stage 2: Mechanical Integration Yield %</label><input type="number" id="fpy-s2" value="97.0" oninput="calculateFPY()"></div>
+          <div class="field"><label>Stage 3: Firmware &amp; Final Test Yield %</label><input type="number" id="fpy-s3" value="99.0" oninput="calculateFPY()"></div>
+        </div>
+        <div class="panel">
+          <h2>Rolled Yield Metrics</h2>
+          <div class="readout"><div class="rlabel">Rolled First Pass Yield (RFPY)</div><div class="rvalue" id="fpy-out-rfpy" style="color:var(--amber);">94.59%</div></div>
+          <div class="readout"><div class="rlabel">Defect Rate (PPM)</div><div class="rvalue" id="fpy-out-ppm" style="color:var(--red);">54,055 PPM</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PILLAR 5: SUSTAINING & EOL CLOSEOUT -->
+  <div id="pillar-sustaining" class="tab-pillar">
+    <div class="subnav-bar">
+      <button class="sub-btn active" onclick="switchTool('sustaining', 'rma', this)">RMA &amp; Warranty Field Loss</button>
+      <button class="sub-btn" onclick="switchTool('sustaining', 'altpart', this)">Alternate Part Qualification</button>
+      <button class="sub-btn" onclick="switchTool('sustaining', 'eol', this)">EOL &amp; LTB Planner</button>
+    </div>
+
+    <!-- RMA & Warranty -->
+    <div id="tool-rma" class="tool-view active">
+      <h1>RMA &amp; Warranty Field Loss Risk Engine</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Model return rates, field failure trends, and warranty reserve liabilities.</p>
+      <div class="grid">
+        <div class="panel">
+          <h2>Field Deployment Parameters</h2>
+          <div class="field"><label>Units Deployed in Field</label><input type="number" id="rma-units" value="15000" oninput="calculateRMA()"></div>
+          <div class="field"><label>Historical Return / Failure Rate (%)</label><input type="number" id="rma-rate" value="2.8" step="0.1" oninput="calculateRMA()"></div>
+          <div class="field"><label>Average Repair / Replacement Cost per Unit</label><div class="prefix-wrap"><span>$</span><input type="number" id="rma-cost" value="180" oninput="calculateRMA()"></div></div>
+        </div>
+        <div class="panel">
+          <h2>Warranty Liability Outputs</h2>
+          <div class="readout"><div class="rlabel">Expected Returned Units</div><div class="rvalue" id="rma-out-units">420 Units</div></div>
+          <div class="readout"><div class="rlabel">Total Warranty Reserve Required</div><div class="rvalue" id="rma-out-reserve" style="color:var(--red);">$75,600</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alternate Part Qualification -->
+    <div id="tool-altpart" class="tool-view">
+      <h1>Alternate Part / Form-Fit-Function (FFF) Qualifier</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Evaluate drop-in component replacements for obsolescence or cost reduction.</p>
+      <div class="grid">
+        <div class="panel">
+          <h2>Qualification Criteria</h2>
+          <div class="field"><label>Form / Mechanical Fit Match?</label><select id="fff-1" onchange="calculateFFF()"><option value="1">Match (Yes)</option><option value="0">Mismatch (No)</option></select></div>
+          <div class="field"><label>Fit / Electrical Pinout &amp; Spec Match?</label><select id="fff-2" onchange="calculateFFF()"><option value="1">Match (Yes)</option><option value="0">Mismatch (No)</option></select></div>
+          <div class="field"><label>Function / Software &amp; Protocol Match?</label><select id="fff-3" onchange="calculateFFF()"><option value="1">Match (Yes)</option><option value="0">Mismatch (No)</option></select></div>
+        </div>
+        <div class="panel">
+          <h2>Qualification Status</h2>
+          <div class="readout"><div class="rlabel">FFF Compatibility Status</div><div class="rvalue" id="fff-out-status" style="color:var(--green);">DROP-IN REPLACEMENT</div></div>
+          <div class="readout"><div class="rlabel">Re-qualification Burden</div><div class="rvalue" id="fff-out-burden">LOW (Minor Testing)</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EOL & LTB Planner -->
+    <div id="tool-eol" class="tool-view">
+      <h1>End-of-Life (EOL) &amp; Last Time Buy (LTB) Planner</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Calculate required last-time-buy inventory to cover remaining product lifecycle service demand.</p>
+      <div class="grid">
+        <div class="panel">
+          <h2>Lifecycle Demand Parameters</h2>
+          <div class="field"><label>Remaining Active Product Life (Years)</label><input type="number" id="ltb-years" value="4" oninput="calculateLTB()"></div>
+          <div class="field"><label>Projected Annual Service &amp; Production Demand</label><input type="number" id="ltb-demand" value="1200" oninput="calculateLTB()"></div>
+          <div class="field"><label>Scrap / Obsolescence Buffer (%)</label><input type="number" id="ltb-buffer" value="15" oninput="calculateLTB()"></div>
+          <div class="field"><label>Part Unit Cost</label><div class="prefix-wrap"><span>$</span><input type="number" id="ltb-unitcost" value="42.00" oninput="calculateLTB()"></div></div>
+        </div>
+        <div class="panel">
+          <h2>LTB Financial Allocation</h2>
+          <div class="readout"><div class="rlabel">Total LTB Unit Quantity Required</div><div class="rvalue" id="ltb-out-qty" style="color:var(--amber);">5,520 Units</div></div>
+          <div class="readout"><div class="rlabel">Total LTB Capital Commit</div><div class="rvalue" id="ltb-out-cost" style="color:var(--red);">$231,840</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="parser.js"></script>
+
+<script>
+// --- CORE NAVIGATION ---
+function switchPillar(pillarId, btn) {
+  document.querySelectorAll('.tab-pillar').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.pillar-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('pillar-' + pillarId).classList.add('active');
+  btn.classList.add('active');
+}
+
+function switchTool(pillarId, toolId, btn) {
+  const container = document.getElementById('pillar-' + pillarId);
+  container.querySelectorAll('.tool-view').forEach(el => el.classList.remove('active'));
+  container.querySelectorAll('.sub-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tool-' + toolId).classList.add('active');
+  btn.classList.add('active');
+}
+
+// --- CALCULATORS ---
+function calculateTAM() {
+  const units = parseFloat(document.getElementById('ts-units').value) || 0;
+  const asp = parseFloat(document.getElementById('ts-asp').value) || 0;
+  const samPct = (parseFloat(document.getElementById('ts-sam-pct').value) || 0) / 100;
+  const somPct = (parseFloat(document.getElementById('ts-som-pct').value) || 0) / 100;
+
+  const tam = units * asp;
+  const sam = tam * samPct;
+  const som = sam * somPct;
+
+  document.getElementById('ts-out-tam').innerText = '$' + tam.toLocaleString();
+  document.getElementById('ts-out-sam').innerText = '$' + sam.toLocaleString();
+  document.getElementById('ts-out-som').innerText = '$' + som.toLocaleString();
+}
+
+function calculateNPV() {
+  const capex = parseFloat(document.getElementById('npv-capex').value) || 0;
+  const r = (parseFloat(document.getElementById('npv-discount').value) || 0) / 100;
+  const y1 = parseFloat(document.getElementById('npv-y1').value) || 0;
+  const y2 = parseFloat(document.getElementById('npv-y2').value) || 0;
+  const y3 = parseFloat(document.getElementById('npv-y3').value) || 0;
+
+  const pv1 = y1 / Math.pow(1 + r, 1);
+  const pv2 = y2 / Math.pow(1 + r, 2);
+  const pv3 = y3 / Math.pow(1 + r, 3);
+  const npv = (pv1 + pv2 + pv3) - capex;
+
+  document.getElementById('npv-out-val').innerText = '$' + Math.round(npv).toLocaleString();
+
+  let accum = 0;
+  let payback = "3+ Years";
+  const cfs = [y1, y2, y3];
+  for (let i = 0; i < cfs.length; i++) {
+    accum += cfs[i];
+    if (accum >= capex) {
+      const prevAccum = accum - cfs[i];
+      const fraction = (capex - prevAccum) / cfs[i];
+      payback = (i + fraction).toFixed(1) + " Years";
+      break;
+    }
+  }
+  document.getElementById('npv-out-payback').innerText = payback;
+
+  const statusEl = document.getElementById('npv-out-status');
+  if (npv > 0) {
+    statusEl.innerText = "VIABLE";
+    statusEl.style.color = "var(--green)";
+  } else {
+    statusEl.innerText = "NON-VIABLE";
+    statusEl.style.color = "var(--red)";
+  }
+}
+
+function calculateDTC() {
+  const msrp = parseFloat(document.getElementById('dtc-msrp').value) || 0;
+  const marginPct = (parseFloat(document.getElementById('dtc-margin').value) || 0) / 100;
+  const logistics = parseFloat(document.getElementById('dtc-logistics').value) || 0;
+
+  const cogsLimit = msrp * (1 - marginPct);
+  const maxBom = cogsLimit - logistics;
+
+  document.getElementById('dtc-out-cogs').innerText = '$' + cogsLimit.toFixed(2);
+  document.getElementById('dtc-out-bom').innerText = '$' + (maxBom > 0 ? maxBom.toFixed(2) : '0.00');
+}
+
+function calculateTechRisk() {
+  const trl = parseFloat(document.getElementById('tr-trl').value) || 1;
+  const custom = parseFloat(document.getElementById('tr-custom').value) || 1;
+  const mfg = parseFloat(document.getElementById('tr-mfg').value) || 1;
+
+  const trlRisk = 6 - Math.min(Math.max(trl, 1), 5);
+  const customRisk = Math.min(Math.max(custom, 1), 5);
+  const mfgRisk = Math.min(Math.max(mfg, 1), 5);
+
+  const avg = (trlRisk + customRisk + mfgRisk) / 3;
+  document.getElementById('tr-out-score').innerText = avg.toFixed(2) + ' / 5.0';
+
+  const statusEl = document.getElementById('tr-out-status');
+  if (avg < 2.5) {
+    statusEl.innerText = "LOW RISK";
+    statusEl.style.color = "var(--green)";
+  } else if (avg < 3.8) {
+    statusEl.innerText = "MEDIUM RISK";
+    statusEl.style.color = "var(--amber)";
+  } else {
+    statusEl.innerText = "HIGH RISK";
+    statusEl.style.color = "var(--red)";
+  }
+}
+
+function calculateStageGate() {
+  const g1 = parseInt(document.getElementById('sg-1').value);
+  const g2 = parseInt(document.getElementById('sg-2').value);
+  const g3 = parseInt(document.getElementById('sg-3').value);
+  const g4 = parseInt(document.getElementById('sg-4').value);
+
+  const score = g1 + g2 + g3 + g4;
+  document.getElementById('sg-out-score').innerText = score + ' / 4';
+
+  const statusEl = document.getElementById('sg-out-status');
+  if (score === 4) {
+    statusEl.innerText = "APPROVED FOR MP";
+    statusEl.style.color = "var(--green)";
+  } else {
+    statusEl.innerText = "GATE BLOCKED (" + (4 - score) + " OPEN)";
+    statusEl.style.color = "var(--red)";
+  }
+}
+
+function calculateBuildYields() {
+  const total = parseFloat(document.getElementById('by-total').value) || 0;
+  const failed = parseFloat(document.getElementById('by-failed').value) || 0;
+
+  if (total <= 0) return;
+  const yieldPct = ((total - failed) / total) * 100;
+  document.getElementById('by-out-yield').innerText = yieldPct.toFixed(1) + '%';
+
+  const statusEl = document.getElementById('by-out-status');
+  if (yieldPct >= 95) {
+    statusEl.innerText = "EXCELLENT";
+    statusEl.style.color = "var(--green)";
+  } else if (yieldPct >= 88) {
+    statusEl.innerText = "ACCEPTABLE";
+    statusEl.style.color = "var(--amber)";
+  } else {
+    statusEl.innerText = "CRITICAL YIELD LOSS";
+    statusEl.style.color = "var(--red)";
+  }
+}
+
+function calculateECO() {
+  const hrs = parseFloat(document.getElementById('eco-hrs').value) || 0;
+  const rate = parseFloat(document.getElementById('eco-rate').value) || 0;
+  const scrap = parseFloat(document.getElementById('eco-scrap').value) || 0;
+  const tooling = parseFloat(document.getElementById('eco-tooling').value) || 0;
+
+  const nre = hrs * rate;
+  const total = nre + scrap + tooling;
+
+  document.getElementById('eco-out-nre').innerText = '$' + nre.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  document.getElementById('eco-out-total').innerText = '$' + total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+
+function calculateLandedCost() {
+  const unit = parseFloat(document.getElementById('tlc-unit').value) || 0;
+  const freight = parseFloat(document.getElementById('tlc-freight').value) || 0;
+  const tariffRate = (parseFloat(document.getElementById('tlc-tariff').value) || 0) / 100;
+  const handling = parseFloat(document.getElementById('tlc-handling').value) || 0;
+
+  const tariffDuty = unit * tariffRate;
+  const totalLanded = unit + freight + tariffDuty + handling;
+  const burden = unit > 0 ? ((totalLanded - unit) / unit) * 100 : 0;
+
+  document.getElementById('tlc-out-tariff').innerText = '$' + tariffDuty.toFixed(2);
+  document.getElementById('tlc-out-total').innerText = '$' + totalLanded.toFixed(2);
+  document.getElementById('tlc-out-burden').innerText = burden.toFixed(1) + '%';
+}
+
+function calculateCustomPartBreakdown() {
+  const baseUnit = parseFloat(document.getElementById('cp-base-unit').value) || 0;
+  const setup = parseFloat(document.getElementById('cp-setup').value) || 0;
+  const tooling = parseFloat(document.getElementById('cp-tooling').value) || 0;
+  const qty = parseFloat(document.getElementById('cp-qty').value) || 1;
+  const matShare = parseFloat(document.getElementById('cp-mat-share').value) || 0;
+
+  const setupPerUnit = setup / qty;
+  const toolingPerUnit = tooling / qty;
+  const effectiveUnit = baseUnit + setupPerUnit + toolingPerUnit;
+
+  document.getElementById('out-qty-label').innerText = qty;
+  document.getElementById('out-effective-unit').innerText = '$' + effectiveUnit.toFixed(2);
+  document.getElementById('out-setup-unit').innerText = '$' + setupPerUnit.toFixed(2) + ' / unit';
+  document.getElementById('out-tooling-unit').innerText = '$' + toolingPerUnit.toFixed(2) + ' / unit';
+
+  const riskList = document.getElementById('risk-flags-list');
+  riskList.innerHTML = '';
+
+  let flags = [];
+  if (qty < 100) {
+    const overheadBurdenPct = ((setupPerUnit + toolingPerUnit) / effectiveUnit * 100).toFixed(0);
+    flags.push(`<strong>Small Batch Setup Penalty:</strong> Low batch run (${qty} units) causes setup ($${setup}) and tooling ($${tooling}) amortization to consume <strong>${overheadBurdenPct}%</strong> ($${(setupPerUnit + toolingPerUnit).toFixed(2)}) of the total effective unit price.`);
+  }
+  if (matShare > 30) {
+    flags.push(`<strong>Material Price Volatility Risk:</strong> Raw substrate represents <strong>${matShare}%</strong> of base manufacturing cost. A minor commodity market shift will noticeably impact unit economics.`);
+  }
+  if (tooling > 2000) {
+    flags.push(`<strong>Tooling Amortization Gate:</strong> High front-end fixture/NRE investment ($${tooling.toLocaleString()}) requires volume commitment verification prior to purchase order release.`);
+  }
+
+  if (flags.length === 0) {
+    flags.push(`<span style="color:var(--green)">✓ Balanced cost profile. Amortization and material metrics sit within safe commercial parameters.</span>`);
+  }
+
+  flags.forEach(flag => {
+    const li = document.createElement('li');
+    li.innerHTML = flag;
+    riskList.appendChild(li);
+  });
+}
+
+function calculateShouldCost() {
+  const bom = parseFloat(document.getElementById('sc-bom').value) || 0;
+  const hours = parseFloat(document.getElementById('sc-hours').value) || 0;
+  const rate = parseFloat(document.getElementById('sc-rate').value) || 0;
+  const ohPct = (parseFloat(document.getElementById('sc-oh').value) || 0) / 100;
+  const marginPct = (parseFloat(document.getElementById('sc-margin').value) || 0) / 100;
+
+  const laborCost = hours * rate;
+  const primeCost = bom + laborCost;
+  const totalCost = primeCost * (1 + ohPct);
+  const fairPrice = totalCost / (1 - marginPct);
+
+  document.getElementById('sc-out-labor').innerText = '$' + laborCost.toFixed(2);
+  document.getElementById('sc-out-subtotal').innerText = '$' + totalCost.toFixed(2);
+  document.getElementById('sc-out-total').innerText = '$' + fairPrice.toFixed(2);
+}
+
+function calculateLeadTime() {
+  const admin = parseFloat(document.getElementById('lt-admin').value) || 0;
+  const mat = parseFloat(document.getElementById('lt-mat').value) || 0;
+  const mfg = parseFloat(document.getElementById('lt-mfg').value) || 0;
+  const transit = parseFloat(document.getElementById('lt-transit').value) || 0;
+  const bufPct = (parseFloat(document.getElementById('lt-buf').value) || 0) / 100;
+
+  const baseLT = admin + mat + mfg + transit;
+  const buffer = baseLT * bufPct;
+  const totalLT = baseLT + buffer;
+
+  document.getElementById('lt-out-base').innerText = Math.round(baseLT) + ' Days';
+  document.getElementById('lt-out-buffer').innerText = Math.round(buffer) + ' Days';
+  document.getElementById('lt-out-total').innerText = Math.round(totalLT) + ' Days';
+}
+
+function calculateEVM() {
+  const bac = parseFloat(document.getElementById('bac').value) || 0;
+  const pv = parseFloat(document.getElementById('pv').value) || 0;
+  const ev = parseFloat(document.getElementById('ev').value) || 0;
+  const ac = parseFloat(document.getElementById('ac').value) || 0;
+
+  const cpi = ac > 0 ? (ev / ac) : 1;
+  const spi = pv > 0 ? (ev / pv) : 1;
+  const cv = ev - ac;
+  const sv = ev - pv;
+  const eac = cpi > 0 ? (bac / cpi) : bac;
+
+  document.getElementById('val-cpi').innerText = cpi.toFixed(2);
+  document.getElementById('val-spi').innerText = spi.toFixed(2);
+
+  const cvEl = document.getElementById('evm-cv');
+  cvEl.innerText = (cv >= 0 ? '+$' : '-$') + Math.abs(Math.round(cv)).toLocaleString();
+  cvEl.style.color = cv >= 0 ? 'var(--green)' : 'var(--red)';
+
+  const svEl = document.getElementById('evm-sv');
+  svEl.innerText = (sv >= 0 ? '+$' : '-$') + Math.abs(Math.round(sv)).toLocaleString();
+  svEl.style.color = sv >= 0 ? 'var(--green)' : 'var(--amber)';
+
+  document.getElementById('evm-eac').innerText = '$' + Math.round(eac).toLocaleString();
+
+  document.getElementById('dot-cpi').style.background = cpi >= 1.0 ? 'var(--green)' : 'var(--red)';
+  document.getElementById('dot-spi').style.background = spi >= 1.0 ? 'var(--green)' : 'var(--amber)';
+
+  const overallEl = document.getElementById('val-overall');
+  const dotOverall = document.getElementById('dot-overall');
+  if (cpi >= 1.0 && spi >= 1.0) {
+    overallEl.innerText = "HEALTHY";
+    dotOverall.style.background = "var(--green)";
+  } else if (cpi >= 0.9 && spi >= 0.9) {
+    overallEl.innerText = "WARNING";
+    dotOverall.style.background = "var(--amber)";
+  } else {
+    overallEl.innerText = "CRITICAL";
+    dotOverall.style.background = "var(--red)";
+  }
+}
+
+function calculateEOQ() {
+  const D = parseFloat(document.getElementById('eoq-demand').value) || 0;
+  const S = parseFloat(document.getElementById('eoq-setup').value) || 0;
+  const H = parseFloat(document.getElementById('eoq-holding').value) || 0;
+  const L = parseFloat(document.getElementById('eoq-lead').value) || 0;
+  const d = parseFloat(document.getElementById('eoq-daily').value) || 0;
+  const ssDays = parseFloat(document.getElementById('eoq-ss-days').value) || 0;
+
+  const eoq = H > 0 ? Math.sqrt((2 * D * S) / H) : 0;
+  const ss = d * ssDays;
+  const rop = (d * L) + ss;
+
+  document.getElementById('eoq-out-qty').innerText = Math.round(eoq).toLocaleString() + ' Units';
+  document.getElementById('eoq-out-ss').innerText = Math.round(ss).toLocaleString() + ' Units';
+  document.getElementById('eoq-out-rop').innerText = Math.round(rop).toLocaleString() + ' Units';
+}
+
+function calculateFPY() {
+  const s1 = (parseFloat(document.getElementById('fpy-s1').value) || 0) / 100;
+  const s2 = (parseFloat(document.getElementById('fpy-s2').value) || 0) / 100;
+  const s3 = (parseFloat(document.getElementById('fpy-s3').value) || 0) / 100;
+
+  const rfpy = s1 * s2 * s3;
+  const ppm = (1 - rfpy) * 1000000;
+
+  document.getElementById('fpy-out-rfpy').innerText = (rfpy * 100).toFixed(2) + '%';
+  document.getElementById('fpy-out-ppm').innerText = Math.round(ppm).toLocaleString() + ' PPM';
+}
+
+function calculateRMA() {
+  const units = parseFloat(document.getElementById('rma-units').value) || 0;
+  const rate = (parseFloat(document.getElementById('rma-rate').value) || 0) / 100;
+  const cost = parseFloat(document.getElementById('rma-cost').value) || 0;
+
+  const returnedUnits = units * rate;
+  const totalReserve = returnedUnits * cost;
+
+  document.getElementById('rma-out-units').innerText = Math.round(returnedUnits).toLocaleString() + ' Units';
+  document.getElementById('rma-out-reserve').innerText = '$' + Math.round(totalReserve).toLocaleString();
+}
+
+function calculateFFF() {
+  const f1 = parseInt(document.getElementById('fff-1').value);
+  const f2 = parseInt(document.getElementById('fff-2').value);
+  const f3 = parseInt(document.getElementById('fff-3').value);
+
+  const total = f1 + f2 + f3;
+  const statusEl = document.getElementById('fff-out-status');
+  const burdenEl = document.getElementById('fff-out-burden');
+
+  if (total === 3) {
+    statusEl.innerText = "DROP-IN REPLACEMENT";
+    statusEl.style.color = "var(--green)";
+    burdenEl.innerText = "LOW (Minor Testing)";
+  } else if (total === 2) {
+    statusEl.innerText = "MINOR REDESIGN REQ";
+    statusEl.style.color = "var(--amber)";
+    burdenEl.innerText = "MEDIUM (ECO & Re-spin)";
+  } else {
+    statusEl.innerText = "INCOMPATIBLE";
+    statusEl.style.color = "var(--red)";
+    burdenEl.innerText = "HIGH (Major Re-architecture)";
+  }
+}
+
+function calculateLTB() {
+  const years = parseFloat(document.getElementById('ltb-years').value) || 0;
+  const demand = parseFloat(document.getElementById('ltb-demand').value) || 0;
+  const bufPct = (parseFloat(document.getElementById('ltb-buffer').value) || 0) / 100;
+  const unitCost = parseFloat(document.getElementById('ltb-unitcost').value) || 0;
+
+  const baseQty = years * demand;
+  const totalQty = baseQty * (1 + bufPct);
+  const totalCost = totalQty * unitCost;
+
+  document.getElementById('ltb-out-qty').innerText = Math.round(totalQty).toLocaleString() + ' Units';
+  document.getElementById('ltb-out-cost').innerText = '$' + Math.round(totalCost).toLocaleString();
+}
+
+// --- EXPORT FUNCTIONALITY ---
+function exportCSV() {
+  const rows = [
+    ["Metric / Tool", "Parameter", "Value"],
+    ["TAM/SAM", "TAM Output", document.getElementById('ts-out-tam').innerText],
+    ["TAM/SAM", "SAM Output", document.getElementById('ts-out-sam').innerText],
+    ["TAM/SAM", "SOM Output", document.getElementById('ts-out-som').innerText],
+    ["NPV/IRR", "NPV Output", document.getElementById('npv-out-val').innerText],
+    ["NPV/IRR", "Payback Period", document.getElementById('npv-out-payback').innerText],
+    ["Target Costing", "Max Manufactured BOM Cost", document.getElementById('dtc-out-bom').innerText],
+    ["Landed Cost", "Total Unit Landed Cost", document.getElementById('tlc-out-total').innerText],
+    ["Custom Part", "Effective Unit Price", document.getElementById('out-effective-unit').innerText],
+    ["EVM", "CPI", document.getElementById('val-cpi').innerText],
+    ["EVM", "SPI", document.getElementById('val-spi').innerText],
+    ["EOQ", "Reorder Point (ROP)", document.getElementById('eoq-out-rop').innerText]
+  ];
+
+  let csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement("a");
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", "hardware_operations_analytics.csv");
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+function exportPDF() {
+  const element = document.getElementById('report-container');
+  const opt = {
+    margin:       0.3,
+    filename:     'Hardware_Operations_Report.pdf',
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { scale: 2 },
+    jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
+  };
+  html2pdf().set(opt).from(element).save();
+}
+
+window.onload = function() {
+  calculateTAM();
+  calculateNPV();
+  calculateDTC();
+  calculateTechRisk();
+  calculateStageGate();
+  calculateBuildYields();
+  calculateECO();
+  calculateLandedCost();
+  calculateCustomPartBreakdown();
+  calculateShouldCost();
+  calculateLeadTime();
+  calculateEVM();
+  calculateEOQ();
+  calculateFPY();
+  calculateRMA();
+  calculateFFF();
+  calculateLTB();
+};
+</script>
+</body>
+</html>
