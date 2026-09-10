@@ -360,27 +360,46 @@
 
           <div class="field">
             <label>Base Unit Production Cost ($/unit)</label>
-            <div class="prefix-wrap"><span>$</span><input type="number" id="cp-base-unit" value="35.00" oninput="calculateCustomPartBreakdown()"></div>
+            <div class="prefix-wrap"><span>$</span><input type="number" id="cp-base-unit" value="35.00" min="0" oninput="calculateCustomPartBreakdown()"></div>
           </div>
 
           <div class="field">
             <label>One-Time Setup Fee ($)</label>
-            <div class="prefix-wrap"><span>$</span><input type="number" id="cp-setup" value="600" oninput="calculateCustomPartBreakdown()"></div>
+            <div class="prefix-wrap"><span>$</span><input type="number" id="cp-setup" value="600" min="0" oninput="calculateCustomPartBreakdown()"></div>
           </div>
 
           <div class="field">
             <label>Fixture / Tooling NRE ($)</label>
-            <div class="prefix-wrap"><span>$</span><input type="number" id="cp-tooling" value="2500" oninput="calculateCustomPartBreakdown()"></div>
+            <div class="prefix-wrap"><span>$</span><input type="number" id="cp-tooling" value="2500" min="0" oninput="calculateCustomPartBreakdown()"></div>
           </div>
 
           <div class="field">
             <label>Current Quote Order Quantity (Units)</label>
-            <input type="number" id="cp-qty" value="50" oninput="calculateCustomPartBreakdown()">
+            <input type="number" id="cp-qty" value="50" min="1" oninput="calculateCustomPartBreakdown()">
           </div>
 
           <div class="field">
             <label>Material Cost Share of Unit Price (%)</label>
-            <input type="number" id="cp-mat-share" value="35" oninput="calculateCustomPartBreakdown()">
+            <input type="number" id="cp-mat-share" value="35" min="0" max="100" oninput="calculateCustomPartBreakdown()">
+          </div>
+
+          <div class="field">
+            <label>Tooling Ownership</label>
+            <select id="cp-tooling-owner" onchange="calculateCustomPartBreakdown()">
+              <option value="unknown">Unknown / Not Specified</option>
+              <option value="buyer">Buyer Owns Tooling</option>
+              <option value="supplier">Supplier Owns Tooling</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Expected Future Order Volume</label>
+            <select id="cp-future-volume" onchange="calculateCustomPartBreakdown()">
+              <option value="none">None Expected / One-Time Build</option>
+              <option value="near">Yes, Within 90 Days</option>
+              <option value="mid">Yes, Within 6 Months</option>
+              <option value="unknown">Unknown</option>
+            </select>
           </div>
 
           <button class="btn-action" onclick="calculateCustomPartBreakdown()">Run Cost &amp; Risk Analysis</button>
@@ -406,6 +425,11 @@
 
           <h2 style="color: var(--amber); margin-top: 15px;">⚠️ Flagged Risk Insights</h2>
           <ul id="risk-flags-list" class="risk-list"></ul>
+
+          <hr class="divider">
+
+          <h2 style="color: var(--amber); margin-top: 15px;">❓ Questions to Ask the Supplier</h2>
+          <ul id="supplier-questions-list" class="risk-list"></ul>
         </div>
       </div>
     </div>
@@ -438,18 +462,52 @@
       <p style="color:var(--text-mid); margin-bottom:20px;">Model operational buffers and transit risks for critical component sourcing.</p>
       <div class="grid">
         <div class="panel">
-          <h2>Lead Time Breakdown (Days)</h2>
-          <div class="field"><label>PO Admin &amp; Order Processing Time</label><input type="number" id="lt-admin" value="5" oninput="calculateLeadTime()"></div>
-          <div class="field"><label>Raw Material Procurement Lead Time</label><input type="number" id="lt-mat" value="30" oninput="calculateLeadTime()"></div>
-          <div class="field"><label>Manufacturing &amp; Assembly Cycle</label><input type="number" id="lt-mfg" value="25" oninput="calculateLeadTime()"></div>
-          <div class="field"><label>Overseas Transit &amp; Customs Clearance</label><input type="number" id="lt-transit" value="14" oninput="calculateLeadTime()"></div>
-          <div class="field"><label>Buffer Risk Adjustment (%)</label><input type="number" id="lt-buf" value="15" oninput="calculateLeadTime()"></div>
+          <h2>Supplier's Quote &amp; Your Requirement</h2>
+
+          <div class="field"><label>Supplier's Quoted Lead Time (Days, as stated in the quote)</label><input type="number" id="lt-supplier-quoted" value="58" min="0" oninput="calculateLeadTime()"></div>
+          <div class="field">
+            <label>When Does the Supplier's Lead-Time Clock Start?</label>
+            <select id="lt-clock-start" onchange="calculateLeadTime()">
+              <option value="po">PO Receipt</option>
+              <option value="drawing">Drawing Approval</option>
+              <option value="material">Material Availability</option>
+              <option value="tooling">Tooling Complete</option>
+            </select>
+          </div>
+          <div class="field"><label>Your Required Schedule (Days Until Parts Needed)</label><input type="number" id="lt-required-days" value="60" min="0" oninput="calculateLeadTime()"></div>
+
+          <hr class="divider">
+
+          <h2 style="margin-top:15px;">Optional: Estimated Breakdown (Days)</h2>
+          <p style="color:var(--text-mid); font-size:0.85em; margin-bottom:10px;">If you know or can estimate what's inside the supplier's number, fill this in as a cross-check. Leave at 0 if unknown.</p>
+          <div class="field"><label>PO Admin &amp; Order Processing Time</label><input type="number" id="lt-admin" value="5" min="0" oninput="calculateLeadTime()"></div>
+          <div class="field"><label>Raw Material Procurement Lead Time</label><input type="number" id="lt-mat" value="30" min="0" oninput="calculateLeadTime()"></div>
+          <div class="field"><label>Manufacturing &amp; Assembly Cycle</label><input type="number" id="lt-mfg" value="25" min="0" oninput="calculateLeadTime()"></div>
+          <div class="field"><label>Overseas Transit &amp; Customs Clearance</label><input type="number" id="lt-transit" value="14" min="0" oninput="calculateLeadTime()"></div>
+          <div class="field"><label>Buffer Risk Adjustment (%)</label><input type="number" id="lt-buf" value="15" min="0" oninput="calculateLeadTime()"></div>
         </div>
         <div class="panel">
-          <h2>Total Schedule Commitment</h2>
-          <div class="readout"><div class="rlabel">Base Lead Time</div><div class="rvalue" id="lt-out-base">74 Days</div></div>
+          <h2>Schedule Comparison</h2>
+          <div class="readout"><div class="rlabel">Supplier's Quoted Lead Time</div><div class="rvalue" id="lt-out-quoted" style="color:var(--amber);">58 Days</div></div>
+          <div class="readout"><div class="rlabel">Your Required Schedule</div><div class="rvalue" id="lt-out-required">60 Days</div></div>
+
+          <hr class="divider">
+
+          <h2 style="color: var(--amber); margin-top: 15px;">⚠️ Schedule Assessment</h2>
+          <div class="readout"><div class="rlabel">Schedule Gap (Your Required Days − Supplier's Quoted Days)</div><div class="rvalue" id="lt-out-gap">—</div></div>
+          <ul id="lt-schedule-flags" class="risk-list"></ul>
+
+          <hr class="divider">
+
+          <h2 style="margin-top: 15px;">Your Estimated Breakdown (Cross-Check)</h2>
+          <div class="readout"><div class="rlabel">Base Lead Time (Sum of Components)</div><div class="rvalue" id="lt-out-base">74 Days</div></div>
           <div class="readout"><div class="rlabel">Buffer Allocation</div><div class="rvalue" id="lt-out-buffer">11 Days</div></div>
-          <div class="readout"><div class="rlabel">Committed Total Lead Time</div><div class="rvalue" id="lt-out-total" style="color:var(--amber);">85 Days</div></div>
+          <div class="readout"><div class="rlabel">Your Estimated Total (Base + Buffer)</div><div class="rvalue" id="lt-out-total">85 Days</div></div>
+
+          <hr class="divider">
+
+          <h2 style="color: var(--amber); margin-top: 15px;">❓ Questions to Ask the Supplier</h2>
+          <ul id="lt-schedule-questions" class="risk-list"></ul>
         </div>
       </div>
     </div>
@@ -779,11 +837,13 @@ function calculateLandedCost() {
 }
 
 function calculateCustomPartBreakdown() {
-  const baseUnit = parseFloat(document.getElementById('cp-base-unit').value) || 0;
-  const setup = parseFloat(document.getElementById('cp-setup').value) || 0;
-  const tooling = parseFloat(document.getElementById('cp-tooling').value) || 0;
-  const qty = parseFloat(document.getElementById('cp-qty').value) || 1;
-  const matShare = parseFloat(document.getElementById('cp-mat-share').value) || 0;
+  const baseUnit = Math.max(parseFloat(document.getElementById('cp-base-unit').value) || 0, 0);
+  const setup = Math.max(parseFloat(document.getElementById('cp-setup').value) || 0, 0);
+  const tooling = Math.max(parseFloat(document.getElementById('cp-tooling').value) || 0, 0);
+  const qty = Math.max(parseFloat(document.getElementById('cp-qty').value) || 1, 1);
+  const matShare = Math.max(parseFloat(document.getElementById('cp-mat-share').value) || 0, 0);
+  const toolingOwner = (document.getElementById('cp-tooling-owner') || {}).value || 'unknown';
+  const futureVolume = (document.getElementById('cp-future-volume') || {}).value || 'unknown';
 
   const setupPerUnit = setup / qty;
   const toolingPerUnit = tooling / qty;
@@ -795,22 +855,50 @@ function calculateCustomPartBreakdown() {
   document.getElementById('out-tooling-unit').innerText = '$' + toolingPerUnit.toFixed(2) + ' / unit';
 
   const riskList = document.getElementById('risk-flags-list');
+  const questionsList = document.getElementById('supplier-questions-list');
   riskList.innerHTML = '';
+  if (questionsList) questionsList.innerHTML = '';
 
   let flags = [];
+  let questions = [];
+
+  // --- Small batch setup penalty ---
   if (qty < 100) {
-    const overheadBurdenPct = ((setupPerUnit + toolingPerUnit) / effectiveUnit * 100).toFixed(0);
-    flags.push(`<strong>Small Batch Setup Penalty:</strong> Low batch run (${qty} units) causes setup ($${setup}) and tooling ($${tooling}) amortization to consume <strong>${overheadBurdenPct}%</strong> ($${(setupPerUnit + toolingPerUnit).toFixed(2)}) of the total effective unit price.`);
+    const overheadDollars = setupPerUnit + toolingPerUnit;
+    const overheadBurdenPct = effectiveUnit > 0 ? ((overheadDollars / effectiveUnit) * 100).toFixed(0) : '0';
+    flags.push(`<strong>Small Batch Setup Penalty:</strong> Low batch run (${qty} units) causes setup ($${setup}) and tooling ($${tooling}) amortization to consume <strong>${overheadBurdenPct}%</strong> ($${overheadDollars.toFixed(2)}) of the total effective unit price.`);
+    questions.push(`Confirm exactly what's included in the $${setup.toLocaleString()} setup charge, and whether it's a one-time fee or applies to every production run.`);
+    questions.push(`Request pricing at higher quantity breaks (e.g., 2x, 5x, 10x this order) to see how much the setup/tooling burden actually drops with volume.`);
   }
+
+  // --- Material volatility ---
   if (matShare > 30) {
     flags.push(`<strong>Material Price Volatility Risk:</strong> Raw substrate represents <strong>${matShare}%</strong> of base manufacturing cost. A minor commodity market shift will noticeably impact unit economics.`);
+    questions.push(`Ask whether this is a fixed material price or indexed to spot/commodity pricing, and how price adjustments would be handled over the life of the PO.`);
   }
+
+  // --- Tooling: context-aware instead of a flat dollar threshold ---
   if (tooling > 2000) {
-    flags.push(`<strong>Tooling Amortization Gate:</strong> High front-end fixture/NRE investment ($${tooling.toLocaleString()}) requires volume commitment verification prior to purchase order release.`);
+    const wellJustified = (toolingOwner === 'buyer') && (futureVolume === 'near' || futureVolume === 'mid');
+    if (wellJustified) {
+      flags.push(`<strong>Tooling Investment — Appears Justified:</strong> $${tooling.toLocaleString()} in tooling looks reasonable given buyer ownership and expected follow-on volume. Verify the details below before treating it as settled.`);
+      questions.push(`Confirm the documented tool-life estimate and who is responsible for maintenance, storage, and eventual replacement.`);
+    } else {
+      flags.push(`<strong>Tooling Amortization Gate:</strong> High front-end fixture/NRE investment ($${tooling.toLocaleString()}) on ${toolingOwner === 'supplier' ? 'supplier-owned' : 'ownership-unclear'} tooling with ${futureVolume === 'none' ? 'no expected follow-on volume' : 'unclear future volume'} — this cost may not be recoverable.`);
+      questions.push(`Ask who owns the tooling, whether it's transferable if you switch suppliers later, and whether the $${tooling.toLocaleString()} NRE is refundable or creditable against future orders.`);
+    }
+  }
+
+  // --- Tooling ownership unspecified, regardless of amount ---
+  if (tooling > 0 && toolingOwner === 'unknown') {
+    questions.push(`Get tooling ownership in writing — most quotes don't state this explicitly, and it materially changes your exposure if you don't reorder.`);
   }
 
   if (flags.length === 0) {
     flags.push(`<span style="color:var(--green)">✓ Balanced cost profile. Amortization and material metrics sit within safe commercial parameters.</span>`);
+  }
+  if (questions.length === 0) {
+    questions.push(`No high-priority questions flagged at these inputs — standard quote diligence still applies (lead-time basis, inspection/FAI inclusion, and revision/spec match).`);
   }
 
   flags.forEach(flag => {
@@ -818,6 +906,14 @@ function calculateCustomPartBreakdown() {
     li.innerHTML = flag;
     riskList.appendChild(li);
   });
+
+  if (questionsList) {
+    questions.forEach(q => {
+      const li = document.createElement('li');
+      li.innerHTML = q;
+      questionsList.appendChild(li);
+    });
+  }
 }
 
 function calculateShouldCost() {
@@ -838,19 +934,115 @@ function calculateShouldCost() {
 }
 
 function calculateLeadTime() {
-  const admin = parseFloat(document.getElementById('lt-admin').value) || 0;
-  const mat = parseFloat(document.getElementById('lt-mat').value) || 0;
-  const mfg = parseFloat(document.getElementById('lt-mfg').value) || 0;
-  const transit = parseFloat(document.getElementById('lt-transit').value) || 0;
-  const bufPct = (parseFloat(document.getElementById('lt-buf').value) || 0) / 100;
+  const admin = Math.max(parseFloat(document.getElementById('lt-admin').value) || 0, 0);
+  const mat = Math.max(parseFloat(document.getElementById('lt-mat').value) || 0, 0);
+  const mfg = Math.max(parseFloat(document.getElementById('lt-mfg').value) || 0, 0);
+  const transit = Math.max(parseFloat(document.getElementById('lt-transit').value) || 0, 0);
+  const bufPct = Math.max(parseFloat(document.getElementById('lt-buf').value) || 0, 0) / 100;
+  const requiredDays = Math.max(parseFloat(document.getElementById('lt-required-days').value) || 0, 0);
+  const supplierQuoted = Math.max(parseFloat(document.getElementById('lt-supplier-quoted').value) || 0, 0);
+  const clockStart = (document.getElementById('lt-clock-start') || {}).value || 'po';
 
   const baseLT = admin + mat + mfg + transit;
   const buffer = baseLT * bufPct;
-  const totalLT = baseLT + buffer;
+  const estimatedTotal = baseLT + buffer;
 
+  // Primary comparison uses the ACTUAL number the supplier quoted you,
+  // not your own component estimate — that's the real commitment on paper.
+  const gap = requiredDays - supplierQuoted;
+
+  document.getElementById('lt-out-quoted').innerText = Math.round(supplierQuoted) + ' Days';
+  document.getElementById('lt-out-required').innerText = Math.round(requiredDays) + ' Days';
   document.getElementById('lt-out-base').innerText = Math.round(baseLT) + ' Days';
   document.getElementById('lt-out-buffer').innerText = Math.round(buffer) + ' Days';
-  document.getElementById('lt-out-total').innerText = Math.round(totalLT) + ' Days';
+  document.getElementById('lt-out-total').innerText = Math.round(estimatedTotal) + ' Days';
+
+  const gapEl = document.getElementById('lt-out-gap');
+  const flagsList = document.getElementById('lt-schedule-flags');
+  const questionsList = document.getElementById('lt-schedule-questions');
+  if (flagsList) flagsList.innerHTML = '';
+  if (questionsList) questionsList.innerHTML = '';
+
+  const clockLabels = {
+    po: 'PO Receipt',
+    drawing: 'Drawing Approval',
+    material: 'Material Availability',
+    tooling: 'Tooling Complete'
+  };
+  const clockLabel = clockLabels[clockStart] || 'PO Receipt';
+
+  let flags = [];
+  let questions = [];
+
+  if (gapEl) {
+    const roundedGap = Math.round(gap);
+    if (gap < 0) {
+      gapEl.innerText = roundedGap + ' Days SHORT';
+      gapEl.style.color = 'var(--red, #e05252)';
+    } else if (gap < 10) {
+      gapEl.innerText = '+' + roundedGap + ' Days (Tight)';
+      gapEl.style.color = 'var(--amber)';
+    } else {
+      gapEl.innerText = '+' + roundedGap + ' Days';
+      gapEl.style.color = 'var(--green, #4caf6b)';
+    }
+  }
+
+  if (gap < 0) {
+    flags.push(`<strong>Schedule Gap:</strong> The supplier's quoted lead time (${Math.round(supplierQuoted)} days) exceeds your available schedule (${Math.round(requiredDays)} days) by <strong>${Math.round(Math.abs(gap))} days</strong>. As quoted, this build will miss your required date.`);
+    questions.push(`Request a recovery schedule before PO release — ask what specific steps (overtime, expedited freight, split shipments, parallel material/tooling procurement) could close the ${Math.round(Math.abs(gap))}-day gap.`);
+  } else if (gap < 10) {
+    flags.push(`<strong>Tight Schedule Margin:</strong> Only <strong>${Math.round(gap)} days</strong> of buffer exist between the supplier's quoted lead time and your required date. Any slippage will likely miss the date.`);
+    questions.push(`Ask what happens to the schedule if material or tooling is delayed by 1-2 weeks, and whether there's a contingency plan.`);
+  } else {
+    flags.push(`<span style="color:var(--green, #4caf6b)">✓ Schedule fits with ${Math.round(gap)} days of margin beyond the supplier's quoted lead time.</span>`);
+  }
+
+  // Cross-check: does the buyer's own component estimate roughly agree with
+  // what the supplier quoted? A big mismatch is itself worth asking about.
+  if (baseLT > 0 && supplierQuoted > 0) {
+    const diff = supplierQuoted - estimatedTotal;
+    const pctDiff = Math.abs(diff) / supplierQuoted * 100;
+    if (pctDiff > 20) {
+      if (diff > 0) {
+        flags.push(`<strong>Estimate Mismatch:</strong> Your own component estimate (${Math.round(estimatedTotal)} days) is meaningfully lower than the supplier's quoted ${Math.round(supplierQuoted)} days. The difference may be queue time, padding, or something not itemized.`);
+        questions.push(`Ask the supplier to itemize the ${Math.round(supplierQuoted)}-day quote — your own estimate for admin, material, manufacturing, and transit only adds up to about ${Math.round(estimatedTotal)} days.`);
+      } else {
+        flags.push(`<strong>Estimate Mismatch:</strong> Your own component estimate (${Math.round(estimatedTotal)} days) is meaningfully higher than the supplier's quoted ${Math.round(supplierQuoted)} days. Confirm the quote isn't optimistic or missing a step.`);
+        questions.push(`Confirm the ${Math.round(supplierQuoted)}-day quote actually includes material procurement, inspection/FAI, and packaging — it's shorter than a typical breakdown for this kind of build.`);
+      }
+    }
+  }
+
+  questions.push(`Confirm what specific event starts the lead-time clock — you've indicated <strong>${clockLabel}</strong> — and get that in writing rather than assuming.`);
+
+  if (clockStart === 'po') {
+    questions.push(`Ask whether material can be procured or reserved before PO release to compress the effective schedule.`);
+  } else if (clockStart === 'drawing') {
+    questions.push(`Ask if long-lead material can be ordered before final drawing approval, so material procurement and drawing review aren't fully serialized.`);
+  } else if (clockStart === 'material') {
+    questions.push(`Confirm current material availability/allocation status now, before committing to this date — material shortages are a common source of schedule slip.`);
+  } else if (clockStart === 'tooling') {
+    questions.push(`Confirm the tooling completion date is firm, and ask what contingency exists if tooling is delayed.`);
+  }
+
+  if (transit > 0) {
+    questions.push(`Confirm whether the ${Math.round(transit)}-day transit/customs estimate already accounts for likely delays at this time of year, or if it's a best-case number.`);
+  }
+
+  flags.forEach(flag => {
+    const li = document.createElement('li');
+    li.innerHTML = flag;
+    if (flagsList) flagsList.appendChild(li);
+  });
+
+  if (questionsList) {
+    questions.forEach(q => {
+      const li = document.createElement('li');
+      li.innerHTML = q;
+      questionsList.appendChild(li);
+    });
+  }
 }
 
 function calculateEVM() {
