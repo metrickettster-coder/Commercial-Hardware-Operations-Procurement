@@ -49,7 +49,8 @@
   .upload-zone:hover, .upload-zone.dragover { border-color: var(--amber); background-color: var(--panel-2); }
 
   /* Primary Lifecycle Stage Nav */
-  nav.pillar-nav{ display:grid; grid-template-columns: repeat(6, 1fr); gap:8px; margin-bottom:16px; }
+  nav.pillar-nav{ display:grid; grid-template-columns: repeat(7, 1fr); gap:8px; margin-bottom:16px; }
+  @media(max-width: 1100px){ nav.pillar-nav{ grid-template-columns: repeat(4, 1fr); } }
   @media(max-width: 900px){ nav.pillar-nav{ grid-template-columns: repeat(3, 1fr); } }
   @media(max-width: 600px){ nav.pillar-nav{ grid-template-columns: repeat(2, 1fr); } }
 
@@ -190,6 +191,9 @@
     </div>
     <div class="pillar-btn" onclick="switchPillar('supplierrisk', this)">
       <span class="title">🛡️ 6. Supplier &amp; Risk Mgmt</span>
+    </div>
+    <div class="pillar-btn" onclick="switchPillar('quality', this)">
+      <span class="title">🎯 7. Quality &amp; Reliability</span>
     </div>
   </nav>
 
@@ -694,6 +698,8 @@
       <button class="sub-btn" onclick="switchTool('sourcing', 'custom-part-breakdown', this)">Custom Part Risk Review</button>
       <button class="sub-btn" onclick="switchTool('sourcing', 'shouldcost', this)">Bottom-Up Should-Cost</button>
       <button class="sub-btn" onclick="switchTool('sourcing', 'leadtime', this)">Procurement Lead Time</button>
+      <button class="sub-btn" onclick="switchTool('sourcing', 'makevsbuy', this)">Make-vs-Buy Analysis</button>
+      <button class="sub-btn" onclick="switchTool('sourcing', 'dutydrawback', this)">Duty Drawback / Tariff Impact</button>
     </div>
 
     <!-- Total Landed Cost Engine -->
@@ -951,6 +957,70 @@
         </div>
       </div>
     </div>
+
+    <!-- Make-vs-Buy Analysis -->
+    <div id="tool-makevsbuy" class="tool-view">
+      <h1>Make-vs-Buy Analysis</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Compare bringing a part in-house against buying it outside, including the breakeven volume where the two costs cross.</p>
+      <div class="grid">
+        <div class="panel">
+          <h2>Volume &amp; Cost Inputs</h2>
+          <div class="field"><label>Annual Volume Required (Units)</label><input type="number" id="mvb-volume" value="20000" min="0" oninput="calculateMakeVsBuy()"></div>
+          <div class="field"><label>Outside Purchase Price per Unit</label><div class="prefix-wrap"><span>$</span><input type="number" id="mvb-buyprice" value="18.50" oninput="calculateMakeVsBuy()"></div></div>
+          <div class="field"><label>In-House Variable Cost per Unit (Material + Labor)</label><div class="prefix-wrap"><span>$</span><input type="number" id="mvb-varcost" value="11.00" oninput="calculateMakeVsBuy()"></div></div>
+          <div class="field"><label>One-Time Tooling / Equipment Investment</label><div class="hint">Capex — amortized across the evaluation horizon below.</div><div class="prefix-wrap"><span>$</span><input type="number" id="mvb-fixedinv" value="450000" min="0" oninput="calculateMakeVsBuy()"></div></div>
+          <div class="field"><label>Additional In-House Fixed Overhead per Year</label><div class="prefix-wrap"><span>$</span><input type="number" id="mvb-fixedoh" value="80000" min="0" oninput="calculateMakeVsBuy()"></div></div>
+          <div class="field"><label>Evaluation Horizon (Years)</label><input type="number" id="mvb-years" value="4" min="1" step="0.5" oninput="calculateMakeVsBuy()"></div>
+        </div>
+        <div class="panel">
+          <h2>Make vs. Buy Outputs</h2>
+          <div class="readout"><div class="rlabel">Breakeven Annual Volume</div><div class="rvalue" id="mvb-out-breakeven" style="color:var(--amber);">—</div></div>
+          <div class="readout"><div class="rlabel">Total Buy Cost Over Horizon</div><div class="rvalue" id="mvb-out-buytotal">—</div></div>
+          <div class="readout"><div class="rlabel">Total Make Cost Over Horizon</div><div class="rvalue" id="mvb-out-maketotal">—</div></div>
+          <hr class="divider">
+          <div class="readout"><div class="rlabel">Net Savings (Make − Buy)</div><div class="rvalue" id="mvb-out-savings">—</div></div>
+          <div class="readout"><div class="rlabel">Recommendation</div><div class="rvalue" id="mvb-out-rec" style="font-size:16px;">—</div></div>
+        </div>
+      </div>
+      <div class="grid" style="margin-top:20px;">
+        <div class="panel">
+          <h2 style="color: var(--amber);">⚠️ Make-vs-Buy Flags</h2>
+          <ul id="mvb-risk-list" class="risk-list"></ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Duty Drawback / Tariff Impact -->
+    <div id="tool-dutydrawback" class="tool-view">
+      <h1>Duty Drawback / Tariff &amp; HTS Cost Impact</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Model landed-cost exposure to tariffs and how much of it is recoverable through a duty drawback program.</p>
+      <div class="grid">
+        <div class="panel">
+          <h2>Import &amp; Duty Inputs</h2>
+          <div class="field"><label>Unit Customs / FOB Value</label><div class="prefix-wrap"><span>$</span><input type="number" id="dd-value" value="24.00" oninput="calculateDutyDrawback()"></div></div>
+          <div class="field"><label>Applicable Duty / Tariff Rate (%)</label><input type="number" id="dd-rate" value="25" min="0" step="0.1" oninput="calculateDutyDrawback()"></div>
+          <div class="field"><label>Annual Import Volume (Units)</label><input type="number" id="dd-volume" value="50000" min="0" oninput="calculateDutyDrawback()"></div>
+          <div class="field"><label>% of Volume Eligible for Drawback</label><div class="hint">Re-exported unused, or incorporated into an exported finished good.</div><input type="number" id="dd-eligible-pct" value="30" min="0" max="100" oninput="calculateDutyDrawback()"></div>
+          <div class="field"><label>Drawback Recovery Rate (%)</label><div class="hint">Typically up to 99% for unused-merchandise drawback claims.</div><input type="number" id="dd-recovery-pct" value="99" min="0" max="100" oninput="calculateDutyDrawback()"></div>
+          <div class="field"><label>Tariff Change Scenario (± Percentage Points)</label><input type="number" id="dd-scenario" value="10" oninput="calculateDutyDrawback()"></div>
+        </div>
+        <div class="panel">
+          <h2>Duty &amp; Drawback Outputs</h2>
+          <div class="readout"><div class="rlabel">Duty Paid per Unit</div><div class="rvalue" id="dd-out-unit">—</div></div>
+          <div class="readout"><div class="rlabel">Total Annual Duty Paid</div><div class="rvalue" id="dd-out-total" style="color:var(--red);">—</div></div>
+          <div class="readout"><div class="rlabel">Recoverable via Drawback</div><div class="rvalue" id="dd-out-recoverable" style="color:var(--green);">—</div></div>
+          <div class="readout"><div class="rlabel">Net Duty Cost After Drawback</div><div class="rvalue" id="dd-out-net" style="color:var(--red);">—</div></div>
+          <hr class="divider">
+          <div class="readout"><div class="rlabel">Landed Cost Impact of Tariff Scenario</div><div class="rvalue" id="dd-out-scenario-impact">—</div></div>
+        </div>
+      </div>
+      <div class="grid" style="margin-top:20px;">
+        <div class="panel">
+          <h2 style="color: var(--amber);">⚠️ Duty &amp; Tariff Flags</h2>
+          <ul id="dd-risk-list" class="risk-list"></ul>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- PILLAR 4: OPS & QUALITY EXECUTION -->
@@ -961,6 +1031,7 @@
       <button class="sub-btn" onclick="switchTool('ops', 'fpy', this)">First Pass Yield (FPY) / PPM</button>
       <button class="sub-btn" onclick="switchTool('ops', 'budgetkpi', this)">Budget KPI Dashboard</button>
       <button class="sub-btn" onclick="switchTool('ops', 'datacut', this)">Data Cut / Report Builder</button>
+      <button class="sub-btn" onclick="switchTool('ops', 'capexopex', this)">CapEx/OpEx Classifier</button>
     </div>
 
     <!-- EVM -->
@@ -1123,6 +1194,54 @@
           </table>
         </div>
         <button type="button" class="btn-action" id="dc-export-btn" style="display:none; margin-top:12px;" onclick="exportDataCutCSV()">Export Report as CSV</button>
+      </div>
+    </div>
+
+    <!-- CapEx/OpEx & Direct/Indirect Classifier -->
+    <div id="tool-capexopex" class="tool-view">
+      <h1>CapEx/OpEx &amp; Direct/Indirect Cost Classifier</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Log cost line items and classify each on two axes — capital vs. operating, direct vs. indirect — to get a rollup Finance can use straight for CAPEX/OPEX budget tracking.</p>
+
+      <div class="panel" style="margin-bottom:20px;">
+        <h2>Cost Line Items</h2>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead><tr>
+              <th style="min-width:200px;">Description</th>
+              <th>Amount ($)</th>
+              <th>Classification</th>
+              <th>Cost Type</th>
+              <th></th>
+            </tr></thead>
+            <tbody id="co-tbody"></tbody>
+          </table>
+        </div>
+        <button type="button" class="btn-row-add" onclick="addCapexOpexRow()">+ Add Line Item</button>
+      </div>
+
+      <div class="grid">
+        <div class="panel">
+          <h2>Totals</h2>
+          <div class="readout"><div class="rlabel">Total CapEx</div><div class="rvalue" id="co-out-capex">$0</div></div>
+          <div class="readout"><div class="rlabel">Total OpEx</div><div class="rvalue" id="co-out-opex">$0</div></div>
+          <div class="readout"><div class="rlabel">Total Direct</div><div class="rvalue" id="co-out-direct">$0</div></div>
+          <div class="readout"><div class="rlabel">Total Indirect</div><div class="rvalue" id="co-out-indirect">$0</div></div>
+          <hr class="divider">
+          <div class="readout"><div class="rlabel">Grand Total</div><div class="rvalue" id="co-out-grand" style="color:var(--amber);">$0</div></div>
+        </div>
+        <div class="panel">
+          <h2>CapEx/OpEx × Direct/Indirect Breakdown</h2>
+          <div class="readout"><div class="rlabel">CapEx — Direct</div><div class="rvalue" id="co-out-capex-direct">$0</div></div>
+          <div class="readout"><div class="rlabel">CapEx — Indirect</div><div class="rvalue" id="co-out-capex-indirect">$0</div></div>
+          <div class="readout"><div class="rlabel">OpEx — Direct</div><div class="rvalue" id="co-out-opex-direct">$0</div></div>
+          <div class="readout"><div class="rlabel">OpEx — Indirect</div><div class="rvalue" id="co-out-opex-indirect">$0</div></div>
+        </div>
+      </div>
+      <div class="grid" style="margin-top:20px;">
+        <div class="panel">
+          <h2 style="color: var(--amber);">⚠️ Classification Flags</h2>
+          <ul id="co-risk-list" class="risk-list"></ul>
+        </div>
       </div>
     </div>
   </div>
@@ -1434,6 +1553,121 @@
         <div class="panel">
           <h2 style="color: var(--amber);">⚠️ Risk Register Flags</h2>
           <ul id="rr-risk-list" class="risk-list"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PILLAR 7: QUALITY & RELIABILITY ENGINEERING -->
+  <div id="pillar-quality" class="tab-pillar">
+    <div class="subnav-bar">
+      <button class="sub-btn active" onclick="switchTool('quality', 'cpk', this)">Process Capability (Cp/Cpk)</button>
+      <button class="sub-btn" onclick="switchTool('quality', 'pfmea', this)">PFMEA / 8D Tracker</button>
+      <button class="sub-btn" onclick="switchTool('quality', 'reliability', this)">Reliability Prediction (MTBF)</button>
+    </div>
+
+    <!-- Process Capability -->
+    <div id="tool-cpk" class="tool-view active">
+      <h1>Process Capability (Cp/Cpk, Pp/Ppk)</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Standard SPC capability indices from a spec window and process spread, with an estimated out-of-spec defect rate.</p>
+      <div class="grid">
+        <div class="panel">
+          <h2>Specification &amp; Process Inputs</h2>
+          <div class="field"><label>Upper Spec Limit (USL)</label><input type="number" id="cpk-usl" value="10.50" step="0.01" oninput="calculateCpk()"></div>
+          <div class="field"><label>Lower Spec Limit (LSL)</label><input type="number" id="cpk-lsl" value="9.50" step="0.01" oninput="calculateCpk()"></div>
+          <div class="field"><label>Process Mean (x̄)</label><input type="number" id="cpk-mean" value="10.10" step="0.01" oninput="calculateCpk()"></div>
+          <div class="field"><label>Short-Term (Within-Subgroup) Std Dev — for Cp/Cpk</label><input type="number" id="cpk-sigma-st" value="0.12" step="0.001" min="0.0001" oninput="calculateCpk()"></div>
+          <div class="field"><label>Long-Term (Overall) Std Dev — for Pp/Ppk</label><input type="number" id="cpk-sigma-lt" value="0.16" step="0.001" min="0.0001" oninput="calculateCpk()"></div>
+        </div>
+        <div class="panel">
+          <h2>Capability Indices &amp; Estimated Defect Rate</h2>
+          <div class="readout"><div class="rlabel">Cp (Potential Capability)</div><div class="rvalue" id="cpk-out-cp">—</div></div>
+          <div class="readout"><div class="rlabel">Cpk (Actual, Centering-Adjusted)</div><div class="rvalue" id="cpk-out-cpk" style="color:var(--amber);">—</div></div>
+          <div class="readout"><div class="rlabel">Pp (Long-Term Potential)</div><div class="rvalue" id="cpk-out-pp">—</div></div>
+          <div class="readout"><div class="rlabel">Ppk (Long-Term, Centering-Adjusted)</div><div class="rvalue" id="cpk-out-ppk">—</div></div>
+          <hr class="divider">
+          <div class="readout"><div class="rlabel">Capability Rating</div><div class="rvalue" id="cpk-out-rating" style="font-size:14px;">—</div></div>
+          <div class="readout"><div class="rlabel">Estimated Defect Rate (Short-Term)</div><div class="rvalue" id="cpk-out-ppm-st" style="color:var(--red);">—</div></div>
+          <div class="readout"><div class="rlabel">Estimated Defect Rate (Long-Term)</div><div class="rvalue" id="cpk-out-ppm-lt">—</div></div>
+        </div>
+      </div>
+      <div class="grid" style="margin-top:20px;">
+        <div class="panel">
+          <h2 style="color: var(--amber);">⚠️ Process Capability Flags</h2>
+          <ul id="cpk-risk-list" class="risk-list"></ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- PFMEA / 8D Tracker -->
+    <div id="tool-pfmea" class="tool-view">
+      <h1>PFMEA / 8D Corrective Action Tracker</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Score failure modes by Severity × Occurrence × Detection (RPN) and track them through 8D-style corrective action to closure.</p>
+
+      <div class="panel" style="margin-bottom:20px;">
+        <h2>Failure Mode Log</h2>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead><tr>
+              <th style="min-width:190px;">Failure Mode / Issue</th>
+              <th>Category</th>
+              <th>Severity (1-10)</th>
+              <th>Occurrence (1-10)</th>
+              <th>Detection (1-10)</th>
+              <th>RPN</th>
+              <th>Owner</th>
+              <th>Status</th>
+              <th></th>
+            </tr></thead>
+            <tbody id="pf-tbody"></tbody>
+          </table>
+        </div>
+        <button type="button" class="btn-row-add" onclick="addPfmeaRow()">+ Add Failure Mode</button>
+      </div>
+
+      <div class="grid">
+        <div class="panel">
+          <h2>RPN Summary</h2>
+          <div class="readout"><div class="rlabel">Open Item Count</div><div class="rvalue" id="pf-out-open-count">0</div></div>
+          <div class="readout"><div class="rlabel">High-Priority Items (RPN &gt; 100)</div><div class="rvalue" id="pf-out-high-count" style="color:var(--red);">0</div></div>
+          <div class="readout"><div class="rlabel">Highest RPN</div><div class="rvalue" id="pf-out-highest" style="font-size:14px;">—</div></div>
+          <hr class="divider">
+          <h2 style="margin-top:15px;">Top Items by RPN</h2>
+          <ul id="pf-top-list" class="risk-list"></ul>
+        </div>
+        <div class="panel">
+          <h2 style="color: var(--amber);">⚠️ PFMEA Flags</h2>
+          <ul id="pf-risk-list" class="risk-list"></ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reliability Prediction -->
+    <div id="tool-reliability" class="tool-view">
+      <h1>Reliability Prediction (MTBF / FIT Rate)</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Constant-failure-rate (exponential) reliability model from observed field or test data — the standard basis for spares planning and warranty reserve sizing.</p>
+      <div class="grid">
+        <div class="panel">
+          <h2>Field / Test Data Inputs</h2>
+          <div class="field"><label>Total Accumulated Operating Hours</label><div class="hint">Sum across the whole fleet or test sample — e.g. units × hours/unit.</div><input type="number" id="rel-hours" value="2000000" min="0" oninput="calculateReliability()"></div>
+          <div class="field"><label>Number of Failures Observed</label><input type="number" id="rel-failures" value="4" min="0" oninput="calculateReliability()"></div>
+          <div class="field"><label>Mission Time / Warranty Period (Hours)</label><input type="number" id="rel-mission" value="17520" min="0" oninput="calculateReliability()"></div>
+          <div class="field"><label>Installed Base / Fleet Size (Units)</label><input type="number" id="rel-fleet" value="15000" min="0" oninput="calculateReliability()"></div>
+        </div>
+        <div class="panel">
+          <h2>Reliability Outputs</h2>
+          <div class="readout"><div class="rlabel">MTBF (Hours)</div><div class="rvalue" id="rel-out-mtbf" style="color:var(--amber);">—</div></div>
+          <div class="readout"><div class="rlabel">Failure Rate (λ, per Hour)</div><div class="rvalue" id="rel-out-lambda">—</div></div>
+          <div class="readout"><div class="rlabel">FIT Rate (Failures per 10⁹ Hours)</div><div class="rvalue" id="rel-out-fit">—</div></div>
+          <hr class="divider">
+          <div class="readout"><div class="rlabel">Reliability at Mission Time, R(t)</div><div class="rvalue" id="rel-out-reliability" style="color:var(--green);">—</div></div>
+          <div class="readout"><div class="rlabel">Expected Fleet Failures by Mission Time</div><div class="rvalue" id="rel-out-fleet-failures" style="color:var(--red);">—</div></div>
+        </div>
+      </div>
+      <div class="grid" style="margin-top:20px;">
+        <div class="panel">
+          <h2 style="color: var(--amber);">⚠️ Reliability Flags</h2>
+          <ul id="rel-risk-list" class="risk-list"></ul>
         </div>
       </div>
     </div>
@@ -3408,6 +3642,433 @@ function exportDataCutCSV() {
   document.body.removeChild(link);
 }
 
+// --- PROCESS CAPABILITY (Cp/Cpk, Pp/Ppk) ---
+function erf(x) {
+  // Abramowitz & Stegun 7.1.26 approximation
+  const sign = x >= 0 ? 1 : -1;
+  x = Math.abs(x);
+  const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741, a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+  const t = 1 / (1 + p * x);
+  const y = 1 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+  return sign * y;
+}
+function normalCDF(z) {
+  return 0.5 * (1 + erf(z / Math.SQRT2));
+}
+
+function calculateCpk() {
+  const usl = parseFloat(document.getElementById('cpk-usl').value) || 0;
+  const lsl = parseFloat(document.getElementById('cpk-lsl').value) || 0;
+  const mean = parseFloat(document.getElementById('cpk-mean').value) || 0;
+  const sigmaST = parseFloat(document.getElementById('cpk-sigma-st').value) || 0.0001;
+  const sigmaLT = parseFloat(document.getElementById('cpk-sigma-lt').value) || 0.0001;
+
+  const cp = (usl - lsl) / (6 * sigmaST);
+  const cpu = (usl - mean) / (3 * sigmaST);
+  const cpl = (mean - lsl) / (3 * sigmaST);
+  const cpk = Math.min(cpu, cpl);
+
+  const pp = (usl - lsl) / (6 * sigmaLT);
+  const ppu = (usl - mean) / (3 * sigmaLT);
+  const ppl = (mean - lsl) / (3 * sigmaLT);
+  const ppk = Math.min(ppu, ppl);
+
+  document.getElementById('cpk-out-cp').innerText = cp.toFixed(2);
+  const cpkEl = document.getElementById('cpk-out-cpk');
+  cpkEl.innerText = cpk.toFixed(2);
+  document.getElementById('cpk-out-pp').innerText = pp.toFixed(2);
+  document.getElementById('cpk-out-ppk').innerText = ppk.toFixed(2);
+
+  let rating, ratingColor;
+  if (cpk >= 1.67) { rating = 'SIX SIGMA CAPABLE'; ratingColor = 'var(--green)'; }
+  else if (cpk >= 1.33) { rating = 'CAPABLE'; ratingColor = 'var(--green)'; }
+  else if (cpk >= 1.0) { rating = 'MARGINALLY CAPABLE'; ratingColor = 'var(--amber)'; }
+  else { rating = 'NOT CAPABLE'; ratingColor = 'var(--red)'; }
+  const ratingEl = document.getElementById('cpk-out-rating');
+  ratingEl.innerText = rating;
+  ratingEl.style.color = ratingColor;
+  cpkEl.style.color = ratingColor;
+
+  const ppmST = (normalCDF((lsl - mean) / sigmaST) + (1 - normalCDF((usl - mean) / sigmaST))) * 1e6;
+  const ppmLT = (normalCDF((lsl - mean) / sigmaLT) + (1 - normalCDF((usl - mean) / sigmaLT))) * 1e6;
+  document.getElementById('cpk-out-ppm-st').innerText = Math.round(ppmST).toLocaleString() + ' PPM';
+  document.getElementById('cpk-out-ppm-lt').innerText = Math.round(ppmLT).toLocaleString() + ' PPM';
+
+  const flags = [];
+  if (cpk < 1.0) {
+    flags.push(`<strong>Not Capable (Cpk ${cpk.toFixed(2)}):</strong> The process is producing meaningful out-of-spec output at current mean and spread. Reduce variation, shift the mean toward center, or widen the spec if it's overly tight.`);
+  }
+  if ((cp - cpk) > 0.2) {
+    flags.push(`<strong>Process Off-Center:</strong> Cp (${cp.toFixed(2)}) is meaningfully higher than Cpk (${cpk.toFixed(2)}) — the process has enough potential capability, but isn't centered in the spec window. Centering the mean would improve Cpk without touching variation.`);
+  }
+  if (sigmaLT > sigmaST * 1.15) {
+    flags.push(`<strong>Long-Term Variation Exceeds Short-Term:</strong> Overall (long-term) std dev is notably higher than within-subgroup (short-term) std dev — look for shift-to-shift, lot-to-lot, or time-based special-cause variation between subgroups.`);
+  }
+
+  const riskList = document.getElementById('cpk-risk-list');
+  riskList.innerHTML = '';
+  if (flags.length === 0) {
+    riskList.innerHTML = '<li>No capability flags at current inputs.</li>';
+  } else {
+    flags.forEach(f => { const li = document.createElement('li'); li.innerHTML = f; riskList.appendChild(li); });
+  }
+}
+
+// --- PFMEA / 8D CORRECTIVE ACTION TRACKER ---
+let pfRowCount = 0;
+function addPfmeaRow(vals) {
+  vals = vals || {};
+  pfRowCount++;
+  const id = pfRowCount;
+  const tbody = document.getElementById('pf-tbody');
+  const tr = document.createElement('tr');
+  tr.id = 'pf-row-' + id;
+  tr.innerHTML = `
+    <td><input type="text" id="pf-desc-${id}" value="${vals.desc || ''}" placeholder="Failure mode / issue" oninput="calculatePfmea()"></td>
+    <td><select id="pf-cat-${id}" onchange="calculatePfmea()">
+      <option value="Design" ${vals.cat === 'Design' || !vals.cat ? 'selected' : ''}>Design</option>
+      <option value="Process" ${vals.cat === 'Process' ? 'selected' : ''}>Process</option>
+      <option value="Supplier" ${vals.cat === 'Supplier' ? 'selected' : ''}>Supplier</option>
+      <option value="Test" ${vals.cat === 'Test' ? 'selected' : ''}>Test</option>
+    </select></td>
+    <td><input type="number" id="pf-sev-${id}" value="${vals.sev !== undefined ? vals.sev : 5}" min="1" max="10" oninput="calculatePfmea()"></td>
+    <td><input type="number" id="pf-occ-${id}" value="${vals.occ !== undefined ? vals.occ : 5}" min="1" max="10" oninput="calculatePfmea()"></td>
+    <td><input type="number" id="pf-det-${id}" value="${vals.det !== undefined ? vals.det : 5}" min="1" max="10" oninput="calculatePfmea()"></td>
+    <td class="score-cell" id="pf-rpn-${id}">—</td>
+    <td><input type="text" id="pf-owner-${id}" value="${vals.owner || ''}" placeholder="Owner" oninput="calculatePfmea()"></td>
+    <td><select id="pf-status-${id}" onchange="calculatePfmea()">
+      <option value="Open" ${vals.status === 'Open' || !vals.status ? 'selected' : ''}>Open</option>
+      <option value="8D In Progress" ${vals.status === '8D In Progress' ? 'selected' : ''}>8D In Progress</option>
+      <option value="Corrective Action Verified" ${vals.status === 'Corrective Action Verified' ? 'selected' : ''}>Corrective Action Verified</option>
+      <option value="Closed" ${vals.status === 'Closed' ? 'selected' : ''}>Closed</option>
+    </select></td>
+    <td><button type="button" class="btn-row-remove" onclick="removePfmeaRow(${id})">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+  calculatePfmea();
+}
+
+function removePfmeaRow(id) {
+  const row = document.getElementById('pf-row-' + id);
+  if (row) row.remove();
+  calculatePfmea();
+}
+
+function calculatePfmea() {
+  const tbody = document.getElementById('pf-tbody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  let openCount = 0, highCount = 0, undetectableCount = 0;
+  let highestDesc = null, highestRpn = -1;
+  const items = [];
+
+  rows.forEach(tr => {
+    const id = tr.id.replace('pf-row-', '');
+    const desc = document.getElementById('pf-desc-' + id).value || 'Unnamed Failure Mode';
+    const sev = parseFloat(document.getElementById('pf-sev-' + id).value) || 0;
+    const occ = parseFloat(document.getElementById('pf-occ-' + id).value) || 0;
+    const det = parseFloat(document.getElementById('pf-det-' + id).value) || 0;
+    const status = document.getElementById('pf-status-' + id).value;
+
+    const rpn = sev * occ * det;
+    const rpnEl = document.getElementById('pf-rpn-' + id);
+    rpnEl.innerText = rpn;
+    rpnEl.style.color = rpn > 100 ? 'var(--red)' : (rpn > 50 ? 'var(--amber)' : 'var(--green)');
+
+    if (status !== 'Closed') {
+      openCount++;
+      if (rpn > 100) highCount++;
+      if (det >= 9) undetectableCount++;
+      items.push({ desc, rpn, status });
+      if (rpn > highestRpn) { highestRpn = rpn; highestDesc = desc; }
+    }
+  });
+
+  document.getElementById('pf-out-open-count').innerText = openCount;
+  document.getElementById('pf-out-high-count').innerText = highCount;
+  document.getElementById('pf-out-highest').innerText = highestDesc ? `${highestDesc} (RPN ${highestRpn})` : '—';
+
+  items.sort((a, b) => b.rpn - a.rpn);
+  const topList = document.getElementById('pf-top-list');
+  topList.innerHTML = '';
+  if (items.length === 0) {
+    topList.innerHTML = '<li>No open failure modes logged.</li>';
+  } else {
+    items.slice(0, 5).forEach(it => {
+      const li = document.createElement('li');
+      li.innerHTML = `<strong>${it.desc}:</strong> RPN ${it.rpn} — ${it.status}`;
+      topList.appendChild(li);
+    });
+  }
+
+  const flags = [];
+  if (highCount > 0) {
+    flags.push(`<strong>${highCount} High-Priority Item${highCount > 1 ? 's' : ''} (RPN &gt; 100):</strong> Standard PFMEA practice treats these as requiring corrective action regardless of overall backlog size.`);
+  }
+  if (undetectableCount > 0) {
+    flags.push(`<strong>${undetectableCount} Item${undetectableCount > 1 ? 's' : ''} With Detection ≥ 9:</strong> A high Detection score means this failure mode would likely reach the customer undetected — worth prioritizing even if Severity or Occurrence alone look moderate.`);
+  }
+
+  const riskList = document.getElementById('pf-risk-list');
+  riskList.innerHTML = '';
+  if (rows.length === 0) {
+    riskList.innerHTML = '<li>Add a failure mode to see flags.</li>';
+  } else if (flags.length === 0) {
+    riskList.innerHTML = '<li>No PFMEA flags at current inputs.</li>';
+  } else {
+    flags.forEach(f => { const li = document.createElement('li'); li.innerHTML = f; riskList.appendChild(li); });
+  }
+}
+
+// --- RELIABILITY PREDICTION (MTBF / FIT) ---
+function calculateReliability() {
+  const hours = parseFloat(document.getElementById('rel-hours').value) || 0;
+  const failures = parseFloat(document.getElementById('rel-failures').value) || 0;
+  const missionTime = parseFloat(document.getElementById('rel-mission').value) || 0;
+  const fleet = parseFloat(document.getElementById('rel-fleet').value) || 0;
+
+  const mtbfEl = document.getElementById('rel-out-mtbf');
+  const lambdaEl = document.getElementById('rel-out-lambda');
+  const fitEl = document.getElementById('rel-out-fit');
+  const reliabilityEl = document.getElementById('rel-out-reliability');
+  const fleetFailEl = document.getElementById('rel-out-fleet-failures');
+  const flags = [];
+
+  if (failures <= 0) {
+    mtbfEl.innerText = 'No failures yet';
+    lambdaEl.innerText = '—';
+    fitEl.innerText = '—';
+    reliabilityEl.innerText = '100.0%';
+    fleetFailEl.innerText = '0';
+    document.getElementById('rel-risk-list').innerHTML = '<li>No failures observed yet — MTBF isn\'t calculable until at least one failure is logged.</li>';
+    return;
+  }
+
+  const mtbf = hours / failures;
+  const lambda = 1 / mtbf;
+  const fit = lambda * 1e9;
+  const reliability = Math.exp(-lambda * missionTime) * 100;
+  const fleetFailures = fleet * (1 - Math.exp(-lambda * missionTime));
+
+  mtbfEl.innerText = Math.round(mtbf).toLocaleString() + ' Hrs';
+  lambdaEl.innerText = lambda.toExponential(3);
+  fitEl.innerText = Math.round(fit).toLocaleString();
+  reliabilityEl.innerText = reliability.toFixed(1) + '%';
+  reliabilityEl.style.color = reliability >= 95 ? 'var(--green)' : (reliability >= 85 ? 'var(--amber)' : 'var(--red)');
+  fleetFailEl.innerText = Math.round(fleetFailures).toLocaleString() + ' Units';
+
+  if (reliability < 90) {
+    flags.push(`<strong>Reliability Below 90% at Mission Time:</strong> At the current failure rate, only ${reliability.toFixed(1)}% of units are expected to survive to ${Math.round(missionTime).toLocaleString()} hours — this directly drives warranty reserve sizing (see the RMA &amp; Warranty tool) and may warrant a design or supplier corrective action.`);
+  }
+  if (mtbf < missionTime) {
+    flags.push(`<strong>MTBF is Shorter Than the Mission Time:</strong> MTBF (${Math.round(mtbf).toLocaleString()} hrs) is less than the ${Math.round(missionTime).toLocaleString()}-hour mission/warranty period itself — most units are statistically expected to fail before the period ends.`);
+  }
+  if (failures < 5) {
+    flags.push(`<strong>Small Failure Sample (n=${failures}):</strong> MTBF estimates from very few failures carry wide statistical uncertainty — treat this as directional until more field or test data accumulates.`);
+  }
+
+  const riskList = document.getElementById('rel-risk-list');
+  riskList.innerHTML = '';
+  if (flags.length === 0) {
+    riskList.innerHTML = '<li>No reliability flags at current inputs.</li>';
+  } else {
+    flags.forEach(f => { const li = document.createElement('li'); li.innerHTML = f; riskList.appendChild(li); });
+  }
+}
+
+// --- MAKE-VS-BUY ANALYSIS ---
+function calculateMakeVsBuy() {
+  const volume = parseFloat(document.getElementById('mvb-volume').value) || 0;
+  const buyPrice = parseFloat(document.getElementById('mvb-buyprice').value) || 0;
+  const varCost = parseFloat(document.getElementById('mvb-varcost').value) || 0;
+  const fixedInv = parseFloat(document.getElementById('mvb-fixedinv').value) || 0;
+  const fixedOH = parseFloat(document.getElementById('mvb-fixedoh').value) || 0;
+  const years = parseFloat(document.getElementById('mvb-years').value) || 1;
+
+  const annualFixedMake = (fixedInv / years) + fixedOH;
+  const contribution = buyPrice - varCost;
+  const breakeven = contribution > 0 ? annualFixedMake / contribution : Infinity;
+
+  const totalBuy = buyPrice * volume * years;
+  const totalMake = fixedInv + (varCost * volume + fixedOH) * years;
+  const savings = totalBuy - totalMake;
+
+  document.getElementById('mvb-out-breakeven').innerText = isFinite(breakeven) ? Math.round(breakeven).toLocaleString() + ' Units/Year' : 'Never (Buy price ≤ variable cost)';
+  document.getElementById('mvb-out-buytotal').innerText = '$' + Math.round(totalBuy).toLocaleString();
+  document.getElementById('mvb-out-maketotal').innerText = '$' + Math.round(totalMake).toLocaleString();
+
+  const savingsEl = document.getElementById('mvb-out-savings');
+  savingsEl.innerText = (savings >= 0 ? '+$' : '-$') + Math.abs(Math.round(savings)).toLocaleString();
+  savingsEl.style.color = savings >= 0 ? 'var(--green)' : 'var(--red)';
+
+  const recEl = document.getElementById('mvb-out-rec');
+  let rec;
+  if (contribution <= 0) {
+    rec = 'BUY — Outside Price Below In-House Variable Cost';
+    recEl.style.color = 'var(--red)';
+  } else if (savings > 0) {
+    rec = 'MAKE';
+    recEl.style.color = 'var(--green)';
+  } else {
+    rec = 'BUY';
+    recEl.style.color = 'var(--amber)';
+  }
+  recEl.innerText = rec;
+
+  const flags = [];
+  if (contribution <= 0) {
+    flags.push(`<strong>Buy Price at or Below In-House Variable Cost:</strong> Making this part in-house can never break even at any volume — the outside price ($${buyPrice.toFixed(2)}) doesn't even cover your variable cost alone ($${varCost.toFixed(2)}).`);
+  } else if (isFinite(breakeven) && volume < breakeven) {
+    flags.push(`<strong>Volume Below Breakeven:</strong> At ${Math.round(volume).toLocaleString()} units/year, you're under the ${Math.round(breakeven).toLocaleString()}-unit/year breakeven — Buy is cheaper at this volume. Making sense would need either higher volume or lower fixed investment/overhead.`);
+  } else if (isFinite(breakeven)) {
+    flags.push(`<strong>Volume Above Breakeven:</strong> At ${Math.round(volume).toLocaleString()} units/year, you're over the ${Math.round(breakeven).toLocaleString()}-unit/year breakeven — Make is the cheaper option at this volume, assuming the fixed investment and overhead estimates hold.`);
+  }
+  if (fixedInv > 0 && years < 2) {
+    flags.push(`<strong>Short Evaluation Horizon:</strong> A ${years}-year horizon may not fully amortize the $${Math.round(fixedInv).toLocaleString()} tooling investment — consider whether the part's expected life supports a longer view.`);
+  }
+
+  const riskList = document.getElementById('mvb-risk-list');
+  riskList.innerHTML = '';
+  if (flags.length === 0) {
+    riskList.innerHTML = '<li>No make-vs-buy flags at current inputs.</li>';
+  } else {
+    flags.forEach(f => { const li = document.createElement('li'); li.innerHTML = f; riskList.appendChild(li); });
+  }
+}
+
+// --- DUTY DRAWBACK / TARIFF & HTS COST IMPACT ---
+function calculateDutyDrawback() {
+  const value = parseFloat(document.getElementById('dd-value').value) || 0;
+  const rate = (parseFloat(document.getElementById('dd-rate').value) || 0) / 100;
+  const volume = parseFloat(document.getElementById('dd-volume').value) || 0;
+  const eligiblePct = (parseFloat(document.getElementById('dd-eligible-pct').value) || 0) / 100;
+  const recoveryPct = (parseFloat(document.getElementById('dd-recovery-pct').value) || 0) / 100;
+  const scenarioInput = parseFloat(document.getElementById('dd-scenario').value) || 0;
+  const scenarioDelta = scenarioInput / 100;
+
+  const dutyPerUnit = value * rate;
+  const totalDuty = dutyPerUnit * volume;
+  const eligibleDuty = totalDuty * eligiblePct;
+  const recoverable = eligibleDuty * recoveryPct;
+  const netDuty = totalDuty - recoverable;
+  const scenarioImpact = value * scenarioDelta * volume;
+
+  document.getElementById('dd-out-unit').innerText = '$' + dutyPerUnit.toFixed(2);
+  document.getElementById('dd-out-total').innerText = '$' + Math.round(totalDuty).toLocaleString();
+  document.getElementById('dd-out-recoverable').innerText = '$' + Math.round(recoverable).toLocaleString();
+  document.getElementById('dd-out-net').innerText = '$' + Math.round(netDuty).toLocaleString();
+
+  const scenarioEl = document.getElementById('dd-out-scenario-impact');
+  scenarioEl.innerText = (scenarioDelta >= 0 ? '+$' : '-$') + Math.abs(Math.round(scenarioImpact)).toLocaleString() + ` (at ${scenarioInput}pt tariff change)`;
+  scenarioEl.style.color = scenarioDelta >= 0 ? 'var(--red)' : 'var(--green)';
+
+  const flags = [];
+  if (recoverable > 50000) {
+    flags.push(`<strong>Significant Recoverable Duty:</strong> $${Math.round(recoverable).toLocaleString()} is potentially recoverable through a duty drawback claim on the eligible volume — confirm a drawback program is actually filed if this isn't already being claimed.`);
+  }
+  if (eligiblePct < 0.5 && totalDuty > 100000) {
+    flags.push(`<strong>Low Drawback Eligibility on High Duty Spend:</strong> Only ${(eligiblePct * 100).toFixed(0)}% of volume is currently drawback-eligible against $${Math.round(totalDuty).toLocaleString()} in total annual duty — worth checking whether more of this volume could qualify (re-export, substitution drawback, or use in exported finished goods).`);
+  }
+  if (totalDuty > 0 && Math.abs(scenarioImpact) > totalDuty * 0.3) {
+    flags.push(`<strong>High Tariff Sensitivity:</strong> The modeled ${scenarioInput}-point tariff change would swing landed cost by $${Math.round(Math.abs(scenarioImpact)).toLocaleString()} — a large enough swing to revisit sourcing-country or HTS classification strategy.`);
+  }
+
+  const riskList = document.getElementById('dd-risk-list');
+  riskList.innerHTML = '';
+  if (flags.length === 0) {
+    riskList.innerHTML = '<li>No duty/tariff flags at current inputs.</li>';
+  } else {
+    flags.forEach(f => { const li = document.createElement('li'); li.innerHTML = f; riskList.appendChild(li); });
+  }
+}
+
+// --- CAPEX/OPEX & DIRECT/INDIRECT CLASSIFIER ---
+let coRowCount = 0;
+function addCapexOpexRow(vals) {
+  vals = vals || {};
+  coRowCount++;
+  const id = coRowCount;
+  const tbody = document.getElementById('co-tbody');
+  const tr = document.createElement('tr');
+  tr.id = 'co-row-' + id;
+  tr.innerHTML = `
+    <td><input type="text" id="co-desc-${id}" value="${vals.desc || ''}" placeholder="Cost line item" oninput="calculateCapexOpex()"></td>
+    <td><input type="number" id="co-amount-${id}" value="${vals.amount !== undefined ? vals.amount : 0}" min="0" oninput="calculateCapexOpex()"></td>
+    <td><select id="co-class-${id}" onchange="calculateCapexOpex()">
+      <option value="CapEx" ${vals.cls === 'CapEx' || !vals.cls ? 'selected' : ''}>CapEx</option>
+      <option value="OpEx" ${vals.cls === 'OpEx' ? 'selected' : ''}>OpEx</option>
+    </select></td>
+    <td><select id="co-type-${id}" onchange="calculateCapexOpex()">
+      <option value="Direct" ${vals.type === 'Direct' || !vals.type ? 'selected' : ''}>Direct</option>
+      <option value="Indirect" ${vals.type === 'Indirect' ? 'selected' : ''}>Indirect</option>
+    </select></td>
+    <td><button type="button" class="btn-row-remove" onclick="removeCapexOpexRow(${id})">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+  calculateCapexOpex();
+}
+
+function removeCapexOpexRow(id) {
+  const row = document.getElementById('co-row-' + id);
+  if (row) row.remove();
+  calculateCapexOpex();
+}
+
+function calculateCapexOpex() {
+  const tbody = document.getElementById('co-tbody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  let capex = 0, opex = 0, direct = 0, indirect = 0;
+  let capexDirect = 0, capexIndirect = 0, opexDirect = 0, opexIndirect = 0;
+  let zeroCount = 0;
+
+  rows.forEach(tr => {
+    const id = tr.id.replace('co-row-', '');
+    const amount = parseFloat(document.getElementById('co-amount-' + id).value) || 0;
+    const cls = document.getElementById('co-class-' + id).value;
+    const type = document.getElementById('co-type-' + id).value;
+
+    if (amount === 0) zeroCount++;
+
+    if (cls === 'CapEx') capex += amount; else opex += amount;
+    if (type === 'Direct') direct += amount; else indirect += amount;
+
+    if (cls === 'CapEx' && type === 'Direct') capexDirect += amount;
+    else if (cls === 'CapEx' && type === 'Indirect') capexIndirect += amount;
+    else if (cls === 'OpEx' && type === 'Direct') opexDirect += amount;
+    else opexIndirect += amount;
+  });
+
+  const grand = capex + opex;
+
+  document.getElementById('co-out-capex').innerText = '$' + Math.round(capex).toLocaleString();
+  document.getElementById('co-out-opex').innerText = '$' + Math.round(opex).toLocaleString();
+  document.getElementById('co-out-direct').innerText = '$' + Math.round(direct).toLocaleString();
+  document.getElementById('co-out-indirect').innerText = '$' + Math.round(indirect).toLocaleString();
+  document.getElementById('co-out-grand').innerText = '$' + Math.round(grand).toLocaleString();
+
+  document.getElementById('co-out-capex-direct').innerText = '$' + Math.round(capexDirect).toLocaleString();
+  document.getElementById('co-out-capex-indirect').innerText = '$' + Math.round(capexIndirect).toLocaleString();
+  document.getElementById('co-out-opex-direct').innerText = '$' + Math.round(opexDirect).toLocaleString();
+  document.getElementById('co-out-opex-indirect').innerText = '$' + Math.round(opexIndirect).toLocaleString();
+
+  const flags = [];
+  if (grand > 0 && (indirect / grand) > 0.4) {
+    flags.push(`<strong>Indirect Costs Are ${((indirect / grand) * 100).toFixed(0)}% of Total:</strong> A high indirect share can be harder to defend in a cost review — confirm these allocations are traceable to a real cost driver, not just a blanket overhead rate.`);
+  }
+  if (zeroCount > 0) {
+    flags.push(`<strong>${zeroCount} Line Item${zeroCount > 1 ? 's' : ''} With $0 Amount:</strong> Likely incomplete entries — fill in an amount or remove the row so totals aren't misleading.`);
+  }
+
+  const riskList = document.getElementById('co-risk-list');
+  riskList.innerHTML = '';
+  if (rows.length === 0) {
+    riskList.innerHTML = '<li>Add a cost line item to see flags.</li>';
+  } else if (flags.length === 0) {
+    riskList.innerHTML = '<li>No classification flags at current inputs.</li>';
+  } else {
+    flags.forEach(f => { const li = document.createElement('li'); li.innerHTML = f; riskList.appendChild(li); });
+  }
+}
+
 // --- EXPORT FUNCTIONALITY ---
 function exportCSV() {
   const rows = [
@@ -3445,7 +4106,18 @@ function exportCSV() {
     ["Supplier Scorecard", "Suppliers at Risk (Red)", document.getElementById('ss-out-atrisk-count').innerText],
     ["Supplier Scorecard", "Annual Spend at Risk", document.getElementById('ss-out-atrisk-spend').innerText],
     ["Risk Register", "Total Risk Exposure", document.getElementById('rr-out-total').innerText],
-    ["Risk Register", "Open Risk Count", document.getElementById('rr-out-open-count').innerText]
+    ["Risk Register", "Open Risk Count", document.getElementById('rr-out-open-count').innerText],
+    ["Process Capability", "Cpk", document.getElementById('cpk-out-cpk').innerText],
+    ["Process Capability", "Capability Rating", document.getElementById('cpk-out-rating').innerText],
+    ["PFMEA", "High-Priority Items (RPN>100)", document.getElementById('pf-out-high-count').innerText],
+    ["Reliability", "MTBF (Hours)", document.getElementById('rel-out-mtbf').innerText],
+    ["Reliability", "Reliability at Mission Time", document.getElementById('rel-out-reliability').innerText],
+    ["Make-vs-Buy", "Breakeven Volume", document.getElementById('mvb-out-breakeven').innerText],
+    ["Make-vs-Buy", "Recommendation", document.getElementById('mvb-out-rec').innerText],
+    ["Duty Drawback", "Total Annual Duty Paid", document.getElementById('dd-out-total').innerText],
+    ["Duty Drawback", "Net Duty Cost After Drawback", document.getElementById('dd-out-net').innerText],
+    ["CapEx/OpEx Classifier", "Total CapEx", document.getElementById('co-out-capex').innerText],
+    ["CapEx/OpEx Classifier", "Total OpEx", document.getElementById('co-out-opex').innerText]
   ];
 
   let csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
@@ -3500,6 +4172,22 @@ window.onload = function() {
   addRiskRow({ desc: 'PVT tooling qualification slipping 3 weeks', cat: 'Schedule', prob: 60, impact: 150000, owner: 'M. Chen', status: 'Mitigating' });
   addRiskRow({ desc: 'Forging alloy price volatility', cat: 'Cost', prob: 35, impact: 220000, owner: 'R. Singh', status: 'Open' });
   addRiskRow({ desc: 'Enclosure IP rating re-test after design change', cat: 'Technical', prob: 25, impact: 90000, owner: 'T. Brooks', status: 'Open' });
+
+  calculateCpk();
+  calculateReliability();
+  addPfmeaRow({ desc: 'Connector pin misalignment during reflow', cat: 'Process', sev: 7, occ: 4, det: 5, owner: 'Line 2 Eng', status: 'Open' });
+  addPfmeaRow({ desc: 'Incoming resistor tolerance out of spec', cat: 'Supplier', sev: 6, occ: 3, det: 8, owner: 'SQE - Kim', status: '8D In Progress' });
+  addPfmeaRow({ desc: 'Enclosure snap-fit cracks under drop test', cat: 'Design', sev: 8, occ: 3, det: 6, owner: 'Mech Eng - Patel', status: 'Open' });
+  addPfmeaRow({ desc: 'Test fixture false-fail on boundary units', cat: 'Test', sev: 4, occ: 5, det: 3, owner: 'Test Eng', status: 'Corrective Action Verified' });
+
+  calculateMakeVsBuy();
+  calculateDutyDrawback();
+
+  addCapexOpexRow({ desc: 'Injection mold tooling', amount: 320000, cls: 'CapEx', type: 'Direct' });
+  addCapexOpexRow({ desc: 'Test fixture equipment', amount: 65000, cls: 'CapEx', type: 'Indirect' });
+  addCapexOpexRow({ desc: 'Contract manufacturer per-unit labor', amount: 210000, cls: 'OpEx', type: 'Direct' });
+  addCapexOpexRow({ desc: 'Facilities & IT overhead allocation', amount: 48000, cls: 'OpEx', type: 'Indirect' });
+  addCapexOpexRow({ desc: 'Raw material / BOM spend', amount: 540000, cls: 'OpEx', type: 'Direct' });
 };
 </script>
   <button class="feedback-fab" onclick="openFeedback()">💬 Feedback</button>
