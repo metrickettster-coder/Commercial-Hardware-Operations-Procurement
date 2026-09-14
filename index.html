@@ -940,6 +940,7 @@
       <button class="sub-btn active" onclick="switchTool('ops', 'evm', this)">Earned Value Management (EVM)</button>
       <button class="sub-btn" onclick="switchTool('ops', 'eoq', this)">EOQ &amp; Reorder Point</button>
       <button class="sub-btn" onclick="switchTool('ops', 'fpy', this)">First Pass Yield (FPY) / PPM</button>
+      <button class="sub-btn" onclick="switchTool('ops', 'budgetkpi', this)">Budget KPI Dashboard</button>
     </div>
 
     <!-- EVM -->
@@ -1009,6 +1010,53 @@
         </div>
       </div>
     </div>
+
+    <!-- Budget KPI Dashboard -->
+    <div id="tool-budgetkpi" class="tool-view">
+      <h1>Budget KPI Dashboard</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Track scoped budget vs. actual spend, burn rate, cost variance, revenue growth, and forecast accuracy in one place.</p>
+      <div class="board">
+        <div class="light-card"><div class="light-row"><span class="light-dot" id="bk-dot-variance" style="background:var(--green);"></span><span class="light-label">Budget Health</span></div><div class="light-value" id="bk-val-variance-pct">0.0%</div><div class="light-status">Variance vs. Scoped</div></div>
+        <div class="light-card"><div class="light-row"><span class="light-dot" id="bk-dot-burn" style="background:var(--amber);"></span><span class="light-label">Burn Rate</span></div><div class="light-value" id="bk-val-burn">$0</div><div class="light-status">Per Month</div></div>
+        <div class="light-card"><div class="light-row"><span class="light-dot" id="bk-dot-forecast" style="background:var(--amber);"></span><span class="light-label">Forecast Accuracy</span></div><div class="light-value" id="bk-val-forecast">0.0%</div><div class="light-status">Prior Forecast vs. Actual</div></div>
+      </div>
+      <div class="grid">
+        <div class="panel">
+          <h2>Scoped Budget &amp; Actual Spend</h2>
+          <div class="field"><label>Total Scoped / Planned Budget</label><div class="prefix-wrap"><span>$</span><input type="number" id="bk-scoped-budget" value="500000" oninput="calculateBudgetKPI()"></div></div>
+          <div class="field"><label>Actual Spend to Date</label><div class="prefix-wrap"><span>$</span><input type="number" id="bk-actual-spend" value="420000" oninput="calculateBudgetKPI()"></div></div>
+          <div class="field"><label>Months Elapsed in Program</label><input type="number" id="bk-months-elapsed" value="7" min="0" step="0.1" oninput="calculateBudgetKPI()"></div>
+          <div class="field"><label>Total Program Duration (Months)</label><input type="number" id="bk-months-total" value="12" min="0" step="0.1" oninput="calculateBudgetKPI()"></div>
+        </div>
+        <div class="panel">
+          <h2>Operating Cost &amp; Revenue Inputs</h2>
+          <div class="field"><label>Budgeted Operating Expense (Labor/Materials) — Period</label><div class="prefix-wrap"><span>$</span><input type="number" id="bk-opex-budget" value="150000" oninput="calculateBudgetKPI()"></div></div>
+          <div class="field"><label>Actual Operating Expense — Period</label><div class="prefix-wrap"><span>$</span><input type="number" id="bk-opex-actual" value="162000" oninput="calculateBudgetKPI()"></div></div>
+          <div class="field"><label>Prior Period Revenue</label><div class="prefix-wrap"><span>$</span><input type="number" id="bk-rev-prior" value="380000" oninput="calculateBudgetKPI()"></div></div>
+          <div class="field"><label>Current Period Revenue</label><div class="prefix-wrap"><span>$</span><input type="number" id="bk-rev-current" value="410000" oninput="calculateBudgetKPI()"></div></div>
+          <div class="field"><label>Previously Forecasted Amount</label><div class="prefix-wrap"><span>$</span><input type="number" id="bk-forecast-amt" value="400000" oninput="calculateBudgetKPI()"></div></div>
+          <div class="field"><label>Actual Outcome for Forecast Period</label><div class="prefix-wrap"><span>$</span><input type="number" id="bk-forecast-actual" value="420000" oninput="calculateBudgetKPI()"></div></div>
+        </div>
+      </div>
+      <div class="grid" style="margin-top:20px;">
+        <div class="panel">
+          <h2>Scoped vs. Actual — Budget KPIs</h2>
+          <div class="readout"><div class="rlabel">Budget Variance ($)</div><div class="rvalue" id="bk-out-variance-dollar" style="color:var(--green);">+$80,000</div></div>
+          <div class="readout"><div class="rlabel">Budget Variance (%)</div><div class="rvalue" id="bk-out-variance-pct" style="color:var(--green);">+16.0%</div></div>
+          <div class="readout"><div class="rlabel">Remaining Budget (Scoped − Actual)</div><div class="rvalue" id="bk-out-remaining">$80,000</div></div>
+          <div class="readout"><div class="rlabel">Burn Rate ($ / Month)</div><div class="rvalue" id="bk-out-burn-rate">$60,000</div></div>
+          <div class="readout"><div class="rlabel">Projected Total Spend at Current Burn Rate</div><div class="rvalue" id="bk-out-projected-total">$720,000</div></div>
+          <div class="readout"><div class="rlabel">Projected Overrun (−) / Underrun (+) at Completion</div><div class="rvalue" id="bk-out-projected-variance" style="color:var(--red);">-$220,000</div></div>
+          <div class="readout"><div class="rlabel">Cost Variance — Opex (Budgeted − Actual)</div><div class="rvalue" id="bk-out-cost-variance" style="color:var(--red);">-$12,000</div></div>
+          <div class="readout"><div class="rlabel">Revenue Growth Rate</div><div class="rvalue" id="bk-out-revenue-growth" style="color:var(--green);">+7.9%</div></div>
+          <div class="readout"><div class="rlabel">Forecast Accuracy</div><div class="rvalue" id="bk-out-forecast-accuracy">95.0%</div></div>
+        </div>
+        <div class="panel">
+          <h2 style="color: var(--amber);">⚠️ Budget Flags</h2>
+          <ul id="bk-risk-list" class="risk-list"></ul>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- PILLAR 5: SUSTAINING & EOL CLOSEOUT -->
@@ -1022,18 +1070,53 @@
     <!-- RMA & Warranty -->
     <div id="tool-rma" class="tool-view active">
       <h1>RMA &amp; Warranty Field Loss Risk Engine</h1>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Model return rates, field failure trends, and warranty reserve liabilities.</p>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Model return rates, field failure trends, warranty terms, return disposition, and warranty reserve liabilities.</p>
       <div class="grid">
         <div class="panel">
-          <h2>Field Deployment Parameters</h2>
+          <h2>Field Deployment &amp; Warranty Terms</h2>
           <div class="field"><label>Units Deployed in Field</label><input type="number" id="rma-units" value="15000" oninput="calculateRMA()"></div>
           <div class="field"><label>Historical Return / Failure Rate (%)</label><input type="number" id="rma-rate" value="2.8" step="0.1" oninput="calculateRMA()"></div>
-          <div class="field"><label>Average Repair / Replacement Cost per Unit</label><div class="prefix-wrap"><span>$</span><input type="number" id="rma-cost" value="180" oninput="calculateRMA()"></div></div>
+          <div class="field"><label>Warranty Period (Months)</label><input type="number" id="rma-warranty-months" value="12" min="0" oninput="calculateRMA()"></div>
+          <div class="field"><label>Warranty Coverage Type</label>
+            <select id="rma-warranty-type" onchange="calculateRMA()">
+              <option value="full">Full Replacement (No Charge to Customer)</option>
+              <option value="repair">Repair &amp; Return (No Charge to Customer)</option>
+              <option value="prorated">Prorated Coverage (Declining % Over Term)</option>
+              <option value="extended">Extended / Paid Warranty</option>
+            </select>
+          </div>
+          <div class="field"><label>Existing Warranty Reserve Balance</label><div class="hint">Funds already accrued/on the books for this program, before this period's forecast.</div><div class="prefix-wrap"><span>$</span><input type="number" id="rma-reserve-balance" value="0" min="0" oninput="calculateRMA()"></div></div>
         </div>
+        <div class="panel">
+          <h2>Return Disposition Mix &amp; Cost Capture</h2>
+          <p style="color:var(--text-mid); font-size:0.85em; margin-bottom:10px;">Split expected returns by how they're actually dispositioned — each path carries a different cost. Percentages should total 100%.</p>
+          <div class="field"><label>% Repaired &amp; Returned to Field</label><input type="number" id="rma-disp-repair-pct" value="60" min="0" max="100" oninput="calculateRMA()"></div>
+          <div class="field"><label>Repair Cost per Unit</label><div class="prefix-wrap"><span>$</span><input type="number" id="rma-disp-repair-cost" value="90" min="0" oninput="calculateRMA()"></div></div>
+          <div class="field"><label>% Scrapped / Written Off (No Repair)</label><input type="number" id="rma-disp-scrap-pct" value="15" min="0" max="100" oninput="calculateRMA()"></div>
+          <div class="field"><label>Scrap / Write-off Cost per Unit</label><div class="prefix-wrap"><span>$</span><input type="number" id="rma-disp-scrap-cost" value="180" min="0" oninput="calculateRMA()"></div></div>
+          <div class="field"><label>% Replaced with New Unit</label><input type="number" id="rma-disp-replace-pct" value="20" min="0" max="100" oninput="calculateRMA()"></div>
+          <div class="field"><label>New Unit Replacement Cost per Unit</label><div class="prefix-wrap"><span>$</span><input type="number" id="rma-disp-replace-cost" value="220" min="0" oninput="calculateRMA()"></div></div>
+          <div class="field"><label>% Credit / Refund Issued to Customer</label><input type="number" id="rma-disp-credit-pct" value="5" min="0" max="100" oninput="calculateRMA()"></div>
+          <div class="field"><label>Credit / Refund Amount per Unit</label><div class="prefix-wrap"><span>$</span><input type="number" id="rma-disp-credit-cost" value="150" min="0" oninput="calculateRMA()"></div></div>
+        </div>
+      </div>
+      <div class="grid" style="margin-top:20px;">
         <div class="panel">
           <h2>Warranty Liability Outputs</h2>
           <div class="readout"><div class="rlabel">Expected Returned Units</div><div class="rvalue" id="rma-out-units">420 Units</div></div>
-          <div class="readout"><div class="rlabel">Total Warranty Reserve Required</div><div class="rvalue" id="rma-out-reserve" style="color:var(--red);">$75,600</div></div>
+          <div class="readout"><div class="rlabel">— Repaired &amp; Returned</div><div class="rvalue" id="rma-out-repair-units" style="font-size:14px;">252 Units</div></div>
+          <div class="readout"><div class="rlabel">— Scrapped / Written Off</div><div class="rvalue" id="rma-out-scrap-units" style="font-size:14px;">63 Units</div></div>
+          <div class="readout"><div class="rlabel">— Replaced with New Unit</div><div class="rvalue" id="rma-out-replace-units" style="font-size:14px;">84 Units</div></div>
+          <div class="readout"><div class="rlabel">— Credited / Refunded</div><div class="rvalue" id="rma-out-credit-units" style="font-size:14px;">21 Units</div></div>
+          <hr class="divider">
+          <div class="readout"><div class="rlabel">Blended Cost per Returned Unit</div><div class="rvalue" id="rma-out-blended-cost">$132.75</div></div>
+          <div class="readout"><div class="rlabel">Total Warranty Reserve Required</div><div class="rvalue" id="rma-out-reserve" style="color:var(--red);">$55,755</div></div>
+          <div class="readout"><div class="rlabel">Existing Reserve Balance</div><div class="rvalue" id="rma-out-balance">$0</div></div>
+          <div class="readout"><div class="rlabel">Reserve Coverage Gap (Shortfall / Surplus)</div><div class="rvalue" id="rma-out-gap" style="color:var(--red);">-$55,755</div></div>
+        </div>
+        <div class="panel">
+          <h2 style="color: var(--amber);">⚠️ Disposition &amp; Reserve Flags</h2>
+          <ul id="rma-risk-list" class="risk-list"></ul>
         </div>
       </div>
     </div>
@@ -1044,15 +1127,38 @@
       <p style="color:var(--text-mid); margin-bottom:20px;">Evaluate drop-in component replacements for obsolescence or cost reduction.</p>
       <div class="grid">
         <div class="panel">
+          <h2>Substitute / Alternate Part Identification</h2>
+          <div class="field"><label>Original (Obsolete) Part Number</label><input type="text" id="fff-orig-pn" placeholder="e.g. TPS54331DR" oninput="calculateFFF()"></div>
+          <div class="field"><label>Proposed Substitute Part Number</label><input type="text" id="fff-sub-pn" placeholder="e.g. TPS54331DR-EQ1" oninput="calculateFFF()"></div>
+          <div class="field"><label>Substitute Manufacturer</label><input type="text" id="fff-sub-mfr" placeholder="e.g. Texas Instruments" oninput="calculateFFF()"></div>
+          <div class="field"><label>Substitute Source</label>
+            <select id="fff-sub-source" onchange="calculateFFF()">
+              <option value="authorized">Authorized / Franchised Distributor</option>
+              <option value="oem">OEM Direct (Manufacturer)</option>
+              <option value="franchised-broker">Franchised Broker</option>
+              <option value="independent-broker">Independent / Open-Market Broker</option>
+              <option value="recycled">Recycled / Pulls / Salvage</option>
+              <option value="unknown">Unknown / Not Yet Verified</option>
+            </select>
+          </div>
+          <div class="field"><label>Substitution Notes / Justification</label><textarea id="fff-sub-notes" style="height:80px;" placeholder="Why this substitute, any known caveats, test coverage planned..." oninput="calculateFFF()"></textarea></div>
+        </div>
+        <div class="panel">
           <h2>Qualification Criteria</h2>
           <div class="field"><label>Form / Mechanical Fit Match?</label><select id="fff-1" onchange="calculateFFF()"><option value="1">Match (Yes)</option><option value="0">Mismatch (No)</option></select></div>
           <div class="field"><label>Fit / Electrical Pinout &amp; Spec Match?</label><select id="fff-2" onchange="calculateFFF()"><option value="1">Match (Yes)</option><option value="0">Mismatch (No)</option></select></div>
           <div class="field"><label>Function / Software &amp; Protocol Match?</label><select id="fff-3" onchange="calculateFFF()"><option value="1">Match (Yes)</option><option value="0">Mismatch (No)</option></select></div>
-        </div>
-        <div class="panel">
-          <h2>Qualification Status</h2>
+          <hr class="divider">
+          <h2 style="margin-top:15px;">Qualification Status</h2>
           <div class="readout"><div class="rlabel">FFF Compatibility Status</div><div class="rvalue" id="fff-out-status" style="color:var(--green);">DROP-IN REPLACEMENT</div></div>
           <div class="readout"><div class="rlabel">Re-qualification Burden</div><div class="rvalue" id="fff-out-burden">LOW (Minor Testing)</div></div>
+          <div class="readout"><div class="rlabel">Sourcing Risk</div><div class="rvalue" id="fff-out-sourcing-risk" style="color:var(--green);">LOW (Traceable Supply Chain)</div></div>
+        </div>
+      </div>
+      <div class="grid" style="margin-top:20px;">
+        <div class="panel">
+          <h2 style="color: var(--amber);">⚠️ Qualification &amp; Sourcing Flags</h2>
+          <ul id="fff-risk-list" class="risk-list"></ul>
         </div>
       </div>
     </div>
@@ -2305,19 +2411,77 @@ function calculateFPY() {
 function calculateRMA() {
   const units = parseFloat(document.getElementById('rma-units').value) || 0;
   const rate = (parseFloat(document.getElementById('rma-rate').value) || 0) / 100;
-  const cost = parseFloat(document.getElementById('rma-cost').value) || 0;
+  const warrantyMonths = parseFloat(document.getElementById('rma-warranty-months').value) || 0;
+  const warrantyType = document.getElementById('rma-warranty-type').value;
+  const reserveBalance = parseFloat(document.getElementById('rma-reserve-balance').value) || 0;
+
+  const repairPct = (parseFloat(document.getElementById('rma-disp-repair-pct').value) || 0) / 100;
+  const repairCost = parseFloat(document.getElementById('rma-disp-repair-cost').value) || 0;
+  const scrapPct = (parseFloat(document.getElementById('rma-disp-scrap-pct').value) || 0) / 100;
+  const scrapCost = parseFloat(document.getElementById('rma-disp-scrap-cost').value) || 0;
+  const replacePct = (parseFloat(document.getElementById('rma-disp-replace-pct').value) || 0) / 100;
+  const replaceCost = parseFloat(document.getElementById('rma-disp-replace-cost').value) || 0;
+  const creditPct = (parseFloat(document.getElementById('rma-disp-credit-pct').value) || 0) / 100;
+  const creditCost = parseFloat(document.getElementById('rma-disp-credit-cost').value) || 0;
+
+  const pctTotal = (repairPct + scrapPct + replacePct + creditPct) * 100;
 
   const returnedUnits = units * rate;
-  const totalReserve = returnedUnits * cost;
+  const repairUnits = returnedUnits * repairPct;
+  const scrapUnits = returnedUnits * scrapPct;
+  const replaceUnits = returnedUnits * replacePct;
+  const creditUnits = returnedUnits * creditPct;
+
+  const totalReserve = (repairUnits * repairCost) + (scrapUnits * scrapCost) + (replaceUnits * replaceCost) + (creditUnits * creditCost);
+  const blendedCost = returnedUnits > 0 ? (totalReserve / returnedUnits) : 0;
+  const coverageGap = totalReserve - reserveBalance;
 
   document.getElementById('rma-out-units').innerText = Math.round(returnedUnits).toLocaleString() + ' Units';
+  document.getElementById('rma-out-repair-units').innerText = Math.round(repairUnits).toLocaleString() + ' Units';
+  document.getElementById('rma-out-scrap-units').innerText = Math.round(scrapUnits).toLocaleString() + ' Units';
+  document.getElementById('rma-out-replace-units').innerText = Math.round(replaceUnits).toLocaleString() + ' Units';
+  document.getElementById('rma-out-credit-units').innerText = Math.round(creditUnits).toLocaleString() + ' Units';
+  document.getElementById('rma-out-blended-cost').innerText = '$' + blendedCost.toFixed(2);
   document.getElementById('rma-out-reserve').innerText = '$' + Math.round(totalReserve).toLocaleString();
+  document.getElementById('rma-out-balance').innerText = '$' + Math.round(reserveBalance).toLocaleString();
+
+  const gapEl = document.getElementById('rma-out-gap');
+  gapEl.innerText = (coverageGap <= 0 ? '+$' : '-$') + Math.abs(Math.round(coverageGap)).toLocaleString();
+  gapEl.style.color = coverageGap <= 0 ? 'var(--green)' : 'var(--red)';
+
+  const flags = [];
+  if (Math.abs(pctTotal - 100) > 0.5) {
+    flags.push(`<strong>Disposition Mix Doesn't Total 100% (currently ${pctTotal.toFixed(1)}%):</strong> Repair, scrap, replace, and credit percentages should add up to 100% of expected returns, or the reserve estimate below will under- or over-state liability.`);
+  }
+  if (coverageGap > 0) {
+    flags.push(`<strong>Warranty Reserve Underfunded by $${Math.round(coverageGap).toLocaleString()}:</strong> The existing reserve balance doesn't cover the modeled liability for this deployment. Consider increasing the accrual rate or reserve balance.`);
+  }
+  if (warrantyType === 'extended') {
+    flags.push(`<strong>Extended / Paid Warranty Selected:</strong> Confirm whether the cost basis above reflects post-warranty billable repairs, or if this population is still under the original no-charge term.`);
+  }
+  if (scrapPct > 0.4) {
+    flags.push(`<strong>High Scrap Rate (${Math.round(scrapPct*100)}%):</strong> A large share of returns are being written off rather than repaired or replaced — worth investigating whether this reflects a design defect, a repair-cost threshold, or a no-fault-found policy.`);
+  }
+  if (warrantyMonths > 0 && rate > 0 && warrantyMonths < 6) {
+    flags.push(`<strong>Short Warranty Term (${warrantyMonths} Months):</strong> Field failures reported this early in a short warranty window often indicate an infant-mortality or process escape issue rather than normal wear-out.`);
+  }
+
+  const riskList = document.getElementById('rma-risk-list');
+  riskList.innerHTML = '';
+  if (flags.length === 0) {
+    riskList.innerHTML = '<li>No disposition or reserve flags at current inputs.</li>';
+  } else {
+    flags.forEach(f => { const li = document.createElement('li'); li.innerHTML = f; riskList.appendChild(li); });
+  }
 }
 
 function calculateFFF() {
   const f1 = parseInt(document.getElementById('fff-1').value);
   const f2 = parseInt(document.getElementById('fff-2').value);
   const f3 = parseInt(document.getElementById('fff-3').value);
+  const origPN = document.getElementById('fff-orig-pn').value.trim();
+  const subPN = document.getElementById('fff-sub-pn').value.trim();
+  const subSource = document.getElementById('fff-sub-source').value;
 
   const total = f1 + f2 + f3;
   const statusEl = document.getElementById('fff-out-status');
@@ -2335,6 +2499,124 @@ function calculateFFF() {
     statusEl.innerText = "INCOMPATIBLE";
     statusEl.style.color = "var(--red)";
     burdenEl.innerText = "HIGH (Major Re-architecture)";
+  }
+
+  const sourceRiskMap = {
+    'authorized':         { label: 'LOW (Traceable Supply Chain)', color: 'var(--green)' },
+    'oem':                { label: 'LOW (Traceable Supply Chain)', color: 'var(--green)' },
+    'franchised-broker':  { label: 'MODERATE (Verify Certs of Conformance)', color: 'var(--amber)' },
+    'independent-broker': { label: 'ELEVATED (Counterfeit Risk — Require Lot Traceability)', color: 'var(--amber)' },
+    'recycled':           { label: 'HIGH (Counterfeit/Reliability Risk — Incoming Inspection Required)', color: 'var(--red)' },
+    'unknown':            { label: 'HIGH (Source Not Verified)', color: 'var(--red)' }
+  };
+  const sourcingRiskEl = document.getElementById('fff-out-sourcing-risk');
+  const sourceRisk = sourceRiskMap[subSource] || sourceRiskMap['unknown'];
+  sourcingRiskEl.innerText = sourceRisk.label;
+  sourcingRiskEl.style.color = sourceRisk.color;
+
+  const flags = [];
+  if (!origPN || !subPN) {
+    flags.push(`<strong>Part Numbers Not Captured:</strong> Record both the original/obsolete part number and the proposed substitute part number so this qualification is traceable in BOM and ECO records.`);
+  }
+  if (subSource === 'independent-broker' || subSource === 'recycled' || subSource === 'unknown') {
+    flags.push(`<strong>Elevated Sourcing Risk:</strong> This substitute source carries meaningful counterfeit or traceability risk. Require certificate of conformance, date/lot code verification, and incoming inspection (or third-party lab testing for critical parts) before release to production.`);
+  }
+  if (total < 3 && (subSource === 'independent-broker' || subSource === 'recycled' || subSource === 'unknown')) {
+    flags.push(`<strong>Compounding Risk:</strong> This part both fails full FFF match and carries elevated sourcing risk — treat as a full requalification, not a drop-in swap.`);
+  }
+
+  const riskList = document.getElementById('fff-risk-list');
+  riskList.innerHTML = '';
+  if (flags.length === 0) {
+    riskList.innerHTML = '<li>No qualification or sourcing flags at current inputs.</li>';
+  } else {
+    flags.forEach(f => { const li = document.createElement('li'); li.innerHTML = f; riskList.appendChild(li); });
+  }
+}
+
+function calculateBudgetKPI() {
+  const scopedBudget = parseFloat(document.getElementById('bk-scoped-budget').value) || 0;
+  const actualSpend = parseFloat(document.getElementById('bk-actual-spend').value) || 0;
+  const monthsElapsed = parseFloat(document.getElementById('bk-months-elapsed').value) || 0;
+  const monthsTotal = parseFloat(document.getElementById('bk-months-total').value) || 0;
+
+  const opexBudget = parseFloat(document.getElementById('bk-opex-budget').value) || 0;
+  const opexActual = parseFloat(document.getElementById('bk-opex-actual').value) || 0;
+  const revPrior = parseFloat(document.getElementById('bk-rev-prior').value) || 0;
+  const revCurrent = parseFloat(document.getElementById('bk-rev-current').value) || 0;
+  const forecastAmt = parseFloat(document.getElementById('bk-forecast-amt').value) || 0;
+  const forecastActual = parseFloat(document.getElementById('bk-forecast-actual').value) || 0;
+
+  const variance = scopedBudget - actualSpend;
+  const variancePct = scopedBudget > 0 ? (variance / scopedBudget) * 100 : 0;
+  const remaining = scopedBudget - actualSpend;
+  const burnRate = monthsElapsed > 0 ? (actualSpend / monthsElapsed) : 0;
+  const projectedTotal = burnRate * monthsTotal;
+  const projectedVariance = scopedBudget - projectedTotal;
+  const costVariance = opexBudget - opexActual;
+  const revenueGrowth = revPrior > 0 ? ((revCurrent - revPrior) / revPrior) * 100 : 0;
+  const forecastAccuracy = forecastAmt > 0 ? Math.max(0, 100 - (Math.abs(forecastActual - forecastAmt) / forecastAmt) * 100) : 0;
+
+  const varDollarEl = document.getElementById('bk-out-variance-dollar');
+  varDollarEl.innerText = (variance >= 0 ? '+$' : '-$') + Math.abs(Math.round(variance)).toLocaleString();
+  varDollarEl.style.color = variance >= 0 ? 'var(--green)' : 'var(--red)';
+
+  const varPctEl = document.getElementById('bk-out-variance-pct');
+  varPctEl.innerText = (variancePct >= 0 ? '+' : '') + variancePct.toFixed(1) + '%';
+  varPctEl.style.color = variancePct >= 0 ? 'var(--green)' : 'var(--red)';
+
+  document.getElementById('bk-out-remaining').innerText = '$' + Math.round(remaining).toLocaleString();
+  document.getElementById('bk-out-burn-rate').innerText = '$' + Math.round(burnRate).toLocaleString();
+  document.getElementById('bk-out-projected-total').innerText = '$' + Math.round(projectedTotal).toLocaleString();
+
+  const projVarEl = document.getElementById('bk-out-projected-variance');
+  projVarEl.innerText = (projectedVariance >= 0 ? '+$' : '-$') + Math.abs(Math.round(projectedVariance)).toLocaleString();
+  projVarEl.style.color = projectedVariance >= 0 ? 'var(--green)' : 'var(--red)';
+
+  const costVarEl = document.getElementById('bk-out-cost-variance');
+  costVarEl.innerText = (costVariance >= 0 ? '+$' : '-$') + Math.abs(Math.round(costVariance)).toLocaleString();
+  costVarEl.style.color = costVariance >= 0 ? 'var(--green)' : 'var(--red)';
+
+  const revGrowthEl = document.getElementById('bk-out-revenue-growth');
+  revGrowthEl.innerText = (revenueGrowth >= 0 ? '+' : '') + revenueGrowth.toFixed(1) + '%';
+  revGrowthEl.style.color = revenueGrowth >= 0 ? 'var(--green)' : 'var(--red)';
+
+  const forecastAccEl = document.getElementById('bk-out-forecast-accuracy');
+  forecastAccEl.innerText = forecastAccuracy.toFixed(1) + '%';
+  forecastAccEl.style.color = forecastAccuracy >= 90 ? 'var(--green)' : (forecastAccuracy >= 75 ? 'var(--amber)' : 'var(--red)');
+
+  document.getElementById('bk-val-variance-pct').innerText = (variancePct >= 0 ? '+' : '') + variancePct.toFixed(1) + '%';
+  document.getElementById('bk-dot-variance').style.background = variancePct >= 0 ? 'var(--green)' : (variancePct >= -10 ? 'var(--amber)' : 'var(--red)');
+
+  document.getElementById('bk-val-burn').innerText = '$' + Math.round(burnRate).toLocaleString();
+  document.getElementById('bk-dot-burn').style.background = projectedVariance >= 0 ? 'var(--green)' : (projectedVariance >= -scopedBudget * 0.1 ? 'var(--amber)' : 'var(--red)');
+
+  document.getElementById('bk-val-forecast').innerText = forecastAccuracy.toFixed(1) + '%';
+  document.getElementById('bk-dot-forecast').style.background = forecastAccuracy >= 90 ? 'var(--green)' : (forecastAccuracy >= 75 ? 'var(--amber)' : 'var(--red)');
+
+  const flags = [];
+  if (variancePct < 0) {
+    flags.push(`<strong>Over Budget by ${Math.abs(variancePct).toFixed(1)}%:</strong> Actual spend to date has already exceeded the scoped budget. Reforecast remaining scope or request a budget change.`);
+  }
+  if (projectedVariance < 0 && monthsElapsed > 0) {
+    flags.push(`<strong>Projected Overrun at Completion:</strong> At the current burn rate of $${Math.round(burnRate).toLocaleString()}/month, total spend is trending to $${Math.round(projectedTotal).toLocaleString()} against a $${Math.round(scopedBudget).toLocaleString()} scoped budget — a projected overrun of $${Math.abs(Math.round(projectedVariance)).toLocaleString()}.`);
+  }
+  if (costVariance < 0) {
+    flags.push(`<strong>Operating Expense Over Budget:</strong> Actual opex ($${Math.round(opexActual).toLocaleString()}) exceeded the budgeted amount ($${Math.round(opexBudget).toLocaleString()}) for this period.`);
+  }
+  if (forecastAccuracy < 75 && forecastAmt > 0) {
+    flags.push(`<strong>Low Forecast Accuracy (${forecastAccuracy.toFixed(1)}%):</strong> The prior forecast deviated significantly from actuals — revisit forecasting assumptions or inputs before relying on the next projection.`);
+  }
+  if (revenueGrowth < 0) {
+    flags.push(`<strong>Revenue Declined ${Math.abs(revenueGrowth).toFixed(1)}% Period-over-Period:</strong> Confirm whether budget assumptions tied to revenue growth still hold.`);
+  }
+
+  const riskList = document.getElementById('bk-risk-list');
+  riskList.innerHTML = '';
+  if (flags.length === 0) {
+    riskList.innerHTML = '<li>No budget flags at current inputs.</li>';
+  } else {
+    flags.forEach(f => { const li = document.createElement('li'); li.innerHTML = f; riskList.appendChild(li); });
   }
 }
 
@@ -2366,7 +2648,20 @@ function exportCSV() {
     ["Custom Part", "Effective Unit Price", document.getElementById('out-effective-unit').innerText],
     ["EVM", "CPI", document.getElementById('val-cpi').innerText],
     ["EVM", "SPI", document.getElementById('val-spi').innerText],
-    ["EOQ", "Reorder Point (ROP)", document.getElementById('eoq-out-rop').innerText]
+    ["EOQ", "Reorder Point (ROP)", document.getElementById('eoq-out-rop').innerText],
+    ["Budget KPI", "Budget Variance ($)", document.getElementById('bk-out-variance-dollar').innerText],
+    ["Budget KPI", "Budget Variance (%)", document.getElementById('bk-out-variance-pct').innerText],
+    ["Budget KPI", "Remaining Budget", document.getElementById('bk-out-remaining').innerText],
+    ["Budget KPI", "Burn Rate ($/Month)", document.getElementById('bk-out-burn-rate').innerText],
+    ["Budget KPI", "Cost Variance — Opex", document.getElementById('bk-out-cost-variance').innerText],
+    ["Budget KPI", "Revenue Growth Rate", document.getElementById('bk-out-revenue-growth').innerText],
+    ["Budget KPI", "Forecast Accuracy", document.getElementById('bk-out-forecast-accuracy').innerText],
+    ["RMA & Warranty", "Expected Returned Units", document.getElementById('rma-out-units').innerText],
+    ["RMA & Warranty", "Blended Cost per Returned Unit", document.getElementById('rma-out-blended-cost').innerText],
+    ["RMA & Warranty", "Total Warranty Reserve Required", document.getElementById('rma-out-reserve').innerText],
+    ["RMA & Warranty", "Reserve Coverage Gap", document.getElementById('rma-out-gap').innerText],
+    ["FFF Qualifier", "Compatibility Status", document.getElementById('fff-out-status').innerText],
+    ["FFF Qualifier", "Sourcing Risk", document.getElementById('fff-out-sourcing-risk').innerText]
   ];
 
   let csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
@@ -2406,6 +2701,7 @@ window.onload = function() {
   calculateEVM();
   calculateEOQ();
   calculateFPY();
+  calculateBudgetKPI();
   calculateRMA();
   calculateFFF();
   calculateLTB();
