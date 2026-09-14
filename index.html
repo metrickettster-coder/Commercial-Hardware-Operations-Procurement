@@ -4,6 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Commercial Hardware Lifecycle &amp; Procurement Suite</title>
+<script>
+  (function() {
+    try {
+      if (localStorage.getItem('hoas-theme') === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    } catch (e) {}
+  })();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -30,6 +39,20 @@
     --red:        #d9584f;
     --focus:      #6fb3ff;
     --radius:     8px;
+  }
+
+  html[data-theme="light"]{
+    --ink:        #f4f6f9;
+    --panel:      #ffffff;
+    --panel-2:    #eef1f6;
+    --grid-line:  #d7dee8;
+    --text-hi:    #16202e;
+    --text-mid:   #45566b;
+    --text-dim:   #7c8ba1;
+    --amber:      #9c6a0f;
+    --green:      #1f7a52;
+    --red:        #c1443b;
+    --focus:      #2f6fb0;
   }
 
   *{ box-sizing:border-box; }
@@ -156,6 +179,7 @@
       <span class="name">Hardware Operations Analytics Suite</span>
     </div>
     <div class="export-controls">
+      <button class="btn-export" id="themeToggleBtn" onclick="toggleTheme()">☀️ Light Mode</button>
       <button class="btn-export" onclick="exportCSV()">📥 Export CSV Data</button>
       <button class="btn-export" onclick="exportPDF()">📄 Export PDF Report</button>
     </div>
@@ -4352,6 +4376,25 @@ function compareQuotes() {
   statusEl.style.color = 'var(--text-mid)';
 }
 
+// --- LIGHT/DARK THEME TOGGLE ---
+function initTheme() {
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  const btn = document.getElementById('themeToggleBtn');
+  if (btn) btn.innerHTML = isLight ? '🌙 Dark Mode' : '☀️ Light Mode';
+}
+
+function toggleTheme() {
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+  if (isLight) {
+    document.documentElement.removeAttribute('data-theme');
+    try { localStorage.setItem('hoas-theme', 'dark'); } catch (e) {}
+  } else {
+    document.documentElement.setAttribute('data-theme', 'light');
+    try { localStorage.setItem('hoas-theme', 'light'); } catch (e) {}
+  }
+  initTheme();
+}
+
 // --- EXPORT FUNCTIONALITY ---
 function exportCSV() {
   const rows = [
@@ -4473,6 +4516,7 @@ window.onload = function() {
   addCapexOpexRow({ desc: 'Raw material / BOM spend', amount: 540000, cls: 'OpEx', type: 'Direct' });
 
   initMultiQuoteUpload();
+  initTheme();
 };
 </script>
   <button class="feedback-fab" onclick="openFeedback()">💬 Feedback</button>
