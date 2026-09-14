@@ -501,6 +501,15 @@
               <select id="eco-sot" onchange="calculateECO()"><option value="no">No — single source of truth</option><option value="yes">Yes — data lives in more than one place</option><option value="unknown">Not Sure</option></select>
             </div>
             <div class="field">
+              <label>If Sub-Tier (Tier 2+) Suppliers Are Involved, Has This Change Been Flowed Down to Them?</label>
+              <select id="eco-subtier" onchange="calculateECO()">
+                <option value="na">Not applicable — no sub-tier suppliers involved</option>
+                <option value="yes">Yes, confirmed flowed down</option>
+                <option value="no">No, or unclear whether it reached them</option>
+                <option value="unknown">Not Sure</option>
+              </select>
+            </div>
+            <div class="field">
               <label>Involves Batteries or Energy Storage Components?</label>
               <select id="eco-battery" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select>
               <p style="font-size:11px; color:var(--text-dim); margin-top:4px;">Applies on top of whatever program type is selected above — a battery change on a defense or medical program carries both sets of requirements, not one or the other.</p>
@@ -557,8 +566,10 @@
             <div id="eco-reg-medical">
               <p style="font-size:11px; color:var(--text-dim); margin-bottom:10px;">Medical Device (FDA / ISO 13485)</p>
               <div class="field"><label>Triggers IEC 60601 (or Equivalent) Re-Testing?</label><select id="eco-iec60601" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label>Involves an AI/Algorithm Update That Could Shift Classification or Intended Use?</label><select id="eco-ai-classification" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
               <div class="field"><label>Requires New 510(k)/PMA Supplement or a Letter to File?</label><select id="eco-510k" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
               <div class="field"><label>Affects UDI/Labeling or ISO 13485 Design-Change Control?</label><select id="eco-udi" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label>If UDI/Labeling Is Affected, Is It Clear Whether Manufacturer or Brand Owner Is Responsible for the Update?</label><select id="eco-udi-ownership" onchange="calculateECO()"><option value="na">Not applicable</option><option value="clear">Clear</option><option value="ambiguous">Ambiguous between parties</option><option value="unknown">Not Sure</option></select></div>
             </div>
 
             <div id="eco-reg-datacenter">
@@ -629,6 +640,7 @@
             <div id="eco-reg-automotive">
               <p style="font-size:11px; color:var(--text-dim); margin-bottom:10px;">Automotive (IATF 16949 / FMVSS / ISO 26262)</p>
               <div class="field"><label>Requires PPAP Re-Submission (IATF 16949)?</label><select id="eco-ppap" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label>Are Critical/Special Characteristics for the Affected Feature Clearly Defined by the Customer?</label><select id="eco-cc-sc" onchange="calculateECO()"><option value="defined">Yes, clearly defined</option><option value="undefined">No — undefined or ambiguous</option><option value="unknown">Not Sure</option></select></div>
               <div class="field"><label>Affects Functional Safety Classification (ISO 26262) — Re-Assessment Needed?</label><select id="eco-iso26262" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
               <div class="field"><label>Affects FMVSS Compliance?</label><select id="eco-fmvss" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
               <div class="field"><label>Affects Emissions-Related Components (EPA/CARB)?</label><select id="eco-emissions" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
@@ -1457,6 +1469,7 @@ function calculateECO() {
   const eol = (document.getElementById('eco-eol') || {}).value || 'no';
   const singleSource = (document.getElementById('eco-singlesource') || {}).value || 'none';
   const sot = (document.getElementById('eco-sot') || {}).value || 'no';
+  const subtier = (document.getElementById('eco-subtier') || {}).value || 'na';
 
   // Starting weights — tune these as you test the tool against real changes you've seen.
   let score = 2; // baseline for any Class I change
@@ -1513,6 +1526,16 @@ function calculateECO() {
     score += sot === 'yes' ? 1 : 1;
     flags.push(`<strong>${sot === 'unknown' ? 'Source-of-Truth Status — Not Sure' : 'No Single Source of Truth'}:</strong> ${sot === 'unknown' ? 'Not confirmed whether data lives in one place or several.' + unknownNote : 'Data for this change lives across more than one system (PLM/ERP/spreadsheets). Expect a higher chance of a missed update somewhere downstream.'}`);
     questions.push(`Identify every system that needs to reflect this change (PLM, ERP, MES, spreadsheets) and assign one owner to confirm each is updated before closure.`);
+  }
+
+  if (subtier === 'no') {
+    score += 3;
+    flags.push(`<strong>Sub-Tier Flow-Down Gap:</strong> This change may not have actually reached Tier 2+ suppliers — a change confirmed at your direct supplier doesn't guarantee it reached who's actually making the affected part.`);
+    questions.push(`Confirm directly with your Tier 1 supplier that this change has been flowed down to and acknowledged by any sub-tier suppliers involved, don't assume it happened.`);
+  } else if (subtier === 'unknown') {
+    score += 1;
+    flags.push(`<strong>Sub-Tier Flow-Down — Not Sure:</strong>${unknownNote}`);
+    questions.push(`Find out whether sub-tier suppliers are involved at all, and if so, whether this change has actually reached them.`);
   }
 
   if (batteryFlag !== 'no') {
@@ -1680,12 +1703,19 @@ function calculateECO() {
     }
   } else if (programType === 'medical') {
     const iec = (document.getElementById('eco-iec60601') || {}).value || 'no';
+    const aiClassification = (document.getElementById('eco-ai-classification') || {}).value || 'no';
     const filing510k = (document.getElementById('eco-510k') || {}).value || 'no';
     const udi = (document.getElementById('eco-udi') || {}).value || 'no';
+    const udiOwnership = (document.getElementById('eco-udi-ownership') || {}).value || 'na';
     if (iec !== 'no') {
       score += iec === 'yes' ? 3 : 2;
       flags.push(`<strong>IEC 60601 Re-Testing${iec === 'unknown' ? ' — Not Sure' : ' Triggered'}:</strong> Medical safety/EMC testing may be required before this change can ship.${iec === 'unknown' ? unknownNote : ''}`);
       questions.push(`Confirm with Regulatory/Quality whether prior test data covers this change or new testing is required.`);
+    }
+    if (aiClassification !== 'no') {
+      score += aiClassification === 'yes' ? 4 : 2;
+      flags.push(`<strong>AI/Algorithm Update — Classification Impact${aiClassification === 'unknown' ? ' — Not Sure' : ''}:</strong> An algorithm change can shift a device outside its originally approved intended use or classification even without any hardware change — this is easy to miss because nothing physical changed.${aiClassification === 'unknown' ? unknownNote : ''}`);
+      questions.push(`Confirm with Regulatory Affairs whether this algorithm update stays within the originally cleared intended use, or whether it constitutes a new device requiring its own submission.`);
     }
     if (filing510k !== 'no') {
       score += filing510k === 'yes' ? 4 : 2;
@@ -1696,6 +1726,15 @@ function calculateECO() {
       score += udi === 'yes' ? 2 : 1;
       flags.push(`<strong>UDI/Labeling or ISO 13485 Design-Change Impact${udi === 'unknown' ? ' — Not Sure' : ''}:</strong> Labeling and design-change-control records may need updating in step with this change.${udi === 'unknown' ? unknownNote : ''}`);
       questions.push(`Confirm with Regulatory/Quality whether UDI or labeling needs updating and that the ISO 13485 design-change record is being kept current.`);
+    }
+    if (udiOwnership === 'ambiguous') {
+      score += 3;
+      flags.push(`<strong>UDI Responsibility Ambiguous:</strong> It's unclear whether the Manufacturer or Brand Owner is responsible for this UDI/labeling update — the same "nobody's clearly accountable" pattern that causes BOM ownership problems, just showing up in regulatory responsibility instead.`);
+      questions.push(`Get explicit written confirmation of which party — Manufacturer or Brand Owner — owns this specific UDI update before assuming it's handled.`);
+    } else if (udiOwnership === 'unknown') {
+      score += 1;
+      flags.push(`<strong>UDI Responsibility — Not Sure:</strong>${unknownNote}`);
+      questions.push(`Determine whether Manufacturer/Brand Owner responsibility for this UDI update has even been discussed.`);
     }
   } else if (programType === 'datacenter') {
     const planning = (document.getElementById('eco-dc-planning') || {}).value || 'planned';
@@ -1818,6 +1857,7 @@ function calculateECO() {
     }
   } else if (programType === 'automotive') {
     const ppap = (document.getElementById('eco-ppap') || {}).value || 'no';
+    const ccsc = (document.getElementById('eco-cc-sc') || {}).value || 'defined';
     const iso26262 = (document.getElementById('eco-iso26262') || {}).value || 'no';
     const fmvss = (document.getElementById('eco-fmvss') || {}).value || 'no';
     const emissions = (document.getElementById('eco-emissions') || {}).value || 'no';
@@ -1825,6 +1865,11 @@ function calculateECO() {
       score += ppap === 'yes' ? 3 : 2;
       flags.push(`<strong>PPAP Re-Submission Required (IATF 16949)${ppap === 'unknown' ? ' — Not Sure' : ''}:</strong> A new Production Part Approval Process submission can add real qualification time before parts can ship to an OEM.${ppap === 'unknown' ? unknownNote : ''}`);
       questions.push(`Confirm with Quality whether this change meets the customer's PPAP resubmission threshold.`);
+    }
+    if (ccsc !== 'defined') {
+      score += ccsc === 'undefined' ? 3 : 1;
+      flags.push(`<strong>Critical/Special Characteristic Status${ccsc === 'undefined' ? ' — Undefined' : ' — Not Sure'}:</strong> If it's not clear whether the affected feature is a Critical or Special Characteristic, you can't actually judge how much this change matters to the customer.${ccsc === 'unknown' ? unknownNote : ''}`);
+      questions.push(`Get explicit confirmation from the customer on CC/SC classification for the affected feature before treating this change as routine.`);
     }
     if (iso26262 !== 'no') {
       score += iso26262 === 'yes' ? 4 : 2;
