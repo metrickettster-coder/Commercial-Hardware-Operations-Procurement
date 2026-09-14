@@ -1166,19 +1166,103 @@
     <!-- EOL & LTB Planner -->
     <div id="tool-eol" class="tool-view">
       <h1>End-of-Life (EOL) &amp; Last Time Buy (LTB) Planner</h1>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Calculate required last-time-buy inventory to cover remaining product lifecycle service demand.</p>
+      <p style="color:var(--text-mid); margin-bottom:20px;">EOL and LTB are related but distinct disciplines — EOL manages the phase-out of what's already on hand (scrap risk), while LTB secures the final lifetime supply from the vendor (stockout risk). Plan both sides separately below.</p>
+
+      <div class="panel" style="margin-bottom:20px;">
+        <h2>Planning Strategy</h2>
+        <p style="color:var(--text-mid); font-size:0.85em; margin-bottom:10px;">Pick a posture and both sections below switch their default execution levers and accepted risk to match. You can still override any individual field after picking one.</p>
+        <div class="field">
+          <label>Strategy</label>
+          <select id="planning-strategy" onchange="applyPlanningStrategy()">
+            <option value="service">Service Level Optimization — protect fill rate, accept E&amp;O write-off risk</option>
+            <option value="cost">Cost Reduction Optimization — protect capital, accept stockout risk</option>
+          </select>
+        </div>
+      </div>
+
+      <h2 style="margin-top:0; color:var(--text-mid); font-size:13px; letter-spacing:0.08em; text-transform:uppercase;">End-of-Life (EOL) Phase-Out — Manage the Wind-Down, Minimize Stranded Inventory</h2>
       <div class="grid">
         <div class="panel">
-          <h2>Lifecycle Demand Parameters</h2>
-          <div class="field"><label>Remaining Active Product Life (Years)</label><input type="number" id="ltb-years" value="4" oninput="calculateLTB()"></div>
-          <div class="field"><label>Projected Annual Service &amp; Production Demand</label><input type="number" id="ltb-demand" value="1200" oninput="calculateLTB()"></div>
-          <div class="field"><label>Scrap / Obsolescence Buffer (%)</label><input type="number" id="ltb-buffer" value="15" oninput="calculateLTB()"></div>
-          <div class="field"><label>Part Unit Cost</label><div class="prefix-wrap"><span>$</span><input type="number" id="ltb-unitcost" value="42.00" oninput="calculateLTB()"></div></div>
+          <h2>Phase-Out Inventory &amp; Cost Inputs</h2>
+          <div class="field"><label>Current On-Hand Inventory (Units)</label><input type="number" id="eol-onhand" value="3000" min="0" oninput="calculateEOL()"></div>
+          <div class="field"><label>Average Monthly Sell-Through / Demand (Units)</label><input type="number" id="eol-runrate" value="250" min="0" oninput="calculateEOL()"></div>
+          <div class="field"><label>Demand-Shift Uplift from Promotions (Units/Month)</label><div class="hint">Incentivize customers to transition early so there's less old material left to scrap.</div><input type="number" id="eol-demand-shift" value="0" min="0" oninput="calculateEOL()"></div>
+          <div class="field"><label>Months Until Hard Cutoff / End-of-Support Date</label><input type="number" id="eol-months-to-cutoff" value="8" min="0" step="0.5" oninput="calculateEOL()"></div>
+          <div class="field"><label>Unit Book Value / Cost</label><div class="prefix-wrap"><span>$</span><input type="number" id="eol-unit-cost" value="42.00" oninput="calculateEOL()"></div></div>
+          <div class="field"><label>Holding Cost per Unit per Month</label><div class="prefix-wrap"><span>$</span><input type="number" id="eol-holding-cost" value="1.10" oninput="calculateEOL()"></div></div>
+          <div class="field"><label>Scrap / Disposal Recovery Value per Unit</label><div class="hint">Salvage value or secondary-market buyback that offsets the final write-off.</div><div class="prefix-wrap"><span>$</span><input type="number" id="eol-scrap-recovery" value="5.00" min="0" oninput="calculateEOL()"></div></div>
+          <div class="field"><label>Reverse Logistics Cost per Returned Unit</label><div class="prefix-wrap"><span>$</span><input type="number" id="eol-reverse-cost" value="8.00" min="0" oninput="calculateEOL()"></div></div>
+          <div class="field"><label>Expected Units Returned During Phase-Down</label><input type="number" id="eol-returns-units" value="60" min="0" oninput="calculateEOL()"></div>
+          <div class="field"><label>Inventory Allocation Policy</label>
+            <select id="eol-allocation-policy" onchange="calculateEOL()">
+              <option value="tiered">Fixed Allocation by Customer Tier/SLA — protect priority accounts</option>
+              <option value="fcfs">First-Come, First-Served — clear remaining stock quickly</option>
+            </select>
+          </div>
         </div>
         <div class="panel">
-          <h2>LTB Financial Allocation</h2>
-          <div class="readout"><div class="rlabel">Total LTB Unit Quantity Required</div><div class="rvalue" id="ltb-out-qty" style="color:var(--amber);">5,520 Units</div></div>
-          <div class="readout"><div class="rlabel">Total LTB Capital Commit</div><div class="rvalue" id="ltb-out-cost" style="color:var(--red);">$231,840</div></div>
+          <h2>Phase-Out KPIs &amp; Cost Exposure</h2>
+          <div class="readout"><div class="rlabel">Safety Stock Policy in Effect</div><div class="rvalue" id="eol-out-policy" style="font-size:14px;">Static (Full Strength Until Shutdown)</div></div>
+          <div class="readout"><div class="rlabel">Days of Supply (DOS) at Effective Run Rate</div><div class="rvalue" id="eol-out-dos">360 Days</div></div>
+          <div class="readout"><div class="rlabel">Projected Stranded Units at Cutoff</div><div class="rvalue" id="eol-out-stranded" style="color:var(--red);">1,000 Units</div></div>
+          <div class="readout"><div class="rlabel">Projected Service Level Through Cutoff</div><div class="rvalue" id="eol-out-service-level" style="color:var(--green);">100.0%</div></div>
+          <hr class="divider">
+          <div class="readout"><div class="rlabel">E&amp;O (Excess &amp; Obsolete) Write-off Exposure</div><div class="rvalue" id="eol-out-eo-cost" style="color:var(--red);">$37,000</div></div>
+          <div class="readout"><div class="rlabel">Total Holding Cost to Cutoff</div><div class="rvalue" id="eol-out-holding">$17,600</div></div>
+          <div class="readout"><div class="rlabel">Reverse Logistics Cost Projection</div><div class="rvalue" id="eol-out-reverse">$480</div></div>
+          <div class="readout"><div class="rlabel">Total EOL Phase-Out Cost Exposure</div><div class="rvalue" id="eol-out-total" style="color:var(--red);">$55,080</div></div>
+        </div>
+      </div>
+      <div class="grid" style="margin-top:20px;">
+        <div class="panel">
+          <h2 style="color: var(--amber);">⚠️ EOL Phase-Out Flags</h2>
+          <ul id="eol-risk-list" class="risk-list"></ul>
+        </div>
+      </div>
+
+      <h2 style="margin-top:30px; color:var(--text-mid); font-size:13px; letter-spacing:0.08em; text-transform:uppercase;">Last Time Buy (LTB) — Secure Final Lifetime Supply, Avoid Field Stockout</h2>
+      <div class="grid">
+        <div class="panel">
+          <h2>Lifetime Demand &amp; Purchase Inputs</h2>
+          <div class="field"><label>LTB Quantity Method</label>
+            <select id="ltb-method" onchange="calculateLTB()">
+              <option value="mtbf">Failure Rate (MTBF) + Insurance Buffer</option>
+              <option value="netdemand">Forecasted Demand − On-Hand Inventory (No Padding)</option>
+            </select>
+          </div>
+          <div class="field"><label>Remaining Service Life (Years)</label><input type="number" id="ltb-years" value="4" min="0" step="0.5" oninput="calculateLTB()"></div>
+          <div class="field"><label>Projected Annual Service &amp; Production Demand</label><input type="number" id="ltb-demand" value="1200" min="0" oninput="calculateLTB()"></div>
+          <div class="field"><label>Installed Base for Failure Modeling (Units in Field)</label><div class="hint">Used with MTBF, not the no-padding method.</div><input type="number" id="ltb-installed-base" value="15000" min="0" oninput="calculateLTB()"></div>
+          <div class="field"><label>MTBF — Mean Time Between Failures (Months)</label><input type="number" id="ltb-mtbf-months" value="96" min="1" oninput="calculateLTB()"></div>
+          <div class="field"><label>On-Hand Inventory to Net Against Order (Units)</label><div class="hint">Used with the no-padding method, not MTBF.</div><input type="number" id="ltb-onhand-net" value="500" min="0" oninput="calculateLTB()"></div>
+          <div class="field"><label>Insurance / Forecast Buffer (%)</label><div class="hint">"Last man standing" buffer against supplier yield issues on the final run — typically 10–20%. Applies only with the MTBF method.</div><input type="number" id="ltb-buffer" value="15" min="0" oninput="calculateLTB()"></div>
+          <div class="field"><label>Part Unit Cost (List Price)</label><div class="prefix-wrap"><span>$</span><input type="number" id="ltb-unitcost" value="42.00" oninput="calculateLTB()"></div></div>
+          <div class="field"><label>Volume Discount at LTB Quantity (%)</label><input type="number" id="ltb-discount" value="8" min="0" max="100" oninput="calculateLTB()"></div>
+          <div class="field"><label>Annual Holding Cost Rate (% of Unit Cost)</label><div class="hint">A discounted-future-value check: model 20–30% to see whether holding this part for years costs more than a later spot buy.</div><input type="number" id="ltb-holding-cost-pct" value="8" min="0" oninput="calculateLTB()"></div>
+          <div class="field"><label>Approved LTB Budget / Spend Limit</label><div class="prefix-wrap"><span>$</span><input type="number" id="ltb-budget" value="650000" min="0" oninput="calculateLTB()"></div></div>
+          <div class="field"><label>Target Service Fill Rate (%)</label><input type="number" id="ltb-target-fill" value="98" min="0" max="100" oninput="calculateLTB()"></div>
+          <div class="field"><label>Staggered Delivery Tranches</label><div class="hint">Negotiate multiple deliveries instead of taking 100% of cash and inventory on day one.</div><input type="number" id="ltb-tranches" value="1" min="1" step="1" oninput="calculateLTB()"></div>
+        </div>
+        <div class="panel">
+          <h2>LTB Financial &amp; Fill-Rate Outputs</h2>
+          <div class="readout"><div class="rlabel">Total Lifetime Demand Required</div><div class="rvalue" id="ltb-out-basedemand">4,944 Units</div></div>
+          <div class="readout"><div class="rlabel">Total LTB Unit Quantity to Order</div><div class="rvalue" id="ltb-out-qty" style="color:var(--amber);">5,686 Units</div></div>
+          <hr class="divider">
+          <div class="readout"><div class="rlabel">Pre-Discount Purchase Cost</div><div class="rvalue" id="ltb-out-precost">$238,812</div></div>
+          <div class="readout"><div class="rlabel">Volume Discount Savings</div><div class="rvalue" id="ltb-out-discount-savings" style="color:var(--green);">-$19,105</div></div>
+          <div class="readout"><div class="rlabel">Total LTB Capital Commit (Net of Discount)</div><div class="rvalue" id="ltb-out-cost" style="color:var(--red);">$219,707</div></div>
+          <div class="readout"><div class="rlabel">Cash Layout per Delivery Tranche</div><div class="rvalue" id="ltb-out-cash-per-tranche">$219,707</div></div>
+          <div class="readout"><div class="rlabel">Multi-Year Holding Cost Projection</div><div class="rvalue" id="ltb-out-holding">$39,802</div></div>
+          <div class="readout"><div class="rlabel">Total LTB Program Cost (Capital + Holding)</div><div class="rvalue" id="ltb-out-total-program" style="color:var(--red);">$259,509</div></div>
+          <hr class="divider">
+          <div class="readout"><div class="rlabel">Budget Utilization</div><div class="rvalue" id="ltb-out-budget-util" style="color:var(--amber);">103.8%</div></div>
+          <div class="readout"><div class="rlabel">Projected Service Fill Rate at Ordered Qty</div><div class="rvalue" id="ltb-out-fill-rate" style="color:var(--green);">115.0%</div></div>
+        </div>
+      </div>
+      <div class="grid" style="margin-top:20px;">
+        <div class="panel">
+          <h2 style="color: var(--amber);">⚠️ LTB Purchase Flags</h2>
+          <ul id="ltb-risk-list" class="risk-list"></ul>
         </div>
       </div>
     </div>
@@ -2620,18 +2704,186 @@ function calculateBudgetKPI() {
   }
 }
 
+function applyPlanningStrategy() {
+  const strategy = document.getElementById('planning-strategy').value;
+  const allocationSel = document.getElementById('eol-allocation-policy');
+  const methodSel = document.getElementById('ltb-method');
+  if (strategy === 'cost') {
+    allocationSel.value = 'fcfs';
+    methodSel.value = 'netdemand';
+  } else {
+    allocationSel.value = 'tiered';
+    methodSel.value = 'mtbf';
+  }
+  calculateEOL();
+  calculateLTB();
+}
+
+function calculateEOL() {
+  const onHand = parseFloat(document.getElementById('eol-onhand').value) || 0;
+  const baseRunRate = parseFloat(document.getElementById('eol-runrate').value) || 0;
+  const demandShift = parseFloat(document.getElementById('eol-demand-shift').value) || 0;
+  const runRate = baseRunRate + demandShift;
+  const monthsToCutoff = parseFloat(document.getElementById('eol-months-to-cutoff').value) || 0;
+  const unitCost = parseFloat(document.getElementById('eol-unit-cost').value) || 0;
+  const holdingCostPerUnitMonth = parseFloat(document.getElementById('eol-holding-cost').value) || 0;
+  const scrapRecovery = parseFloat(document.getElementById('eol-scrap-recovery').value) || 0;
+  const reverseCost = parseFloat(document.getElementById('eol-reverse-cost').value) || 0;
+  const returnsUnits = parseFloat(document.getElementById('eol-returns-units').value) || 0;
+  const strategy = document.getElementById('planning-strategy').value;
+  const allocationPolicy = document.getElementById('eol-allocation-policy').value;
+
+  const demandThroughCutoff = runRate * monthsToCutoff;
+  const strandedUnits = Math.max(0, onHand - demandThroughCutoff);
+  const serviceLevel = demandThroughCutoff > 0 ? Math.min(100, (onHand / demandThroughCutoff) * 100) : 100;
+
+  // Strategy sets the safety-stock policy: a cost-reduction posture burns stock down toward
+  // zero ahead of cutoff (lower holding cost, more stockout risk); a service-level posture
+  // holds the buffer at full strength through shutdown (higher holding cost, protects fill rate).
+  let avgOnHand;
+  if (strategy === 'cost') {
+    if (runRate <= 0 || monthsToCutoff <= 0) {
+      avgOnHand = onHand;
+    } else if (demandThroughCutoff <= onHand) {
+      avgOnHand = (onHand + strandedUnits) / 2;
+    } else {
+      const depletionMonths = onHand / runRate;
+      avgOnHand = (onHand / 2 * depletionMonths) / monthsToCutoff;
+    }
+  } else {
+    avgOnHand = onHand;
+  }
+
+  const eoCost = strandedUnits * Math.max(0, unitCost - scrapRecovery);
+  const holdingCost = avgOnHand * holdingCostPerUnitMonth * monthsToCutoff;
+  const reverseCostTotal = returnsUnits * reverseCost;
+  const totalExposure = eoCost + holdingCost + reverseCostTotal;
+
+  document.getElementById('eol-out-policy').innerText = strategy === 'cost'
+    ? 'Dynamic Step-Down (Burns to Zero Ahead of Cutoff)'
+    : 'Static (Full Strength Until Shutdown)';
+  document.getElementById('eol-out-dos').innerText = (runRate > 0 ? Math.round((onHand / runRate) * 30).toLocaleString() : '—') + (runRate > 0 ? ' Days' : '');
+  document.getElementById('eol-out-stranded').innerText = Math.round(strandedUnits).toLocaleString() + ' Units';
+  const svcEl = document.getElementById('eol-out-service-level');
+  svcEl.innerText = serviceLevel.toFixed(1) + '%';
+  svcEl.style.color = serviceLevel >= 98 ? 'var(--green)' : (serviceLevel >= 90 ? 'var(--amber)' : 'var(--red)');
+  document.getElementById('eol-out-eo-cost').innerText = '$' + Math.round(eoCost).toLocaleString();
+  document.getElementById('eol-out-holding').innerText = '$' + Math.round(holdingCost).toLocaleString();
+  document.getElementById('eol-out-reverse').innerText = '$' + Math.round(reverseCostTotal).toLocaleString();
+  document.getElementById('eol-out-total').innerText = '$' + Math.round(totalExposure).toLocaleString();
+
+  const flags = [];
+  if (strandedUnits > 0) {
+    flags.push(`<strong>Scrap Risk — ${Math.round(strandedUnits).toLocaleString()} Units Stranded:</strong> At the effective sell-through rate, this many units are projected to remain unsold at the hard cutoff date (E&amp;O exposure of $${Math.round(eoCost).toLocaleString()}). Consider a markdown, secondary-market sale, or accelerating the phase-out communication to customers.`);
+  }
+  if (serviceLevel < 98) {
+    flags.push(`<strong>Stockout Risk Before Cutoff:</strong> On-hand inventory will not fully cover demand through the hard cutoff date at the effective run rate (projected service level ${serviceLevel.toFixed(1)}%). Check whether a Last Time Buy order below is sized to backstop this tail demand.`);
+  }
+  if (returnsUnits > 0 && reverseCostTotal > eoCost * 0.25) {
+    flags.push(`<strong>Reverse Logistics Cost is a Significant Share of Exposure:</strong> Processing returns during phase-down is projected to cost $${Math.round(reverseCostTotal).toLocaleString()} — confirm the returns/RMA policy for this product doesn't extend meaningfully past the cutoff date.`);
+  }
+  if (demandShift > 0) {
+    flags.push(`<strong>Demand-Shift Promotion Modeled:</strong> Adding ${Math.round(demandShift).toLocaleString()} units/month of promotional uplift reduces stranded inventory and E&amp;O exposure above — confirm the discount cost of the promotion itself doesn't exceed the write-off it avoids.`);
+  }
+  if (strategy === 'cost') {
+    flags.push(`<strong>Dynamic Safety Stock Burn-Down (Cost-Reduction Strategy):</strong> Holding cost above reflects an aggressive step-down toward the cutoff date, which lowers E&amp;O exposure but increases the risk of running out before the hard cutoff if demand doesn't decline as forecast.`);
+  } else {
+    flags.push(`<strong>Static Safety Stock Policy (Service-Level Strategy):</strong> The full buffer is held at strength through shutdown per the selected strategy, which raises the holding cost above versus a dynamic step-down, in exchange for protecting fill rate through the cutoff.`);
+  }
+  if (allocationPolicy === 'tiered') {
+    flags.push(`<strong>Fixed Allocation by Customer Tier/SLA:</strong> Priority and high-margin accounts are protected with dedicated allocation — confirm lower-tier or spot-buy customers understand they may be shut out of remaining stock early.`);
+  } else {
+    flags.push(`<strong>First-Come, First-Served Allocation:</strong> Remaining stock clears quickly under this policy, but there's no guarantee your highest-priority or highest-margin customers receive an allocation before it runs out.`);
+  }
+
+  const riskList = document.getElementById('eol-risk-list');
+  riskList.innerHTML = '';
+  if (flags.length === 0) {
+    riskList.innerHTML = '<li>No phase-out flags at current inputs.</li>';
+  } else {
+    flags.forEach(f => { const li = document.createElement('li'); li.innerHTML = f; riskList.appendChild(li); });
+  }
+}
+
 function calculateLTB() {
+  const method = document.getElementById('ltb-method').value;
   const years = parseFloat(document.getElementById('ltb-years').value) || 0;
   const demand = parseFloat(document.getElementById('ltb-demand').value) || 0;
+  const installedBase = parseFloat(document.getElementById('ltb-installed-base').value) || 0;
+  const mtbfMonths = parseFloat(document.getElementById('ltb-mtbf-months').value) || 0;
+  const onHandNet = parseFloat(document.getElementById('ltb-onhand-net').value) || 0;
   const bufPct = (parseFloat(document.getElementById('ltb-buffer').value) || 0) / 100;
   const unitCost = parseFloat(document.getElementById('ltb-unitcost').value) || 0;
+  const discountPct = (parseFloat(document.getElementById('ltb-discount').value) || 0) / 100;
+  const holdingCostPct = (parseFloat(document.getElementById('ltb-holding-cost-pct').value) || 0) / 100;
+  const budget = parseFloat(document.getElementById('ltb-budget').value) || 0;
+  const targetFillPct = parseFloat(document.getElementById('ltb-target-fill').value) || 0;
+  const tranches = Math.max(1, parseFloat(document.getElementById('ltb-tranches').value) || 1);
 
-  const baseQty = years * demand;
-  const totalQty = baseQty * (1 + bufPct);
-  const totalCost = totalQty * unitCost;
+  let baseDemand, totalQty;
+  if (method === 'netdemand') {
+    baseDemand = years * demand;
+    totalQty = Math.max(0, baseDemand - onHandNet);
+  } else {
+    const failureDrivenAnnualDemand = mtbfMonths > 0 ? installedBase * (12 / mtbfMonths) : 0;
+    baseDemand = (years * demand) + (years * failureDrivenAnnualDemand);
+    totalQty = baseDemand * (1 + bufPct);
+  }
 
+  const preDiscountCost = totalQty * unitCost;
+  const discountSavings = preDiscountCost * discountPct;
+  const totalCost = preDiscountCost - discountSavings;
+  const cashPerTranche = totalCost / tranches;
+  const avgInventoryOverLife = totalQty / 2;
+  const holdingCostPerUnitYear = unitCost * holdingCostPct;
+  const holdingCostTotal = avgInventoryOverLife * holdingCostPerUnitYear * years;
+  const totalProgramCost = totalCost + holdingCostTotal;
+  const budgetUtilPct = budget > 0 ? (totalProgramCost / budget) * 100 : 0;
+  const fillRatePct = baseDemand > 0 ? (totalQty / baseDemand) * 100 : 100;
+
+  document.getElementById('ltb-out-basedemand').innerText = Math.round(baseDemand).toLocaleString() + ' Units';
   document.getElementById('ltb-out-qty').innerText = Math.round(totalQty).toLocaleString() + ' Units';
+  document.getElementById('ltb-out-precost').innerText = '$' + Math.round(preDiscountCost).toLocaleString();
+  document.getElementById('ltb-out-discount-savings').innerText = '-$' + Math.round(discountSavings).toLocaleString();
   document.getElementById('ltb-out-cost').innerText = '$' + Math.round(totalCost).toLocaleString();
+  document.getElementById('ltb-out-cash-per-tranche').innerText = '$' + Math.round(cashPerTranche).toLocaleString() + (tranches > 1 ? ` × ${tranches}` : '');
+  document.getElementById('ltb-out-holding').innerText = '$' + Math.round(holdingCostTotal).toLocaleString();
+  document.getElementById('ltb-out-total-program').innerText = '$' + Math.round(totalProgramCost).toLocaleString();
+
+  const budgetEl = document.getElementById('ltb-out-budget-util');
+  budgetEl.innerText = budgetUtilPct.toFixed(1) + '%';
+  budgetEl.style.color = budgetUtilPct <= 100 ? 'var(--green)' : (budgetUtilPct <= 110 ? 'var(--amber)' : 'var(--red)');
+
+  const fillEl = document.getElementById('ltb-out-fill-rate');
+  fillEl.innerText = fillRatePct.toFixed(1) + '%';
+  fillEl.style.color = fillRatePct >= targetFillPct ? 'var(--green)' : 'var(--red)';
+
+  const flags = [];
+  if (method === 'netdemand') {
+    flags.push(`<strong>Cost-Reduction Method Selected — No Forecast Padding:</strong> This order is sized to exactly forecasted demand minus on-hand inventory, with no insurance buffer. Financial risk accepted: potential stockout, missed revenue, or penalty fees if actual demand exceeds forecast, since this is a one-time buy with no re-order option.`);
+  } else {
+    flags.push(`<strong>Service-Level Method Selected — MTBF + Insurance Buffer:</strong> Sized to protect fill rate using failure-rate-driven demand plus a buffer. Financial risk accepted: if actual field failures run below the modeled MTBF, a meaningful share of this one-time buy may go unused and become an E&amp;O write-off at true end-of-life.`);
+  }
+  if (tranches <= 1 && totalCost > budget * 0.5 && budget > 0) {
+    flags.push(`<strong>Consider Staggered Delivery:</strong> This is a large one-time cash layout ($${Math.round(totalCost).toLocaleString()}). Negotiating multiple delivery tranches with the supplier spreads both the cash outlay and the inventory-obsolescence risk instead of taking 100% on day one.`);
+  }
+  if (budgetUtilPct > 100) {
+    flags.push(`<strong>Over Approved Budget by $${Math.round(totalProgramCost - budget).toLocaleString()} (${budgetUtilPct.toFixed(1)}% of budget):</strong> Request a budget increase, or reduce the forecast buffer / order quantity before placing this LTB order.`);
+  }
+  if (fillRatePct < targetFillPct) {
+    flags.push(`<strong>Projected Fill Rate Below Target:</strong> At ${fillRatePct.toFixed(1)}%, the ordered quantity falls short of the ${targetFillPct}% target service fill rate — increase the buffer or order quantity to reduce long-term field stockout risk, since this is a one-time purchase with no re-order option.`);
+  }
+  if (discountPct === 0) {
+    flags.push(`<strong>No Volume Discount Captured:</strong> A last-time buy is often the single largest order for this part in its lifecycle — confirm whether the supplier will offer volume pricing at this quantity before committing capital.`);
+  }
+
+  const riskList = document.getElementById('ltb-risk-list');
+  riskList.innerHTML = '';
+  if (flags.length === 0) {
+    riskList.innerHTML = '<li>No purchase flags at current inputs.</li>';
+  } else {
+    flags.forEach(f => { const li = document.createElement('li'); li.innerHTML = f; riskList.appendChild(li); });
+  }
 }
 
 // --- EXPORT FUNCTIONALITY ---
@@ -2661,7 +2913,12 @@ function exportCSV() {
     ["RMA & Warranty", "Total Warranty Reserve Required", document.getElementById('rma-out-reserve').innerText],
     ["RMA & Warranty", "Reserve Coverage Gap", document.getElementById('rma-out-gap').innerText],
     ["FFF Qualifier", "Compatibility Status", document.getElementById('fff-out-status').innerText],
-    ["FFF Qualifier", "Sourcing Risk", document.getElementById('fff-out-sourcing-risk').innerText]
+    ["FFF Qualifier", "Sourcing Risk", document.getElementById('fff-out-sourcing-risk').innerText],
+    ["EOL Phase-Out", "Projected Stranded Units", document.getElementById('eol-out-stranded').innerText],
+    ["EOL Phase-Out", "Total EOL Phase-Out Cost Exposure", document.getElementById('eol-out-total').innerText],
+    ["LTB Planning", "Total LTB Unit Quantity to Order", document.getElementById('ltb-out-qty').innerText],
+    ["LTB Planning", "Total LTB Program Cost", document.getElementById('ltb-out-total-program').innerText],
+    ["LTB Planning", "Budget Utilization", document.getElementById('ltb-out-budget-util').innerText]
   ];
 
   let csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
@@ -2704,6 +2961,7 @@ window.onload = function() {
   calculateBudgetKPI();
   calculateRMA();
   calculateFFF();
+  calculateEOL();
   calculateLTB();
 };
 </script>
