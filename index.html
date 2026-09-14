@@ -1639,7 +1639,7 @@
   <div id="pillar-quality" class="tab-pillar">
     <div class="subnav-bar">
       <button class="sub-btn active" onclick="switchTool('quality', 'cpk', this)">Process Capability (Cp/Cpk)</button>
-      <button class="sub-btn" onclick="switchTool('quality', 'pfmea', this)">PFMEA / 8D Tracker</button>
+      <button class="sub-btn" onclick="switchTool('quality', 'pfmea', this)">FMEA / 8D Tracker</button>
       <button class="sub-btn" onclick="switchTool('quality', 'reliability', this)">Reliability Prediction (MTBF)</button>
     </div>
 
@@ -1676,13 +1676,14 @@
       </div>
     </div>
 
-    <!-- PFMEA / 8D Tracker -->
+    <!-- FMEA / 8D Tracker -->
     <div id="tool-pfmea" class="tool-view">
-      <h1>PFMEA / 8D Corrective Action Tracker</h1>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Score failure modes by Severity × Occurrence × Detection (RPN) and track them through 8D-style corrective action to closure.</p>
+      <h1>FMEA / 8D Corrective Action Tracker</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Score failure modes by Severity × Occurrence × Detection (RPN) and track them through 8D-style corrective action to closure. One register for Design, System, and Process FMEA side by side — the RPN math is identical across all three; what differs is where the failure mode comes from.</p>
 
       <div class="panel" style="margin-bottom:20px;">
         <h2>Failure Mode Log</h2>
+        <p style="color:var(--text-mid); font-size:0.85em; margin-bottom:10px;"><strong>Design</strong> = the design itself couldn't meet a requirement (independent of how it's built). <strong>System</strong> = failure from interaction between subsystems/interfaces. <strong>Process</strong> = the manufacturing/assembly process could produce a good design incorrectly. <strong>Supplier</strong> / <strong>Test</strong> track failure modes owned outside your own design or line.</p>
         <div class="data-table-wrap">
           <table class="data-table">
             <thead><tr>
@@ -1713,7 +1714,7 @@
           <ul id="pf-top-list" class="risk-list"></ul>
         </div>
         <div class="panel">
-          <h2 style="color: var(--amber);">⚠️ PFMEA Flags</h2>
+          <h2 style="color: var(--amber);">⚠️ FMEA Flags</h2>
           <ul id="pf-risk-list" class="risk-list"></ul>
         </div>
       </div>
@@ -3791,7 +3792,7 @@ function calculateCpk() {
   }
 }
 
-// --- PFMEA / 8D CORRECTIVE ACTION TRACKER ---
+// --- FMEA / 8D CORRECTIVE ACTION TRACKER ---
 let pfRowCount = 0;
 function addPfmeaRow(vals) {
   vals = vals || {};
@@ -3804,6 +3805,7 @@ function addPfmeaRow(vals) {
     <td><input type="text" id="pf-desc-${id}" value="${vals.desc || ''}" placeholder="Failure mode / issue" oninput="calculatePfmea()"></td>
     <td><select id="pf-cat-${id}" onchange="calculatePfmea()">
       <option value="Design" ${vals.cat === 'Design' || !vals.cat ? 'selected' : ''}>Design</option>
+      <option value="System" ${vals.cat === 'System' ? 'selected' : ''}>System</option>
       <option value="Process" ${vals.cat === 'Process' ? 'selected' : ''}>Process</option>
       <option value="Supplier" ${vals.cat === 'Supplier' ? 'selected' : ''}>Supplier</option>
       <option value="Test" ${vals.cat === 'Test' ? 'selected' : ''}>Test</option>
@@ -3879,7 +3881,7 @@ function calculatePfmea() {
 
   const flags = [];
   if (highCount > 0) {
-    flags.push(`<strong>${highCount} High-Priority Item${highCount > 1 ? 's' : ''} (RPN &gt; 100):</strong> Standard PFMEA practice treats these as requiring corrective action regardless of overall backlog size.`);
+    flags.push(`<strong>${highCount} High-Priority Item${highCount > 1 ? 's' : ''} (RPN &gt; 100):</strong> Standard FMEA practice treats these as requiring corrective action regardless of overall backlog size.`);
   }
   if (undetectableCount > 0) {
     flags.push(`<strong>${undetectableCount} Item${undetectableCount > 1 ? 's' : ''} With Detection ≥ 9:</strong> A high Detection score means this failure mode would likely reach the customer undetected — worth prioritizing even if Severity or Occurrence alone look moderate.`);
@@ -3890,7 +3892,7 @@ function calculatePfmea() {
   if (rows.length === 0) {
     riskList.innerHTML = '<li>Add a failure mode to see flags.</li>';
   } else if (flags.length === 0) {
-    riskList.innerHTML = '<li>No PFMEA flags at current inputs.</li>';
+    riskList.innerHTML = '<li>No FMEA flags at current inputs.</li>';
   } else {
     flags.forEach(f => { const li = document.createElement('li'); li.innerHTML = f; riskList.appendChild(li); });
   }
@@ -4435,7 +4437,7 @@ function exportCSV() {
     ["Risk Register", "Open Risk Count", document.getElementById('rr-out-open-count').innerText],
     ["Process Capability", "Cpk", document.getElementById('cpk-out-cpk').innerText],
     ["Process Capability", "Capability Rating", document.getElementById('cpk-out-rating').innerText],
-    ["PFMEA", "High-Priority Items (RPN>100)", document.getElementById('pf-out-high-count').innerText],
+    ["FMEA", "High-Priority Items (RPN>100)", document.getElementById('pf-out-high-count').innerText],
     ["Reliability", "MTBF (Hours)", document.getElementById('rel-out-mtbf').innerText],
     ["Reliability", "Reliability at Mission Time", document.getElementById('rel-out-reliability').innerText],
     ["Make-vs-Buy", "Breakeven Volume", document.getElementById('mvb-out-breakeven').innerText],
@@ -4504,6 +4506,7 @@ window.onload = function() {
   addPfmeaRow({ desc: 'Connector pin misalignment during reflow', cat: 'Process', sev: 7, occ: 4, det: 5, owner: 'Line 2 Eng', status: 'Open' });
   addPfmeaRow({ desc: 'Incoming resistor tolerance out of spec', cat: 'Supplier', sev: 6, occ: 3, det: 8, owner: 'SQE - Kim', status: '8D In Progress' });
   addPfmeaRow({ desc: 'Enclosure snap-fit cracks under drop test', cat: 'Design', sev: 8, occ: 3, det: 6, owner: 'Mech Eng - Patel', status: 'Open' });
+  addPfmeaRow({ desc: 'Battery/BMS interface loses comms under thermal cycling', cat: 'System', sev: 7, occ: 2, det: 7, owner: 'Systems Eng - Ortiz', status: 'Open' });
   addPfmeaRow({ desc: 'Test fixture false-fail on boundary units', cat: 'Test', sev: 4, occ: 5, det: 3, owner: 'Test Eng', status: 'Corrective Action Verified' });
 
   calculateMakeVsBuy();
