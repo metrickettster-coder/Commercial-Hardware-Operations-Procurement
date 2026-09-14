@@ -107,6 +107,21 @@
   .risk-list li { margin-bottom: 10px; line-height: 1.4; }
   .divider { border: 0; border-top: 1px solid var(--grid-line); margin: 16px 0; }
   .hidden { display: none; }
+.feedback-fab{ position:fixed; bottom:24px; right:24px; background:var(--amber); color:#1a1305; font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:12px; border:none; border-radius:24px; padding:12px 18px; cursor:pointer; box-shadow:0 4px 14px rgba(0,0,0,0.4); z-index:1000; transition:transform 0.15s ease; }
+.feedback-fab:hover{ transform:translateY(-2px); }
+.feedback-overlay{ position:fixed; inset:0; background:rgba(5,10,18,0.7); z-index:1001; display:flex; align-items:center; justify-content:center; }
+.feedback-modal{ background:var(--panel); border:1px solid var(--grid-line); border-radius:var(--radius); padding:24px; width:420px; max-width:90vw; max-height:85vh; overflow-y:auto; }
+.feedback-modal h2{ color:var(--text-hi); font-size:16px; margin-bottom:4px; }
+.feedback-modal .ctx-note{ font-size:11px; color:var(--text-dim); margin-bottom:16px; }
+.feedback-modal .field{ margin-bottom:14px; }
+.feedback-modal label{ display:block; font-size:12.5px; font-weight:600; color:var(--text-mid); margin-bottom:4px; }
+.feedback-modal select, .feedback-modal input, .feedback-modal textarea{ width:100%; background:var(--panel-2); border:1px solid var(--grid-line); color:var(--text-hi); font-family:'IBM Plex Mono',monospace; font-size:13px; padding:8px 10px; border-radius:6px; }
+.feedback-modal textarea{ min-height:90px; resize:vertical; }
+.feedback-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:16px; }
+.feedback-actions button{ font-family:'IBM Plex Mono',monospace; font-size:12px; padding:8px 16px; border-radius:6px; cursor:pointer; }
+.feedback-cancel{ background:transparent; border:1px solid var(--grid-line); color:var(--text-mid); }
+.feedback-submit{ background:var(--amber); border:none; color:#1a1305; font-weight:700; }
+.feedback-status{ font-size:12px; margin-top:10px; }.auto-filled{ border-color:var(--amber) !important; background:rgba(224,165,44,0.08) !important; }
 </style>
 </head>
 <body>
@@ -129,9 +144,13 @@
     <p style="font-size:12px; color:var(--text-dim); margin:6px 0 0 0;">Zero-Trust Processing: Parsed 100% locally in browser memory.</p>
     <input type="file" id="fileInput" accept=".pdf,.docx,.txt" style="display:none;">
   </div>
+  <p style="font-size:12px; color:var(--text-dim); margin:-12px 0 20px 0; text-align:center;">
+    Don't have a formatted quote? <a href="#" id="downloadTemplateLink" style="color:var(--amber); text-decoration:underline;">Download a blank template</a> to fill in and upload — this gives the most reliable auto-fill. Freeform quotes work too, but extraction may miss or mismatch fields on unusual formats.
+  </p>
 
   <div id="resultsCard" class="panel hidden" style="margin-bottom:20px;">
     <h2>Quote Parsing &amp; Commercial Terms Extraction</h2>
+    <div id="autofillBanner" class="hidden" style="background:rgba(224,165,44,0.12); border:1px solid var(--amber); color:var(--amber); padding:8px 12px; border-radius:6px; font-size:12px; margin-bottom:12px;">⚠️ The fields below were auto-filled from your upload. Verify each value before trusting the analysis — extraction can misread a number or grab the wrong one from a multi-tier quote.</div>
     <div id="flagsContainer"></div>
     <pre id="redactedOutput" style="background:var(--ink); border:1px solid var(--grid-line); padding:12px; border-radius:6px; margin-top:12px; font-family:'IBM Plex Mono', monospace; font-size:12px; max-height:250px; overflow-y:auto; white-space:pre-wrap;"></pre>
   </div>
@@ -256,32 +275,139 @@
 
     <!-- Gate Exit Verification -->
     <div id="tool-stagegate" class="tool-view active">
-      <h1>Stage-Gate Launch Exit Checklist</h1>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Verify mandatory operational gates to transition from prototype to volume production.</p>
+      <h1>Stage-Gate Launch Exit Verification</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Checks whether a gate is actually ready — not just whether the boxes got checked. Problems that show up together across categories are treated as more dangerous than the same number of problems in one area.</p>
+
       <div class="grid">
         <div class="panel">
-          <h2>Milestone Verification Gates</h2>
-          <div class="field"><label>1. EVT Completed &amp; Functional Spec Met?</label><select id="sg-1" onchange="calculateStageGate()"><option value="1">Passed</option><option value="0">Open</option></select></div>
-          <div class="field"><label>2. DVT Reliability &amp; Compliance Passed?</label><select id="sg-2" onchange="calculateStageGate()"><option value="1">Passed</option><option value="0">Open</option></select></div>
-          <div class="field"><label>3. PVT Tooling &amp; Factory Line Qualified?</label><select id="sg-3" onchange="calculateStageGate()"><option value="1">Passed</option><option value="0">Open</option></select></div>
-          <div class="field"><label>4. Mass Production (MP) Sourcing Secured?</label><select id="sg-4" onchange="calculateStageGate()"><option value="1">Passed</option><option value="0">Open</option></select></div>
+          <h2>1. Milestone Verification</h2>
+          <div class="field"><label>EVT Completed &amp; Functional Spec Met?</label><select id="sg-1" onchange="calculateStageGate()"><option value="passed">Passed</option><option value="rushed">Passed — but rushed / things still in flux</option><option value="open">Open</option></select></div>
+          <div class="field"><label>DVT Reliability &amp; Compliance Passed?</label><select id="sg-2" onchange="calculateStageGate()"><option value="passed">Passed</option><option value="rushed">Passed — but rushed / things still in flux</option><option value="open">Open</option></select></div>
+          <div class="field"><label>PVT Tooling &amp; Factory Line Qualified?</label><select id="sg-3" onchange="calculateStageGate()"><option value="passed">Passed</option><option value="rushed">Passed — but rushed / things still in flux</option><option value="open">Open</option></select></div>
+          <div class="field"><label>Mass Production (MP) Sourcing Secured?</label><select id="sg-4" onchange="calculateStageGate()"><option value="passed">Passed</option><option value="rushed">Passed — but rushed / things still in flux</option><option value="open">Open</option></select></div>
         </div>
         <div class="panel">
-          <h2>Gate Exit Status</h2>
+          <h2>Verdict</h2>
           <div class="readout"><div class="rlabel">Completed Stage Milestones</div><div class="rvalue" id="sg-out-score">4 / 4</div></div>
-          <div class="readout"><div class="rlabel">Gate Release Approval</div><div class="rvalue" id="sg-out-status" style="color:var(--green);">APPROVED FOR MP</div></div>
+          <div class="readout"><div class="rlabel">Categories With Real Issues</div><div class="rvalue" id="sg-out-catcount">0 / 3</div></div>
+          <div class="readout"><div class="rlabel">Gate Release Verdict</div><div class="rvalue" id="sg-out-status" style="color:var(--green);">APPROVED FOR MP</div></div>
         </div>
+      </div>
+
+      <div class="grid" style="margin-top:18px;">
+        <div class="panel">
+          <h2>2. Schedule &amp; Process Integrity</h2>
+          <div class="field">
+            <label>Were any stages rushed or skipped entirely?</label>
+            <select id="sg-stage-integrity" onchange="calculateStageGate()">
+              <option value="none">None rushed or skipped</option>
+              <option value="rushed">Some stages rushed</option>
+              <option value="skipped">A stage was skipped entirely (e.g. no golden unit, no low-rate run, went straight to MP)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>PRD Lock Status</label>
+            <select id="sg-prd" onchange="calculateStageGate()">
+              <option value="locked">Locked</option>
+              <option value="loose">Loosely locked — still moving</option>
+              <option value="unlocked">Not locked</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Was the schedule feasible from the start?</label>
+            <select id="sg-schedule" onchange="calculateStageGate()">
+              <option value="yes">Yes, realistic from day one</option>
+              <option value="no">No — aspirational or known infeasible from the start</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>3. Manufacturing &amp; Logistics Readiness</h2>
+          <div class="field">
+            <label>Factory Setup Status</label>
+            <select id="sg-factory" onchange="calculateStageGate()">
+              <option value="verified">Verified complete</option>
+              <option value="assumed">Assumed complete, not verified</option>
+              <option value="incomplete">Not complete</option>
+            </select>
+          </div>
+          <div class="field"><label>Factory Capacity Validated Against Required Production Rate/Delivery Dates?</label><select id="sg-capacity" onchange="calculateStageGate()"><option value="yes">Yes</option><option value="no">No</option><option value="unknown">Unknown / Not Sure</option></select></div>
+          <div class="field"><label>Is There an Actual Logistics Plan (Inbound + Outbound)?</label><select id="sg-logistics" onchange="calculateStageGate()"><option value="yes">Yes, defined</option><option value="no">No — undefined or assumed</option><option value="unknown">Unknown / Not Sure</option></select></div>
+          <div class="field"><label>Long-Lead Items Identified Early?</label><select id="sg-longlead" onchange="calculateStageGate()"><option value="yes">Yes, ordered early</option><option value="no">No — discovered late</option><option value="unknown">Unknown / Not Sure</option></select></div>
+        </div>
+
+        <div class="panel">
+          <h2>4. Factory &amp; Process Structure</h2>
+          <div class="field">
+            <label>Is there a defined, documented manufacturing process/sequence for this product?</label>
+            <select id="sg-process-fit" onchange="calculateStageGate()"><option value="yes">Yes, defined and documented</option><option value="no">No</option><option value="unknown">Unknown / Not Sure</option></select>
+          </div>
+          <div class="field">
+            <label>Does material flow (raw material → production → finishing → dispatch) follow a clean path, without backtracking or crossing itself?</label>
+            <select id="sg-material-flow" onchange="calculateStageGate()"><option value="yes">Yes</option><option value="no">No — flow crosses or backtracks</option><option value="unknown">Unknown / Not Mapped</option></select>
+          </div>
+          <div class="field">
+            <label>Are SOPs defined and in place, independent of who's currently hired to run them?</label>
+            <select id="sg-sops" onchange="calculateStageGate()"><option value="yes">Yes</option><option value="no">No — people are compensating without documented SOPs</option><option value="unknown">Unknown / Not Sure</option></select>
+          </div>
+          <div class="field">
+            <label>Is there a defined quality/inspection plan in place?</label>
+            <select id="sg-quality-plan" onchange="calculateStageGate()"><option value="yes">Yes</option><option value="no">No</option><option value="unknown">Unknown / Not Sure</option></select>
+          </div>
+          <div class="field">
+            <label>Can this setup handle 2x demand without a major restructure?</label>
+            <select id="sg-scalability" onchange="calculateStageGate()"><option value="yes">Yes</option><option value="no">No — would require major rework</option><option value="unknown">Unknown / Not Assessed</option></select>
+          </div>
+          <div class="field">
+            <label>Has compliance/export/audit readiness for this facility actually been planned (not assumed)?</label>
+            <select id="sg-compliance-readiness" onchange="calculateStageGate()"><option value="yes">Yes, planned</option><option value="no">No</option><option value="unknown">Unknown / Not Sure</option></select>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>5. BOM &amp; Component Integrity</h2>
+          <div class="field">
+            <label>Are All Assemblies/Components Confirmed Available?</label>
+            <select id="sg-components" onchange="calculateStageGate()">
+              <option value="confirmed">Confirmed available</option>
+              <option value="some-missing">Some missing or assumed available</option>
+              <option value="major-gaps">Significant gaps</option>
+              <option value="unknown">Unknown / Not Checked</option>
+            </select>
+          </div>
+          <div class="field"><label>Is the BOM Broken/Mismatched Right Now (structure issues, orphaned items)?</label><select id="sg-bom-broken" onchange="calculateStageGate()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Unknown / Not Sure</option></select></div>
+          <div class="field">
+            <label>Is BOM Ownership Clearly Assigned?</label>
+            <select id="sg-bom-owner" onchange="calculateStageGate()">
+              <option value="clear">Clearly assigned to one accountable party</option>
+              <option value="ambiguous">Ambiguous or informally/ad-hoc delegated</option>
+              <option value="abdicated">Over-the-wall / unmanaged turnkey — nobody is really managing it</option>
+              <option value="unknown">Unknown — haven't verified who owns this</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:18px;">
+        <h2 style="color:var(--amber);">⚠️ Flagged Readiness Gaps</h2>
+        <p style="font-size:11px; color:var(--text-dim); margin-bottom:10px;">This assessment is only as accurate as the answers given. An answer selected in error (e.g. "Yes" when the real status is "No") will produce a wrong verdict — treat this as a tool for organizing judgment, not a substitute for it.</p>
+        <ul id="sg-risk-list" class="risk-list"></ul>
+        <hr class="divider">
+        <h2 style="color:var(--amber);">❓ Verify Before This Gate Is Called "Cleared"</h2>
+        <ul id="sg-question-list" class="risk-list"></ul>
       </div>
     </div>
 
-    <!-- EVT / DVT / PVT Build Yields -->
+
+    <!-- EVT / DVT / PVT / MP Build Yields -->
     <div id="tool-buildyields" class="tool-view">
-      <h1>NPI Build Yield Tracker (EVT / DVT / PVT)</h1>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Track prototype build performance across critical testing phases.</p>
+      <h1>NPI Build Yield Tracker (EVT / DVT / PVT / MP)</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Track prototype and production build performance — acceptable yield rises sharply as you move toward mass production.</p>
       <div class="grid">
         <div class="panel">
           <h2>Build Quantities &amp; Defects</h2>
-          <div class="field"><label>Target Build Phase</label><select id="by-phase"><option value="EVT">EVT Build</option><option value="DVT">DVT Build</option><option value="PVT">PVT Build</option></select></div>
+          <div class="field"><label>Target Build Phase</label><select id="by-phase" onchange="calculateBuildYields()"><option value="EVT">EVT Build</option><option value="DVT">DVT Build</option><option value="PVT">PVT Build</option><option value="MP">MP (Mass Production) Build</option></select></div>
           <div class="field"><label>Total Units Started</label><input type="number" id="by-total" value="250" oninput="calculateBuildYields()"></div>
           <div class="field"><label>Scrapped / Failed Units</label><input type="number" id="by-failed" value="18" oninput="calculateBuildYields()"></div>
         </div>
@@ -293,22 +419,238 @@
       </div>
     </div>
 
-    <!-- ECO Impact Analysis -->
+    <!-- ECO Severity & Downstream Impact Triage -->
     <div id="tool-eco" class="tool-view">
-      <h1>ECO (Engineering Change Order) Cost &amp; Impact Analysis</h1>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Evaluate non-recurring engineering, drawing updates, and scrap implications of design changes.</p>
+      <h1>ECO Severity &amp; Downstream Impact Triage</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">A fast, judgment-based read on how much scrutiny a proposed change actually deserves — before it reaches the board.</p>
       <div class="grid">
         <div class="panel">
-          <h2>Change Parameters</h2>
-          <div class="field"><label>Design &amp; Drafting Hours</label><input type="number" id="eco-hrs" value="45" oninput="calculateECO()"></div>
-          <div class="field"><label>Engineering Labor Rate ($/hr)</label><div class="prefix-wrap"><span>$</span><input type="number" id="eco-rate" value="110" oninput="calculateECO()"></div></div>
-          <div class="field"><label>Scrapped Obsolete Inventory / WIP Value</label><div class="prefix-wrap"><span>$</span><input type="number" id="eco-scrap" value="6200" oninput="calculateECO()"></div></div>
-          <div class="field"><label>Tooling Modification / Re-qualification Fee</label><div class="prefix-wrap"><span>$</span><input type="number" id="eco-tooling" value="12000" oninput="calculateECO()"></div></div>
+          <h2>1. Classification</h2>
+          <div class="field">
+            <label>Change Description (optional, for your own reference)</label>
+            <input type="text" id="eco-desc" placeholder="e.g. Switch connector supplier on Board Rev C">
+          </div>
+          <div class="field">
+            <label>Does this change affect Form, Fit, Function, Safety, Cost, or the Contract/Customer Baseline?</label>
+            <select id="eco-class1" onchange="calculateECO()">
+              <option value="yes" selected>Yes</option>
+              <option value="no">No — administrative / documentation only</option>
+            </select>
+            <p style="font-size:11px; color:var(--text-dim); margin-top:4px;">This is the real triage question a CCB asks first. Leave it on "Yes" to see the full downstream assessment below — switch to "No" only once you're sure this is a minor, paperwork-only change.</p>
+          </div>
+          <div class="field">
+            <label>Program / Industry Type</label>
+            <select id="eco-program-type" onchange="calculateECO()">
+              <option value="commercial">Commercial — General Hardware (no DoD/FAA/FDA/DC-specific regime)</option>
+              <option value="aviation">Commercial Aviation / Aeronautics (FAA / AS9100)</option>
+              <option value="space">Commercial Space / Satellite (FCC / FAA Part 450 / NOAA)</option>
+              <option value="defense">Defense / DoD / Government Contract</option>
+              <option value="medical">Medical Device (FDA / ISO 13485)</option>
+              <option value="datacenter">Data Center / Infrastructure</option>
+              <option value="consumer">Consumer Electronics (FCC / UL / CE / RoHS)</option>
+              <option value="automotive">Automotive (IATF 16949 / FMVSS / ISO 26262)</option>
+              <option value="unsure">Not Sure Which Applies</option>
+            </select>
+            <p style="font-size:11px; color:var(--text-dim); margin-top:4px;">Aerospace isn't automatically DoD — commercial aerospace (FAA/AS9100) has different rigor and flow-down than a defense/ITAR program. Pick the one that actually governs this part.</p>
+          </div>
         </div>
         <div class="panel">
-          <h2>ECO Cost Output</h2>
-          <div class="readout"><div class="rlabel">Engineering NRE Cost</div><div class="rvalue" id="eco-out-nre">$4,950.00</div></div>
-          <div class="readout"><div class="rlabel">Total Financial Impact of ECO</div><div class="rvalue" id="eco-out-total" style="color:var(--red);">$23,150.00</div></div>
+          <h2>Verdict</h2>
+          <div class="readout"><div class="rlabel">Classification</div><div class="rvalue" id="eco-out-class">—</div></div>
+          <div class="readout"><div class="rlabel">Severity Read</div><div class="rvalue" id="eco-out-severity" style="color:var(--amber);">—</div></div>
+          <div class="readout"><div class="rlabel">Estimated Financial Exposure</div><div class="rvalue" id="eco-out-cost" style="color:var(--red);">—</div></div>
+        </div>
+      </div>
+
+      <div id="eco-detail-section" class="hidden">
+        <div class="grid" style="margin-top:18px;">
+          <div class="panel">
+            <h2>2. Downstream Impact Factors</h2>
+            <div class="field">
+              <label>Existing Inventory / WIP Exposure</label>
+              <select id="eco-inventory" onchange="calculateECO()">
+                <option value="none">None on hand or on order</option>
+                <option value="some">Some stock/WIP — disposition not yet decided</option>
+                <option value="large">Significant stock/WIP, open POs, or finished goods — no disposition plan</option>
+                <option value="unknown">Unknown / Not Checked</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Tooling, Fixtures, or Equipment Reprogramming Required?</label>
+              <select id="eco-tooling-flag" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select>
+            </div>
+            <div class="field">
+              <label>Requires Re-Testing / Re-Qualification?</label>
+              <select id="eco-requal" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select>
+            </div>
+            <div class="field">
+              <label>Driven by a Part Going Obsolete/EOL (Lifetime-Buy Clock Running)?</label>
+              <select id="eco-eol" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select>
+            </div>
+            <div class="field">
+              <label>Single-Source Components or Single Points of Failure Involved?</label>
+              <select id="eco-singlesource" onchange="calculateECO()">
+                <option value="none">None involved</option>
+                <option value="one">One single-source component involved</option>
+                <option value="multiple">Multiple single-source components involved</option>
+                <option value="unknown">Not Sure</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Multiple Systems of Record Involved (e.g., PLM, ERP, spreadsheets not synced)?</label>
+              <select id="eco-sot" onchange="calculateECO()"><option value="no">No — single source of truth</option><option value="yes">Yes — data lives in more than one place</option><option value="unknown">Not Sure</option></select>
+            </div>
+            <div class="field">
+              <label>Involves Batteries or Energy Storage Components?</label>
+              <select id="eco-battery" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select>
+              <p style="font-size:11px; color:var(--text-dim); margin-top:4px;">Applies on top of whatever program type is selected above — a battery change on a defense or medical program carries both sets of requirements, not one or the other.</p>
+            </div>
+          </div>
+
+          <div id="eco-battery-panel" class="panel hidden">
+            <h2>Battery / Energy Storage Factors</h2>
+            <div class="field"><label>UN 38.3 Transport/Shipping Classification Impact?</label><select id="eco-un383" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+            <div class="field"><label>UL 1642/2054 or IEC 62133 Certification Impact?</label><select id="eco-batt-cert" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+            <div class="field"><label>Thermal Runaway / Battery Safety Retesting Required?</label><select id="eco-thermal" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+          </div>
+
+          <div id="eco-reg-panel" class="panel hidden">
+            <h2>3. Regulated-Program Factors</h2>
+
+            <div id="eco-reg-aviation">
+              <p style="font-size:11px; color:var(--text-dim); margin-bottom:10px;">Commercial Aviation / Aeronautics (FAA / AS9100)</p>
+              <div class="field"><label>Affects FAA-Approved Data (Type Certificate / STC / PMA) — Needs DER Sign-Off or Re-Approval?</label><select id="eco-faa-data" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label>Requires Formal AS9100 Nonconformance Disposition or Configuration Control Action?</label><select id="eco-as9100" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label>Could This Affect Airworthiness (Potential Airworthiness Directive Exposure)?</label><select id="eco-airworthiness" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label>Elevated Counterfeit/Fraudulent Part Risk (AS6081)?</label><select id="eco-as6081" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label>Affects Avionics Software/Cybersecurity (DO-326A)?</label><select id="eco-do326a" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label>Technical Data Package Needs ITAR/EAR Export-Control Review?</label><select id="eco-aviation-itar" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+            </div>
+
+            <div id="eco-reg-space">
+              <p style="font-size:11px; color:var(--text-dim); margin-bottom:10px;">Commercial Space / Satellite</p>
+              <div class="field"><label>Affects FCC Spectrum Authorization or Interference Profile (47 CFR Part 25)?</label><select id="eco-fcc-spectrum" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label>Affects Deorbit/Disposal Capability (FCC 5-Year Deorbit Rule)?</label><select id="eco-deorbit" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label>Affects Launch/Re-Entry Licensing (FAA Part 450) or Debris Assessment?</label><select id="eco-part450" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label>Affects Remote Sensing License Class (NOAA, 15 CFR Part 960)?</label><select id="eco-noaa" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label>Technical Data Package Needs ITAR/EAR Export-Control Review?</label><select id="eco-space-itar" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+            </div>
+
+            <div id="eco-reg-defense">
+              <p style="font-size:11px; color:var(--text-dim); margin-bottom:10px;">Defense / DoD / Government Contract</p>
+              <div class="field">
+                <label>Which MIL-STD Standards Does This Change Likely Trigger? (check all that apply)</label>
+                <div style="display:flex; align-items:center; gap:6px; margin:5px 0;"><input type="checkbox" id="eco-mil-810" onchange="calculateECO()"><label for="eco-mil-810" style="margin:0; font-weight:400; display:inline;">MIL-STD-810 — Environmental (vibration, humidity, temperature)</label></div>
+                <div style="display:flex; align-items:center; gap:6px; margin:5px 0;"><input type="checkbox" id="eco-mil-461" onchange="calculateECO()"><label for="eco-mil-461" style="margin:0; font-weight:400; display:inline;">MIL-STD-461 — EMI/EMC</label></div>
+                <div style="display:flex; align-items:center; gap:6px; margin:5px 0;"><input type="checkbox" id="eco-mil-883" onchange="calculateECO()"><label for="eco-mil-883" style="margin:0; font-weight:400; display:inline;">MIL-STD-883 — Microelectronics Test Methods</label></div>
+                <div style="display:flex; align-items:center; gap:6px; margin:5px 0;"><input type="checkbox" id="eco-mil-704" onchange="calculateECO()"><label for="eco-mil-704" style="margin:0; font-weight:400; display:inline;">MIL-STD-704 — Aircraft Electric Power</label></div>
+                <div style="display:flex; align-items:center; gap:6px; margin:5px 0;"><input type="checkbox" id="eco-mil-167" onchange="calculateECO()"><label for="eco-mil-167" style="margin:0; font-weight:400; display:inline;">MIL-STD-167-1 — Shipboard Mechanical Vibration</label></div>
+                <div style="display:flex; align-items:center; gap:6px; margin:5px 0;"><input type="checkbox" id="eco-mil-129" onchange="calculateECO()"><label for="eco-mil-129" style="margin:0; font-weight:400; display:inline;">MIL-STD-129 — Military Marking for Shipment/Storage</label></div>
+                <div style="display:flex; align-items:center; gap:6px; margin:5px 0;"><input type="checkbox" id="eco-mil-2073" onchange="calculateECO()"><label for="eco-mil-2073" style="margin:0; font-weight:400; display:inline;">MIL-STD-2073-1 — Military Packaging</label></div>
+                <div style="display:flex; align-items:center; gap:6px; margin:5px 0;"><input type="checkbox" id="eco-mil-unsure" onchange="calculateECO()"><label for="eco-mil-unsure" style="margin:0; font-weight:400; display:inline;">Not Sure Which Apply</label></div>
+              </div>
+              <div class="field"><label>Technical Data Package Needs ITAR/Export-Control Review?</label><select id="eco-itar" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label>Requires New NSN or Relabeling (UDI / MIL-STD-130)?</label><select id="eco-nsn" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label>Requires DCMA Notification or Affects CAS-Covered Cost Accounting?</label><select id="eco-refiling" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+            </div>
+
+            <div id="eco-reg-medical">
+              <p style="font-size:11px; color:var(--text-dim); margin-bottom:10px;">Medical Device (FDA / ISO 13485)</p>
+              <div class="field"><label>Triggers IEC 60601 (or Equivalent) Re-Testing?</label><select id="eco-iec60601" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label>Requires New 510(k)/PMA Supplement or a Letter to File?</label><select id="eco-510k" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label>Affects UDI/Labeling or ISO 13485 Design-Change Control?</label><select id="eco-udi" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+            </div>
+
+            <div id="eco-reg-datacenter">
+              <p style="font-size:11px; color:var(--text-dim); margin-bottom:10px;">Data Center / Infrastructure</p>
+              <div class="field"><label>Was This Upgrade Fully Thought Through Before Proceeding?</label>
+                <select id="eco-dc-planning" onchange="calculateECO()">
+                  <option value="planned">Yes — planned and reviewed (dependencies, downstream effects, capacity)</option>
+                  <option value="partial">Partially — some things weren't considered</option>
+                  <option value="adhoc">No — reactive / bolted on</option>
+                  <option value="unknown">Not Sure</option>
+                </select>
+              </div>
+              <p style="font-size:11px; color:var(--text-dim); margin:10px 0 4px;">IT Hardware &amp; Configuration</p>
+              <div class="field"><label>Configuration Scope</label>
+                <select id="eco-dc-config-scope" onchange="calculateECO()">
+                  <option value="single">Single site/config variant</option>
+                  <option value="multiple">Multiple site configurations affected</option>
+                  <option value="unknown">Not Sure</option>
+                </select>
+              </div>
+              <div class="field"><label>Cross-Site Rollout Sequencing Defined?</label><select id="eco-dc-rollout" onchange="calculateECO()"><option value="yes">Yes, defined and tracked</option><option value="no">No — unclear which sites have which revision</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label>Rack/Power/Electrical Compatibility Validated at Every Destination Site?</label><select id="eco-dc-compat" onchange="calculateECO()"><option value="yes">Yes</option><option value="no">No — only validated at one site</option><option value="unknown">Not Sure</option></select></div>
+              <p style="font-size:11px; color:var(--text-dim); margin:10px 0 4px;">Facility Equipment (Generator / HVAC / Cooling / Electrical)</p>
+              <div class="field"><label>Equipment Ownership &amp; Change Authority</label>
+                <select id="eco-dc-ownership" onchange="calculateECO()">
+                  <option value="internal">Internal — owned and managed by us</option>
+                  <option value="landlord">Landlord / colo provider controlled</option>
+                  <option value="vendor">Vendor maintenance contract restricts changes</option>
+                  <option value="unclear">Unclear who owns this</option>
+                </select>
+              </div>
+              <div class="field"><label>Contract/Warranty Terms Actually Reviewed for This Change?</label><select id="eco-dc-contract" onchange="calculateECO()"><option value="reviewed">Yes, reviewed</option><option value="assumed">No — assumed it's fine</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label>Requires Equipment Shutdown to Implement?</label>
+                <select id="eco-dc-shutdown" onchange="calculateECO()">
+                  <option value="no">No shutdown required</option>
+                  <option value="redundant">Yes, but redundant path available</option>
+                  <option value="exposed">Yes — full exposure, no redundancy during change</option>
+                </select>
+              </div>
+              <div class="field"><label>Post-Maintenance Return-to-Service Verification Plan Exists?</label><select id="eco-dc-return-service" onchange="calculateECO()"><option value="yes">Yes, defined test plan</option><option value="no">No — assumed it'll just work</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label>Backup Power/Failover Tested Under Load?</label><select id="eco-dc-failover" onchange="calculateECO()"><option value="yes">Yes, tested</option><option value="no">No — untested</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label>Rack Power Density vs. Validated Cooling/Power Design Margin</label>
+                <select id="eco-dc-density" onchange="calculateECO()">
+                  <option value="within">Within validated margin</option>
+                  <option value="exceeds">Exceeds validated margin</option>
+                  <option value="unknown">Not Assessed</option>
+                </select>
+              </div>
+              <div class="field"><label>Environmental/Regulatory Exposure (Noise, Emissions Permits)?</label><select id="eco-dc-environmental" onchange="calculateECO()"><option value="no">No impact</option><option value="yes">Yes — may affect permit/ordinance compliance</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label>Long-Lead Capital Equipment Exposure (Generators, Switchgear, Transformers)?</label><select id="eco-dc-longlead" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label>IT or Facility Equipment Obsolescence Exposure (EOL/No Longer Supported, Spares Getting Scarce)?</label><select id="eco-dc-obsolescence" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label>Moisture/Environmental Exposure Risk?</label><select id="eco-dc-moisture" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label>Estimated Utility/Operating Cost Impact (optional)</label><div class="prefix-wrap"><span>$</span><input type="number" id="eco-dc-utility-cost" value="0" oninput="calculateECO()"></div></div>
+            </div>
+
+            <div id="eco-reg-unsure">
+              <p style="font-size:12px; color:var(--red);">Which regulatory framework applies hasn't been determined yet. That's a real risk on its own — DoD/ITAR, FAA/AS9100, and FDA requirements differ significantly, and assuming the wrong one (or none) can mean missing a requirement entirely. Determine the correct framework before this goes to the board.</p>
+            </div>
+
+            <div id="eco-reg-consumer">
+              <p style="font-size:11px; color:var(--text-dim); margin-bottom:10px;">Consumer Electronics (FCC / UL / CE / RoHS)</p>
+              <div class="field"><label>Affects FCC Part 15 Emissions — May Require Re-Test/New FCC ID?</label><select id="eco-fcc15" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label>Affects UL/CE/CB Scheme Safety Certification?</label><select id="eco-ul-ce" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label>Affects RoHS/REACH Hazardous-Substance Compliance?</label><select id="eco-rohs" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label>Requires Re-Certification in Other Target Markets (e.g., PSE Japan, KC Korea)?</label><select id="eco-intl-cert" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+            </div>
+
+            <div id="eco-reg-automotive">
+              <p style="font-size:11px; color:var(--text-dim); margin-bottom:10px;">Automotive (IATF 16949 / FMVSS / ISO 26262)</p>
+              <div class="field"><label>Requires PPAP Re-Submission (IATF 16949)?</label><select id="eco-ppap" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label>Affects Functional Safety Classification (ISO 26262) — Re-Assessment Needed?</label><select id="eco-iso26262" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label>Affects FMVSS Compliance?</label><select id="eco-fmvss" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label>Affects Emissions-Related Components (EPA/CARB)?</label><select id="eco-emissions" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h2>4. Optional Cost Inputs (fill in what you know)</h2>
+            <div class="field"><label>Estimated Engineering/Drafting Hours</label><input type="number" id="eco-hrs" value="0" oninput="calculateECO()"></div>
+            <div class="field"><label>Engineering Labor Rate ($/hr)</label><div class="prefix-wrap"><span>$</span><input type="number" id="eco-rate" value="0" oninput="calculateECO()"></div></div>
+            <div class="field"><label>Known/Estimated Scrap or WIP Value</label><div class="prefix-wrap"><span>$</span><input type="number" id="eco-scrap" value="0" oninput="calculateECO()"></div></div>
+            <div class="field"><label>Known/Estimated Tooling or Re-Qual Cost</label><div class="prefix-wrap"><span>$</span><input type="number" id="eco-tooling-cost" value="0" oninput="calculateECO()"></div></div>
+            <p style="font-size:11px; color:var(--text-dim);">Leave at 0 if unknown — the severity read doesn't depend on these, but filling them in sharpens the cost estimate.</p>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top:18px;">
+          <h2 style="color:var(--amber);">⚠️ Flagged Risk Drivers</h2>
+          <ul id="eco-risk-list" class="risk-list"></ul>
+          <hr class="divider">
+          <h2 style="color:var(--amber);">❓ Verify Before This Goes to the Board</h2>
+          <ul id="eco-question-list" class="risk-list"></ul>
         </div>
       </div>
     </div>
@@ -836,25 +1178,198 @@ function calculateTechRisk() {
 }
 
 function calculateStageGate() {
-  const g1 = parseInt(document.getElementById('sg-1').value);
-  const g2 = parseInt(document.getElementById('sg-2').value);
-  const g3 = parseInt(document.getElementById('sg-3').value);
-  const g4 = parseInt(document.getElementById('sg-4').value);
+  const milestoneNames = { 'sg-1': 'EVT', 'sg-2': 'DVT', 'sg-3': 'PVT', 'sg-4': 'MP' };
+  const milestoneValue = v => v === 'passed' ? 1 : (v === 'rushed' ? 0.5 : 0);
+  const g1 = (document.getElementById('sg-1') || {}).value || 'open';
+  const g2 = (document.getElementById('sg-2') || {}).value || 'open';
+  const g3 = (document.getElementById('sg-3') || {}).value || 'open';
+  const g4 = (document.getElementById('sg-4') || {}).value || 'open';
+  const milestoneScore = milestoneValue(g1) + milestoneValue(g2) + milestoneValue(g3) + milestoneValue(g4);
+  document.getElementById('sg-out-score').innerText = milestoneScore + ' / 4';
 
-  const score = g1 + g2 + g3 + g4;
-  document.getElementById('sg-out-score').innerText = score + ' / 4';
+  const stageIntegrity = (document.getElementById('sg-stage-integrity') || {}).value || 'none';
+  const prd = (document.getElementById('sg-prd') || {}).value || 'locked';
+  const schedule = (document.getElementById('sg-schedule') || {}).value || 'yes';
+
+  const factory = (document.getElementById('sg-factory') || {}).value || 'verified';
+  const capacity = (document.getElementById('sg-capacity') || {}).value || 'yes';
+  const logistics = (document.getElementById('sg-logistics') || {}).value || 'yes';
+  const longlead = (document.getElementById('sg-longlead') || {}).value || 'yes';
+
+  const processFit = (document.getElementById('sg-process-fit') || {}).value || 'yes';
+  const materialFlow = (document.getElementById('sg-material-flow') || {}).value || 'yes';
+  const sops = (document.getElementById('sg-sops') || {}).value || 'yes';
+  const qualityPlan = (document.getElementById('sg-quality-plan') || {}).value || 'yes';
+  const scalability = (document.getElementById('sg-scalability') || {}).value || 'yes';
+  const complianceReadiness = (document.getElementById('sg-compliance-readiness') || {}).value || 'yes';
+
+  const components = (document.getElementById('sg-components') || {}).value || 'confirmed';
+  const bomBroken = (document.getElementById('sg-bom-broken') || {}).value || 'no';
+  const bomOwner = (document.getElementById('sg-bom-owner') || {}).value || 'clear';
+
+  let score = 0;
+  let flags = [];
+  let questions = [];
+  let categoryHasIssue = [false, false, false, false]; // Schedule/Process, Manufacturing/Logistics, Factory/Process Structure, BOM/Component
+
+  const unknownNote = ' This wasn\'t verified — treat "Unknown" as a gap to close before relying on this gate, not as a pass.';
+
+  ['sg-1', 'sg-2', 'sg-3', 'sg-4'].forEach(id => {
+    const val = (document.getElementById(id) || {}).value;
+    if (val === 'rushed') {
+      score += 1.5;
+      categoryHasIssue[0] = true;
+      flags.push(`<strong>${milestoneNames[id]} Passed Under Pressure:</strong> Marked "Passed," but by your own note things were still in flux or the timeline was rushed — this milestone may not be as solid as a clean pass.`);
+      questions.push(`Ask specifically what was still unresolved when ${milestoneNames[id]} was signed off, and whether that gap has since closed or just gone quiet.`);
+    }
+  });
+
+  // --- Category 1: Schedule & Process Integrity ---
+  if (stageIntegrity === 'skipped') {
+    score += 4; categoryHasIssue[0] = true;
+    flags.push(`<strong>Stage Skipped Entirely:</strong> Going straight to a later phase (e.g. no golden unit, no low-rate run) removes the checkpoint designed to catch problems before volume — this is a different, more serious failure than a rushed stage.`);
+    questions.push(`Confirm exactly which validation step was skipped and what evidence exists that the risk it was meant to catch has been covered another way.`);
+  } else if (stageIntegrity === 'rushed') {
+    score += 2; categoryHasIssue[0] = true;
+    flags.push(`<strong>Stage(s) Rushed:</strong> Work happened inside the stage, but under compressed time — corners may have been cut without being documented as such.`);
+    questions.push(`Ask what specifically got compressed or cut to hit the date, and who signed off on that trade-off.`);
+  }
+  if (prd !== 'locked') {
+    score += prd === 'unlocked' ? 3 : 2; categoryHasIssue[0] = true;
+    flags.push(`<strong>PRD Not Fully Locked:</strong> Requirements are still moving this close to a gate — everything downstream is being built against a moving target.`);
+    questions.push(`Get a specific date the PRD will actually lock, and confirm nothing already built assumes a requirement that's still changing.`);
+  }
+  if (schedule === 'no') {
+    score += 2; categoryHasIssue[0] = true;
+    flags.push(`<strong>Schedule Was Never Feasible:</strong> The timeline was aspirational or known to be unrealistic from the start — pressure to hit it is a likely driver of every other shortcut on this list.`);
+    questions.push(`Ask what the schedule was based on originally, and whether it's been re-baselined against what's actually been learned since.`);
+  }
+
+  // --- Category 2: Manufacturing & Logistics Readiness ---
+  if (factory !== 'verified') {
+    score += factory === 'incomplete' ? 3 : 2; categoryHasIssue[1] = true;
+    flags.push(`<strong>Factory Setup Unverified or Incomplete:</strong> "Assumed complete" and "actually complete" are not the same thing at this stage.`);
+    questions.push(`Get direct confirmation (not a secondhand status update) that the line is physically ready to run at the committed rate.`);
+  }
+  if (capacity === 'no') {
+    score += 2; categoryHasIssue[1] = true;
+    flags.push(`<strong>Factory Capacity Not Validated:</strong> Nobody has confirmed the line can actually hit the required rate and delivery dates.`);
+    questions.push(`Ask for the actual demonstrated run-rate data, not a theoretical capacity number.`);
+  } else if (capacity === 'unknown') {
+    score += 1; categoryHasIssue[1] = true;
+    flags.push(`<strong>Factory Capacity — Unknown:</strong> Nobody filling this out currently knows if capacity has been validated.${unknownNote}`);
+    questions.push(`Find out who owns capacity validation and get a straight answer before assuming this is fine.`);
+  }
+  if (logistics === 'no') {
+    score += 2; categoryHasIssue[1] = true;
+    flags.push(`<strong>Logistics Plan Undefined:</strong> Inbound materials and/or outbound shipping haven't been actually planned.`);
+    questions.push(`Confirm who owns the logistics plan and get it in writing before this gate closes.`);
+  } else if (logistics === 'unknown') {
+    score += 1; categoryHasIssue[1] = true;
+    flags.push(`<strong>Logistics Plan — Unknown:</strong> Status of the logistics plan isn't known to whoever is filling this out.${unknownNote}`);
+    questions.push(`Track down the logistics owner directly rather than assuming a plan exists.`);
+  }
+  if (longlead === 'no') {
+    score += 2; categoryHasIssue[1] = true;
+    flags.push(`<strong>Long-Lead Items Discovered Late:</strong> This is a frequent, quiet cause of missed launch dates that nobody sees coming until it's too late to fix cheaply.`);
+    questions.push(`Get current lead times on every long-lead item today, not from when the program was first planned.`);
+  } else if (longlead === 'unknown') {
+    score += 1; categoryHasIssue[1] = true;
+    flags.push(`<strong>Long-Lead Items — Unknown:</strong> Nobody has confirmed whether long-lead items were caught early.${unknownNote}`);
+    questions.push(`Pull the current BOM against known long-lead categories and check this directly rather than assuming it was handled.`);
+  }
+
+  // --- Category 3: Factory & Process Structure ---
+  if (processFit !== 'yes') {
+    score += processFit === 'no' ? 2 : 1; categoryHasIssue[2] = true;
+    flags.push(`<strong>${processFit === 'no' ? 'No Defined Manufacturing Process' : 'Manufacturing Process — Unknown'}:</strong> Without a documented, defined sequence, consistency is left to whoever happens to be running the line that day.${processFit === 'unknown' ? unknownNote : ''}`);
+    questions.push(`Get the manufacturing sequence documented and confirm it's actually being followed, not just assumed.`);
+  }
+  if (materialFlow !== 'yes') {
+    score += materialFlow === 'no' ? 2 : 1; categoryHasIssue[2] = true;
+    flags.push(`<strong>${materialFlow === 'no' ? 'Material Flow Crosses or Backtracks' : 'Material Flow — Not Mapped'}:</strong> A flow that crosses itself is a standing source of inefficiency and confusion, not a one-time cost.${materialFlow === 'unknown' ? unknownNote : ''}`);
+    questions.push(`Map the actual physical flow from raw material to dispatch and look for crossing points or backtracking.`);
+  }
+  if (sops !== 'yes') {
+    score += sops === 'no' ? 2 : 1; categoryHasIssue[2] = true;
+    flags.push(`<strong>${sops === 'no' ? 'No Documented SOPs' : 'SOP Status — Unknown'}:</strong> When people compensate for missing SOPs, the process only works as well as whoever is currently doing the job.${sops === 'unknown' ? unknownNote : ''}`);
+    questions.push(`Confirm SOPs exist independent of any one person, and that new hires could follow them without tribal knowledge.`);
+  }
+  if (qualityPlan !== 'yes') {
+    score += qualityPlan === 'no' ? 2 : 1; categoryHasIssue[2] = true;
+    flags.push(`<strong>${qualityPlan === 'no' ? 'No Quality/Inspection Plan' : 'Quality Plan — Unknown'}:</strong> Inspection is the first line of defense against shipping a problem — without a plan, defects are found by customers instead.${qualityPlan === 'unknown' ? unknownNote : ''}`);
+    questions.push(`Confirm what gets inspected, at what stage, by whom, and what happens when something fails.`);
+  }
+  if (scalability !== 'yes') {
+    score += scalability === 'no' ? 1 : 1; categoryHasIssue[2] = true;
+    flags.push(`<strong>${scalability === 'no' ? 'Setup Will Not Scale' : 'Scalability — Not Assessed'}:</strong> This may be fine at current volume but become a real problem the moment demand grows.${scalability === 'unknown' ? unknownNote : ''}`);
+    questions.push(`Ask what specifically breaks first at 2x demand — machine capacity, manpower, or floor space — before it becomes an emergency.`);
+  }
+  if (complianceReadiness !== 'yes') {
+    score += complianceReadiness === 'no' ? 3 : 2; categoryHasIssue[2] = true;
+    flags.push(`<strong>${complianceReadiness === 'no' ? 'Compliance/Export/Audit Readiness Not Planned' : 'Compliance Readiness — Unknown'}:</strong> Safety, export, and audit requirements are far cheaper to plan for than to fix after a finding.${complianceReadiness === 'unknown' ? unknownNote : ''}`);
+    questions.push(`Confirm with whoever owns compliance/export/audit for this facility that it's been actively planned, not assumed.`);
+  }
+
+  // --- Category 4: BOM & Component Integrity ---
+  if (components !== 'confirmed') {
+    score += components === 'major-gaps' ? 3 : (components === 'unknown' ? 1 : 2); categoryHasIssue[3] = true;
+    flags.push(`<strong>${components === 'unknown' ? 'Component Availability — Unknown' : 'Components Not Confirmed Available'}:</strong> Assumed availability is not the same as confirmed availability.${components === 'unknown' ? unknownNote : ''}`);
+    questions.push(`Get a line-by-line confirmation of component availability against the current BOM revision, not the last one that was checked.`);
+  }
+  if (bomBroken !== 'no') {
+    score += bomBroken === 'yes' ? 3 : 1; categoryHasIssue[3] = true;
+    flags.push(`<strong>${bomBroken === 'yes' ? 'BOM Is Currently Broken' : 'BOM Integrity — Unknown'}:</strong> ${bomBroken === 'yes' ? 'Structure issues or mismatches right now mean whatever this gate is being judged against may not reflect reality.' : 'Nobody filling this out currently knows if the BOM structure is sound.' + unknownNote}`);
+    questions.push(`${bomBroken === 'yes' ? 'Fix and re-verify the BOM structure before using it as evidence for this gate — don\'t let a broken BOM be the basis for an approval.' : 'Have someone with direct BOM visibility confirm structure integrity before this gate closes.'}`);
+  }
+  if (bomOwner !== 'clear') {
+    score += bomOwner === 'abdicated' ? 4 : (bomOwner === 'unknown' ? 2 : 2); categoryHasIssue[3] = true;
+    flags.push(`<strong>BOM Ownership ${bomOwner === 'unknown' ? 'Unknown' : (bomOwner === 'abdicated' ? 'Abdicated' : 'Ambiguous')}:</strong> ${bomOwner === 'abdicated' ? "Nobody is really managing this BOM — it's been handed over-the-wall with no accountable owner, which means its true status is unknown, not just unclear." : bomOwner === 'unknown' ? "Whoever is filling this out doesn't know who owns the BOM — that's the same practical risk as no owner existing." : "Ownership is informal or ad-hoc, which means status updates may be incomplete or inconsistent."}`);
+    questions.push(`Name one accountable owner for this BOM before this gate closes — an unmanaged or unidentified BOM owner at this stage is a structural risk, not a paperwork gap.`);
+  }
+
+  const categoriesWithIssues = categoryHasIssue.filter(Boolean).length;
+  document.getElementById('sg-out-catcount').innerText = categoriesWithIssues + ' / 4';
+
+  let compounding = false;
+  if (categoriesWithIssues >= 2) {
+    compounding = true;
+    score += 5;
+    flags.unshift(`<strong style="color:var(--red);">⚠ COMPOUNDING RISK — ${categoriesWithIssues} of 4 categories have real issues at once.</strong> A single weak area is normal program pressure. Problems showing up across multiple categories simultaneously is the pattern most associated with programs that go on to have compliance and regulatory findings, not just schedule slip — this is a signal to escalate, not just note.`);
+  }
+
+  if (flags.length === (compounding ? 1 : 0)) {
+    flags.push(`<span style="color:var(--green)">✓ No readiness gaps flagged at these inputs.</span>`);
+  }
+  if (questions.length === 0) {
+    questions.push(`No high-priority questions flagged at these inputs.`);
+  }
 
   const statusEl = document.getElementById('sg-out-status');
-  if (score === 4) {
-    statusEl.innerText = "APPROVED FOR MP";
-    statusEl.style.color = "var(--green)";
+  if (milestoneScore === 4 && score === 0) {
+    statusEl.innerText = 'APPROVED FOR MP';
+    statusEl.style.color = 'var(--green)';
+  } else if (compounding || milestoneScore < 3) {
+    statusEl.innerText = 'BLOCKED — do not proceed to MP';
+    statusEl.style.color = 'var(--red)';
+  } else if (score > 0 || milestoneScore < 4) {
+    statusEl.innerText = 'CONDITIONAL — review flagged items before proceeding';
+    statusEl.style.color = 'var(--amber)';
   } else {
-    statusEl.innerText = "GATE BLOCKED (" + (4 - score) + " OPEN)";
-    statusEl.style.color = "var(--red)";
+    statusEl.innerText = 'APPROVED FOR MP';
+    statusEl.style.color = 'var(--green)';
   }
+
+  const riskList = document.getElementById('sg-risk-list');
+  const questionList = document.getElementById('sg-question-list');
+  riskList.innerHTML = '';
+  flags.forEach(f => { const li = document.createElement('li'); li.innerHTML = f; riskList.appendChild(li); });
+  questionList.innerHTML = '';
+  questions.forEach(q => { const li = document.createElement('li'); li.innerHTML = q; questionList.appendChild(li); });
 }
 
 function calculateBuildYields() {
+  const phase = (document.getElementById('by-phase') || {}).value || 'EVT';
   const total = parseFloat(document.getElementById('by-total').value) || 0;
   const failed = parseFloat(document.getElementById('by-failed').value) || 0;
 
@@ -862,30 +1377,515 @@ function calculateBuildYields() {
   const yieldPct = ((total - failed) / total) * 100;
   document.getElementById('by-out-yield').innerText = yieldPct.toFixed(1) + '%';
 
+  // Acceptable yield rises sharply by phase — an EVT build is still finding problems on purpose;
+  // an MP build finding the same defect rate is a real, expensive line issue.
+  // Starting thresholds — tune these against your own program history as you use it.
+  const thresholds = {
+    EVT: { excellent: 85, acceptable: 70 },
+    DVT: { excellent: 90, acceptable: 80 },
+    PVT: { excellent: 95, acceptable: 90 },
+    MP:  { excellent: 98, acceptable: 95 }
+  };
+  const t = thresholds[phase] || thresholds.EVT;
+
   const statusEl = document.getElementById('by-out-status');
-  if (yieldPct >= 95) {
-    statusEl.innerText = "EXCELLENT";
+  if (yieldPct >= t.excellent) {
+    statusEl.innerText = "EXCELLENT for " + phase;
     statusEl.style.color = "var(--green)";
-  } else if (yieldPct >= 88) {
-    statusEl.innerText = "ACCEPTABLE";
+  } else if (yieldPct >= t.acceptable) {
+    statusEl.innerText = "ACCEPTABLE for " + phase;
     statusEl.style.color = "var(--amber)";
   } else {
-    statusEl.innerText = "CRITICAL YIELD LOSS";
+    statusEl.innerText = phase === 'MP'
+      ? "CRITICAL YIELD LOSS — this is costing real money at volume"
+      : "BELOW EXPECTATION FOR " + phase + " — investigate before the next phase";
     statusEl.style.color = "var(--red)";
   }
 }
 
 function calculateECO() {
-  const hrs = parseFloat(document.getElementById('eco-hrs').value) || 0;
-  const rate = parseFloat(document.getElementById('eco-rate').value) || 0;
-  const scrap = parseFloat(document.getElementById('eco-scrap').value) || 0;
-  const tooling = parseFloat(document.getElementById('eco-tooling').value) || 0;
+  const class1 = (document.getElementById('eco-class1') || {}).value || 'no';
+  const programType = (document.getElementById('eco-program-type') || {}).value || 'commercial';
 
+  const detailSection = document.getElementById('eco-detail-section');
+  const regPanel = document.getElementById('eco-reg-panel');
+  const outClass = document.getElementById('eco-out-class');
+  const outSeverity = document.getElementById('eco-out-severity');
+  const outCost = document.getElementById('eco-out-cost');
+  const riskList = document.getElementById('eco-risk-list');
+  const questionList = document.getElementById('eco-question-list');
+
+  // Class II: administrative change, no board-level scrutiny needed
+  if (class1 !== 'yes') {
+    if (detailSection) detailSection.classList.add('hidden');
+    outClass.innerText = 'Class II — Administrative';
+    outClass.style.color = 'var(--green)';
+    outSeverity.innerText = 'LOW — internal approval likely sufficient';
+    outSeverity.style.color = 'var(--green)';
+    outCost.innerText = '—';
+    return;
+  }
+
+  // Class I: this is a real change — show the downstream factors
+  if (detailSection) detailSection.classList.remove('hidden');
+  if (regPanel) regPanel.classList.toggle('hidden', programType === 'commercial');
+
+  // Show only the sub-panel matching the selected program type — each regime has different flow-down.
+  ['eco-reg-aviation', 'eco-reg-space', 'eco-reg-defense', 'eco-reg-medical', 'eco-reg-datacenter', 'eco-reg-consumer', 'eco-reg-automotive', 'eco-reg-unsure'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.add('hidden');
+  });
+  const activePanelMap = { 'aviation': 'eco-reg-aviation', 'space': 'eco-reg-space', 'defense': 'eco-reg-defense', 'medical': 'eco-reg-medical', 'datacenter': 'eco-reg-datacenter', 'consumer': 'eco-reg-consumer', 'automotive': 'eco-reg-automotive', 'unsure': 'eco-reg-unsure' };
+  if (activePanelMap[programType]) {
+    const activeEl = document.getElementById(activePanelMap[programType]);
+    if (activeEl) activeEl.classList.remove('hidden');
+  }
+
+  // Battery/energy is cross-cutting — independent of program type, shown whenever flagged.
+  const batteryFlag = (document.getElementById('eco-battery') || {}).value || 'no';
+  const batteryPanel = document.getElementById('eco-battery-panel');
+  if (batteryPanel) batteryPanel.classList.toggle('hidden', batteryFlag !== 'yes');
+
+  outClass.innerText = 'Class I — Major Change';
+  outClass.style.color = 'var(--red)';
+
+  const unknownNote = ' Not confirmed yet — treat "Not Sure" as a gap to close, not a pass.';
+
+  const inventory = (document.getElementById('eco-inventory') || {}).value || 'none';
+  const toolingFlag = (document.getElementById('eco-tooling-flag') || {}).value || 'no';
+  const requal = (document.getElementById('eco-requal') || {}).value || 'no';
+  const eol = (document.getElementById('eco-eol') || {}).value || 'no';
+  const singleSource = (document.getElementById('eco-singlesource') || {}).value || 'none';
+  const sot = (document.getElementById('eco-sot') || {}).value || 'no';
+
+  // Starting weights — tune these as you test the tool against real changes you've seen.
+  let score = 2; // baseline for any Class I change
+  let flags = [];
+  let questions = [];
+
+  if (inventory === 'large') {
+    score += 3;
+    flags.push(`<strong>Inventory/WIP Exposure — High:</strong> Significant on-hand stock, open POs, or finished goods with no disposition plan. This is a common source of unbudgeted scrap or field recall cost.`);
+    questions.push(`Get exact quantities of on-hand raw material, open POs, WIP on the line, and finished goods — and a defined serial-number breakpoint — before this goes to the board.`);
+  } else if (inventory === 'some') {
+    score += 1;
+    flags.push(`<strong>Inventory/WIP Exposure — Moderate:</strong> Some stock or WIP exists and disposition hasn't been decided yet.`);
+    questions.push(`Decide and document whether existing stock/WIP will be used as-is, reworked, or scrapped — don't leave this implicit.`);
+  } else if (inventory === 'unknown') {
+    score += 1;
+    flags.push(`<strong>Inventory/WIP Exposure — Not Checked:</strong>${unknownNote}`);
+    questions.push(`Check actual on-hand stock, open POs, and WIP before assuming there's no exposure.`);
+  }
+
+  if (toolingFlag !== 'no') {
+    score += toolingFlag === 'yes' ? 2 : 1;
+    flags.push(`<strong>Tooling/Equipment Impact${toolingFlag === 'unknown' ? ' — Not Sure' : ''}:</strong> Stencils, fixtures, jigs, or pick-and-place/AOI programming may need updating.${toolingFlag === 'unknown' ? unknownNote : ''}`);
+    questions.push(`Confirm which specific tooling/programming needs updating, who owns that update, and whether it's on the critical path to the effectivity date.`);
+  }
+
+  if (requal !== 'no') {
+    score += requal === 'yes' ? 2 : 1;
+    flags.push(`<strong>Re-Testing/Re-Qualification${requal === 'unknown' ? ' — Not Sure' : ' Required'}:</strong> This isn't a paperwork-only change — expect real calendar time for testing before implementation.${requal === 'unknown' ? unknownNote : ''}`);
+    questions.push(`Get a firm test-lab schedule and duration estimate for the required re-qualification before committing to an effectivity date.`);
+  }
+
+  if (eol !== 'no') {
+    score += eol === 'yes' ? 2 : 1;
+    flags.push(`<strong>Obsolescence-Driven${eol === 'unknown' ? ' — Not Sure' : ' — Clock Is Running'}:</strong> This change may be forced by a part going end-of-life. Approval delay directly risks missing the supplier's lifetime-buy window.${eol === 'unknown' ? unknownNote : ''}`);
+    questions.push(`Confirm the exact last-time-buy date/quantity from the supplier, and treat CCB approval speed as schedule-critical if this is EOL-driven.`);
+  }
+
+  if (singleSource === 'multiple') {
+    score += 4;
+    flags.push(`<strong>Multiple Single-Source Components Involved:</strong> More than one component here has no qualified alternate — that's compounding exposure, not just one risk.`);
+    questions.push(`List every single-source component involved individually and ask about second-source qualification status for each — don't treat them as one risk.`);
+  } else if (singleSource === 'one') {
+    score += 2;
+    flags.push(`<strong>Single-Source / Single Point of Failure:</strong> No qualified alternate exists for the affected component today.`);
+    questions.push(`Ask whether a second source is being qualified in parallel, and what the fallback plan is if this change or its replacement part slips.`);
+  } else if (singleSource === 'unknown') {
+    score += 1;
+    flags.push(`<strong>Single-Source Status — Not Checked:</strong>${unknownNote}`);
+    questions.push(`Check the affected part(s) against your single-source/second-source list before assuming this is fine.`);
+  }
+
+  if (sot !== 'no') {
+    score += sot === 'yes' ? 1 : 1;
+    flags.push(`<strong>${sot === 'unknown' ? 'Source-of-Truth Status — Not Sure' : 'No Single Source of Truth'}:</strong> ${sot === 'unknown' ? 'Not confirmed whether data lives in one place or several.' + unknownNote : 'Data for this change lives across more than one system (PLM/ERP/spreadsheets). Expect a higher chance of a missed update somewhere downstream.'}`);
+    questions.push(`Identify every system that needs to reflect this change (PLM, ERP, MES, spreadsheets) and assign one owner to confirm each is updated before closure.`);
+  }
+
+  if (batteryFlag !== 'no') {
+    if (batteryFlag === 'unknown') {
+      score += 1;
+      flags.push(`<strong>Battery/Energy Storage Involvement — Not Confirmed:</strong>${unknownNote}`);
+      questions.push(`Confirm whether this change involves battery or energy-storage components; if so, mark "Yes" above and re-run this assessment to see the full battery-specific risk set.`);
+    } else {
+      const un383 = (document.getElementById('eco-un383') || {}).value || 'no';
+      const battCert = (document.getElementById('eco-batt-cert') || {}).value || 'no';
+      const thermal = (document.getElementById('eco-thermal') || {}).value || 'no';
+      if (un383 !== 'no') {
+        score += un383 === 'yes' ? 2 : 1;
+        flags.push(`<strong>UN 38.3 Transport Classification Impact${un383 === 'unknown' ? ' — Not Sure' : ''}:</strong> Shipping classification and documentation may need updating for this cell/pack configuration change.${un383 === 'unknown' ? unknownNote : ''}`);
+        questions.push(`Confirm the UN 38.3 test summary and shipping paperwork are current before this ships domestically or internationally.`);
+      }
+      if (battCert !== 'no') {
+        score += battCert === 'yes' ? 3 : 2;
+        flags.push(`<strong>Battery Safety Certification Impact${battCert === 'unknown' ? ' — Not Sure' : ''}:</strong> This may invalidate existing UL 1642/2054 or IEC 62133 certification, requiring re-testing before this ships.${battCert === 'unknown' ? unknownNote : ''}`);
+        questions.push(`Confirm with your test lab/certification body whether this change requires re-certification testing.`);
+      }
+      if (thermal !== 'no') {
+        score += thermal === 'yes' ? 3 : 2;
+        flags.push(`<strong>Thermal Runaway / Safety Retesting${thermal === 'unknown' ? ' — Not Sure' : ' Required'}:</strong> Battery safety testing is not optional and can add significant calendar time.${thermal === 'unknown' ? unknownNote : ''}`);
+        questions.push(`Get a firm timeline from the test lab for thermal/safety retesting before committing to an effectivity date.`);
+      }
+    }
+  }
+
+  // --- Program-type-specific factors ---
+  if (programType === 'aviation') {
+    const faaData = (document.getElementById('eco-faa-data') || {}).value || 'no';
+    const as9100 = (document.getElementById('eco-as9100') || {}).value || 'no';
+    const airworthiness = (document.getElementById('eco-airworthiness') || {}).value || 'no';
+    const as6081 = (document.getElementById('eco-as6081') || {}).value || 'no';
+    const do326a = (document.getElementById('eco-do326a') || {}).value || 'no';
+    const aviationItar = (document.getElementById('eco-aviation-itar') || {}).value || 'no';
+    if (faaData !== 'no') {
+      score += faaData === 'yes' ? 3 : 2;
+      flags.push(`<strong>FAA-Approved Data Impacted${faaData === 'unknown' ? ' — Not Sure' : ''}:</strong> Changes touching Type Certificate/STC/PMA data typically need DER sign-off or FAA re-approval, which runs on its own timeline.${faaData === 'unknown' ? unknownNote : ''}`);
+      questions.push(`Confirm with your DER or certification lead whether this specific change requires new FAA approval before implementation.`);
+    }
+    if (as9100 !== 'no') {
+      score += as9100 === 'yes' ? 2 : 1;
+      flags.push(`<strong>AS9100 Configuration Control Action${as9100 === 'unknown' ? ' — Not Sure' : ' Required'}:</strong> This may need a formal nonconformance disposition or configuration control record, not just an internal note.${as9100 === 'unknown' ? unknownNote : ''}`);
+      questions.push(`Confirm with Quality whether this requires a formal AS9100 nonconformance/configuration control record.`);
+    }
+    if (airworthiness !== 'no') {
+      score += airworthiness === 'yes' ? 4 : 2;
+      flags.push(`<strong>Potential Airworthiness Impact${airworthiness === 'unknown' ? ' — Not Sure' : ''}:</strong> If this could affect airworthiness, it may carry Airworthiness Directive exposure — treat this as high-scrutiny by default.${airworthiness === 'unknown' ? unknownNote : ''}`);
+      questions.push(`Get Engineering/Certification to explicitly rule airworthiness impact in or out — don't assume "probably fine."`);
+    }
+    if (as6081 !== 'no') {
+      score += as6081 === 'yes' ? 3 : 1;
+      flags.push(`<strong>Counterfeit/Fraudulent Part Risk (AS6081)${as6081 === 'unknown' ? ' — Not Sure' : ''}:</strong> Elevated counterfeit-part risk requires the inspection/traceability rigor AS6081 exists for — this is a supply-chain integrity issue, not just a technical one.${as6081 === 'unknown' ? unknownNote : ''}`);
+      questions.push(`Confirm sourcing and traceability documentation for the affected part(s) meets AS6081 requirements before use.`);
+    }
+    if (do326a !== 'no') {
+      score += do326a === 'yes' ? 3 : 1;
+      flags.push(`<strong>Avionics Software/Cybersecurity Impact (DO-326A)${do326a === 'unknown' ? ' — Not Sure' : ''}:</strong> Changes touching avionics software or connected systems may need airworthiness-security review, not just a functional test.${do326a === 'unknown' ? unknownNote : ''}`);
+      questions.push(`Confirm with Systems/Security Engineering whether this change needs DO-326A security assessment before it ships.`);
+    }
+    if (aviationItar !== 'no') {
+      score += aviationItar === 'yes' ? 3 : 2;
+      flags.push(`<strong>ITAR/EAR Export-Control Exposure${aviationItar === 'unknown' ? ' — Not Sure' : ''}:</strong> Commercial aviation parts and technical data are commonly EAR-controlled (dual-use), and some carry ITAR exposure if there's any military-derivative lineage — don't assume "commercial" means "no export control."${aviationItar === 'unknown' ? unknownNote : ''}`);
+      questions.push(`Confirm with your export-control/compliance lead whether this specific part or its technical data package is EAR- or ITAR-controlled before sharing it with any non-U.S. party.`);
+    }
+  } else if (programType === 'space') {
+    const fccSpectrum = (document.getElementById('eco-fcc-spectrum') || {}).value || 'no';
+    const deorbit = (document.getElementById('eco-deorbit') || {}).value || 'no';
+    const part450 = (document.getElementById('eco-part450') || {}).value || 'no';
+    const noaa = (document.getElementById('eco-noaa') || {}).value || 'no';
+    const spaceItar = (document.getElementById('eco-space-itar') || {}).value || 'no';
+    if (fccSpectrum !== 'no') {
+      score += fccSpectrum === 'yes' ? 3 : 2;
+      flags.push(`<strong>FCC Spectrum/Interference Impact${fccSpectrum === 'unknown' ? ' — Not Sure' : ''}:</strong> A change affecting transmitter design or interference profile may require amending the existing FCC authorization, not just a technical retest.${fccSpectrum === 'unknown' ? unknownNote : ''}`);
+      questions.push(`Confirm with Regulatory/Spectrum Engineering whether this change requires an FCC license amendment.`);
+    }
+    if (deorbit !== 'no') {
+      score += deorbit === 'yes' ? 3 : 2;
+      flags.push(`<strong>Deorbit/Disposal Capability Impact${deorbit === 'unknown' ? ' — Not Sure' : ''}:</strong> Anything touching propulsion, attitude control, or disposal capability may affect compliance with the FCC's 5-year deorbit rule.${deorbit === 'unknown' ? unknownNote : ''}`);
+      questions.push(`Confirm the change doesn't compromise the vehicle's ability to meet its committed deorbit timeline.`);
+    }
+    if (part450 !== 'no') {
+      score += part450 === 'yes' ? 3 : 1;
+      flags.push(`<strong>Launch/Re-Entry Licensing Impact (FAA Part 450)${part450 === 'unknown' ? ' — Not Sure' : ''}:</strong> This may require an updated debris assessment or touch conditions of an existing launch license.${part450 === 'unknown' ? unknownNote : ''}`);
+      questions.push(`Confirm with your launch licensing lead whether this change requires an amendment or new debris assessment.`);
+    }
+    if (noaa !== 'no') {
+      score += noaa === 'yes' ? 2 : 1;
+      flags.push(`<strong>Remote Sensing License Impact (NOAA)${noaa === 'unknown' ? ' — Not Sure' : ''}:</strong> A change to sensor/imaging capability can shift which NOAA license class applies.${noaa === 'unknown' ? unknownNote : ''}`);
+      questions.push(`Confirm with Regulatory Affairs whether this change affects the NOAA remote sensing license class currently held.`);
+    }
+    if (spaceItar !== 'no') {
+      score += spaceItar === 'yes' ? 3 : 2;
+      flags.push(`<strong>ITAR/EAR Export-Control Exposure${spaceItar === 'unknown' ? ' — Not Sure' : ''}:</strong> Space technology carries some of the strictest export-control scrutiny — confirm before any data or hardware crosses a border or a non-U.S. person.${spaceItar === 'unknown' ? unknownNote : ''}`);
+      questions.push(`Confirm with your Empowered Official whether this change requires export-control re-classification.`);
+    }
+  } else if (programType === 'defense') {
+    const mil810 = (document.getElementById('eco-mil-810') || {}).checked;
+    const mil461 = (document.getElementById('eco-mil-461') || {}).checked;
+    const mil883 = (document.getElementById('eco-mil-883') || {}).checked;
+    const mil704 = (document.getElementById('eco-mil-704') || {}).checked;
+    const mil167 = (document.getElementById('eco-mil-167') || {}).checked;
+    const mil129 = (document.getElementById('eco-mil-129') || {}).checked;
+    const mil2073 = (document.getElementById('eco-mil-2073') || {}).checked;
+    const milUnsure = (document.getElementById('eco-mil-unsure') || {}).checked;
+    const itar = (document.getElementById('eco-itar') || {}).value || 'no';
+    const nsn = (document.getElementById('eco-nsn') || {}).value || 'no';
+    const refiling = (document.getElementById('eco-refiling') || {}).value || 'no';
+    if (mil810) {
+      score += 3;
+      flags.push(`<strong>MIL-STD-810 Environmental Re-Testing:</strong> Vibration, humidity, or temperature-extreme testing may be required — this is a real test-lab schedule item, not paperwork.`);
+      questions.push(`Confirm with Systems Engineering whether prior MIL-STD-810 data is invalidated by this change or a delta-qualification is sufficient.`);
+    }
+    if (mil461) {
+      score += 3;
+      flags.push(`<strong>MIL-STD-461 EMI/EMC Re-Testing:</strong> Electromagnetic interference/compatibility testing may be required, especially for anything touching power, RF, or digital switching design.`);
+      questions.push(`Confirm whether this change affects emissions or susceptibility enough to require EMI/EMC retest.`);
+    }
+    if (mil883) {
+      score += 2;
+      flags.push(`<strong>MIL-STD-883 Microelectronics Testing:</strong> Applies if this change touches a microcircuit/IC — screening or qualification testing may be required.`);
+      questions.push(`Confirm whether the affected microelectronic component requires MIL-STD-883 screening at its new revision or source.`);
+    }
+    if (mil704) {
+      score += 2;
+      flags.push(`<strong>MIL-STD-704 Aircraft Electric Power Impact:</strong> Relevant if this change affects how the item interfaces with aircraft electrical power.`);
+      questions.push(`Confirm power interface compatibility against MIL-STD-704 limits before implementation.`);
+    }
+    if (mil167) {
+      score += 2;
+      flags.push(`<strong>MIL-STD-167-1 Shipboard Vibration Impact:</strong> Relevant for naval/shipboard-mounted equipment — mechanical vibration qualification may need to be repeated.`);
+      questions.push(`Confirm whether shipboard vibration qualification data still covers this change.`);
+    }
+    if (mil129) {
+      score += 1;
+      flags.push(`<strong>MIL-STD-129 Marking Impact:</strong> Shipment/storage marking may need updating — lower schedule risk, but easy to overlook and can hold up shipment if missed.`);
+      questions.push(`Confirm shipping/storage marking is updated to reflect the new configuration before the next shipment.`);
+    }
+    if (mil2073) {
+      score += 1;
+      flags.push(`<strong>MIL-STD-2073-1 Packaging Impact:</strong> Military packaging requirements may need updating for the new configuration.`);
+      questions.push(`Confirm packaging specifications are updated and re-validated for the new configuration.`);
+    }
+    if (milUnsure) {
+      score += 2;
+      flags.push(`<strong>MIL-STD Applicability — Not Determined:</strong> Nobody has confirmed which, if any, MIL-STD requirements this change triggers.${unknownNote}`);
+      questions.push(`Work with Systems Engineering to determine which MIL-STD requirements actually apply before this goes to the board.`);
+    }
+    if (itar !== 'no') {
+      score += itar === 'yes' ? 3 : 2;
+      flags.push(`<strong>ITAR/Export-Control Exposure${itar === 'unknown' ? ' — Not Sure' : ''}:</strong> The technical data package may need export-control review before it's shared with any non-U.S. supply chain.${itar === 'unknown' ? unknownNote : ''}`);
+      questions.push(`Confirm with your Empowered Official / Regulatory Affairs whether the updated TDP requires re-classification before it's shared with any supplier.`);
+    }
+    if (nsn !== 'no') {
+      score += nsn === 'yes' ? 2 : 1;
+      flags.push(`<strong>NSN/UDI Relabeling Impact${nsn === 'unknown' ? ' — Not Sure' : ''}:</strong> This may require a new National Stock Number or updated serialized labeling — affecting spares interchangeability in the field.${nsn === 'unknown' ? unknownNote : ''}`);
+      questions.push(`Confirm with Logistics/IPS whether legacy spares remain compatible, or whether this creates a field interchangeability split.`);
+    }
+    if (refiling !== 'no') {
+      score += refiling === 'yes' ? 3 : 2;
+      flags.push(`<strong>DCMA Notification / CAS Impact${refiling === 'unknown' ? ' — Not Sure' : ' Likely'}:</strong> This may require notifying DCMA or affect CAS-covered cost accounting — this alone can add real time.${refiling === 'unknown' ? unknownNote : ''}`);
+      questions.push(`Confirm with your contracts/compliance lead whether this triggers a DCMA notification or CAS disclosure requirement.`);
+    }
+  } else if (programType === 'medical') {
+    const iec = (document.getElementById('eco-iec60601') || {}).value || 'no';
+    const filing510k = (document.getElementById('eco-510k') || {}).value || 'no';
+    const udi = (document.getElementById('eco-udi') || {}).value || 'no';
+    if (iec !== 'no') {
+      score += iec === 'yes' ? 3 : 2;
+      flags.push(`<strong>IEC 60601 Re-Testing${iec === 'unknown' ? ' — Not Sure' : ' Triggered'}:</strong> Medical safety/EMC testing may be required before this change can ship.${iec === 'unknown' ? unknownNote : ''}`);
+      questions.push(`Confirm with Regulatory/Quality whether prior test data covers this change or new testing is required.`);
+    }
+    if (filing510k !== 'no') {
+      score += filing510k === 'yes' ? 4 : 2;
+      flags.push(`<strong>510(k)/PMA Supplement or Letter to File${filing510k === 'unknown' ? ' — Not Sure' : ' Likely'}:</strong> This can add months — confirm the filing threshold, don't assume it's a Letter to File.${filing510k === 'unknown' ? unknownNote : ''}`);
+      questions.push(`Confirm with Regulatory Affairs whether this specific change meets the threshold for a new filing versus a Letter to File.`);
+    }
+    if (udi !== 'no') {
+      score += udi === 'yes' ? 2 : 1;
+      flags.push(`<strong>UDI/Labeling or ISO 13485 Design-Change Impact${udi === 'unknown' ? ' — Not Sure' : ''}:</strong> Labeling and design-change-control records may need updating in step with this change.${udi === 'unknown' ? unknownNote : ''}`);
+      questions.push(`Confirm with Regulatory/Quality whether UDI or labeling needs updating and that the ISO 13485 design-change record is being kept current.`);
+    }
+  } else if (programType === 'datacenter') {
+    const planning = (document.getElementById('eco-dc-planning') || {}).value || 'planned';
+    const configScope = (document.getElementById('eco-dc-config-scope') || {}).value || 'single';
+    const rollout = (document.getElementById('eco-dc-rollout') || {}).value || 'yes';
+    const compat = (document.getElementById('eco-dc-compat') || {}).value || 'yes';
+    const ownership = (document.getElementById('eco-dc-ownership') || {}).value || 'internal';
+    const contract = (document.getElementById('eco-dc-contract') || {}).value || 'reviewed';
+    const shutdown = (document.getElementById('eco-dc-shutdown') || {}).value || 'no';
+    const returnService = (document.getElementById('eco-dc-return-service') || {}).value || 'yes';
+    const failover = (document.getElementById('eco-dc-failover') || {}).value || 'yes';
+    const density = (document.getElementById('eco-dc-density') || {}).value || 'within';
+    const environmental = (document.getElementById('eco-dc-environmental') || {}).value || 'no';
+    const longlead = (document.getElementById('eco-dc-longlead') || {}).value || 'no';
+    const obsolescence = (document.getElementById('eco-dc-obsolescence') || {}).value || 'no';
+    const moisture = (document.getElementById('eco-dc-moisture') || {}).value || 'no';
+    const utilityCost = parseFloat((document.getElementById('eco-dc-utility-cost') || {}).value) || 0;
+
+    if (planning !== 'planned') {
+      score += planning === 'adhoc' ? 3 : (planning === 'partial' ? 2 : 1);
+      flags.push(`<strong>Upgrade Planning — ${planning === 'adhoc' ? 'Reactive/Bolted On' : planning === 'partial' ? 'Partially Thought Through' : 'Not Sure'}:</strong> Upgrades that skip a full review of dependencies and downstream effects are a common, avoidable source of surprise failures.${planning === 'unknown' ? unknownNote : ''}`);
+      questions.push(`Walk through dependencies, downstream effects, and capacity impacts explicitly before proceeding, even if that takes extra time up front.`);
+    }
+    if (configScope === 'multiple') {
+      score += 2;
+      flags.push(`<strong>Multiple Site Configurations Affected:</strong> This isn't a single change, it's several — each site/config variant needs its own tracking, not one status for all.`);
+      questions.push(`List every site/configuration variant this touches individually and confirm each has a defined rollout status.`);
+    } else if (configScope === 'unknown') {
+      score += 1;
+      flags.push(`<strong>Configuration Scope — Not Sure:</strong>${unknownNote}`);
+      questions.push(`Confirm how many site configurations this actually touches before assuming it's a single, simple change.`);
+    }
+    if (rollout !== 'yes') {
+      score += rollout === 'no' ? 3 : 1;
+      flags.push(`<strong>Cross-Site Rollout Sequencing${rollout === 'unknown' ? ' — Not Sure' : ' Undefined'}:</strong> Without a tracked sequence, some sites end up on the old revision and some on the new with nobody keeping a clear picture of which is which.${rollout === 'unknown' ? unknownNote : ''}`);
+      questions.push(`Define and assign an owner for tracking exactly which sites have received this change and which haven't.`);
+    }
+    if (compat !== 'yes') {
+      score += compat === 'no' ? 3 : 1;
+      flags.push(`<strong>Rack/Power/Electrical Compatibility${compat === 'unknown' ? ' — Not Sure' : ' Not Validated Everywhere'}:</strong> Validated at one site doesn't mean it fits the rack, power, or weight-loading standards at every destination site.${compat === 'unknown' ? unknownNote : ''}`);
+      questions.push(`Confirm compatibility at every destination site individually — don't extrapolate from the site where it was first validated.`);
+    }
+    if (ownership !== 'internal') {
+      score += ownership === 'unclear' ? 4 : 2;
+      flags.push(`<strong>Facility Equipment Ownership — ${ownership === 'unclear' ? 'Unclear' : ownership === 'landlord' ? 'Landlord/Colo Controlled' : 'Vendor Contract Restricted'}:</strong> ${ownership === 'unclear' ? "Nobody knowing who owns this equipment means the true approval path is unknown, not just informal." : "Changes here may require landlord/colo or vendor sign-off before anything can be implemented, on a timeline you don't control."}`);
+      questions.push(`Confirm who actually has change authority over this equipment before planning an implementation date around it.`);
+    }
+    if (contract !== 'reviewed') {
+      score += contract === 'assumed' ? 3 : 1;
+      flags.push(`<strong>Contract/Warranty Terms — ${contract === 'assumed' ? 'Assumed Fine, Not Reviewed' : 'Not Sure'}:</strong> Restrictions or warranty voidance clauses are easy to miss until after a change is already made.${contract === 'unknown' ? unknownNote : ''}`);
+      questions.push(`Actually read the relevant contract/warranty language for this specific piece of equipment before proceeding.`);
+    }
+    if (shutdown !== 'no') {
+      score += shutdown === 'exposed' ? 3 : 1;
+      flags.push(`<strong>Equipment Shutdown Required${shutdown === 'exposed' ? ' — No Redundancy' : ', Redundant Path Available'}:</strong> ${shutdown === 'exposed' ? 'There is full exposure during this change with no fallback if something goes wrong.' : 'A redundant path exists, but confirm it can actually carry full load during the shutdown window.'}`);
+      questions.push(`Confirm exactly what's unprotected during the shutdown window and for how long.`);
+    }
+    if (returnService !== 'yes') {
+      score += returnService === 'no' ? 3 : 1;
+      flags.push(`<strong>Post-Maintenance Return-to-Service — ${returnService === 'no' ? 'No Verification Plan' : 'Not Sure'}:</strong> A shutdown that goes fine doesn't mean the restart will — parts fail on power-up more often than people plan for.${returnService === 'unknown' ? unknownNote : ''}`);
+      questions.push(`Define a specific verification test to run immediately after return-to-service, not just "turn it back on and see."`);
+    }
+    if (failover !== 'yes') {
+      score += failover === 'no' ? 3 : 2;
+      flags.push(`<strong>Backup Power/Failover — ${failover === 'no' ? 'Untested' : 'Not Sure'}:</strong> A failover path that's never been tested under real load is not a confirmed safety net.${failover === 'unknown' ? unknownNote : ''}`);
+      questions.push(`Get backup power/failover tested under real or realistic load before relying on it as protection during this change.`);
+    }
+    if (density !== 'within') {
+      score += density === 'exceeds' ? 3 : 1;
+      flags.push(`<strong>Rack Density vs. Design Margin — ${density === 'exceeds' ? 'Exceeds Validated Margin' : 'Not Assessed'}:</strong> Pushing past validated cooling/power margin is a direct, common cause of hot spots and thermal shutdowns.${density === 'unknown' ? unknownNote : ''}`);
+      questions.push(`Get actual cooling/power margin numbers for the affected racks before assuming current infrastructure can absorb this.`);
+    }
+    if (environmental !== 'no') {
+      score += environmental === 'yes' ? 2 : 1;
+      flags.push(`<strong>Environmental/Regulatory Exposure${environmental === 'unknown' ? ' — Not Sure' : ''}:</strong> Increased generator runtime or noise from this change could affect permit or ordinance compliance.${environmental === 'unknown' ? unknownNote : ''}`);
+      questions.push(`Check whether this change increases generator runtime, noise, or emissions enough to matter against local permits.`);
+    }
+    if (longlead !== 'no') {
+      score += longlead === 'yes' ? 2 : 1;
+      flags.push(`<strong>Long-Lead Capital Equipment Exposure${longlead === 'unknown' ? ' — Not Sure' : ''}:</strong> Generators, switchgear, and transformers can carry multi-year lead times — treat this as schedule-critical if it's on the path.${longlead === 'unknown' ? unknownNote : ''}`);
+      questions.push(`Get current lead times directly from the supplier for any capital equipment this change touches, not historical estimates.`);
+    }
+    if (obsolescence !== 'no') {
+      score += obsolescence === 'yes' ? 2 : 1;
+      flags.push(`<strong>IT/Facility Equipment Obsolescence Exposure${obsolescence === 'unknown' ? ' — Not Sure' : ''}:</strong> Equipment nearing EOL or with scarce spares is a common, slow-building risk that doesn't announce itself until something fails and can't be quickly replaced.${obsolescence === 'unknown' ? unknownNote : ''}`);
+      questions.push(`Check EOL/support status and spares availability for the affected equipment before assuming it can be repaired or sourced quickly if it fails.`);
+    }
+    if (moisture !== 'no') {
+      score += moisture === 'yes' ? 2 : 1;
+      flags.push(`<strong>Moisture/Environmental Exposure Risk${moisture === 'unknown' ? ' — Not Sure' : ''}:</strong>${moisture === 'unknown' ? unknownNote : ' Moisture exposure is a common, under-checked cause of unexpected equipment degradation.'}`);
+      questions.push(`Confirm environmental sealing and moisture exposure at the affected location before proceeding.`);
+    }
+    if (utilityCost > 0) {
+      flags.push(`<strong>Utility/Operating Cost Impact Noted:</strong> An estimated $${utilityCost.toLocaleString('en-US')} operating cost impact was entered — factor this into the total exposure below.`);
+    }
+  } else if (programType === 'consumer') {
+    const fcc15 = (document.getElementById('eco-fcc15') || {}).value || 'no';
+    const ulCe = (document.getElementById('eco-ul-ce') || {}).value || 'no';
+    const rohs = (document.getElementById('eco-rohs') || {}).value || 'no';
+    const intlCert = (document.getElementById('eco-intl-cert') || {}).value || 'no';
+    if (fcc15 !== 'no') {
+      score += fcc15 === 'yes' ? 3 : 2;
+      flags.push(`<strong>FCC Part 15 Emissions Impact${fcc15 === 'unknown' ? ' — Not Sure' : ''}:</strong> Changes affecting RF/digital emissions can require re-testing and, in some cases, a new FCC ID grant — this can add real lab time.${fcc15 === 'unknown' ? unknownNote : ''}`);
+      questions.push(`Confirm with your compliance/test lab whether this change requires FCC Part 15 retesting or a new grant.`);
+    }
+    if (ulCe !== 'no') {
+      score += ulCe === 'yes' ? 3 : 2;
+      flags.push(`<strong>UL/CE/CB Safety Certification Impact${ulCe === 'unknown' ? ' — Not Sure' : ''}:</strong> Safety certification can be invalidated by changes to materials, power handling, or enclosure design.${ulCe === 'unknown' ? unknownNote : ''}`);
+      questions.push(`Confirm with your certification body whether existing UL/CE/CB certification still covers this change.`);
+    }
+    if (rohs !== 'no') {
+      score += rohs === 'yes' ? 2 : 1;
+      flags.push(`<strong>RoHS/REACH Compliance Impact${rohs === 'unknown' ? ' — Not Sure' : ''}:</strong> A material or component substitution can unknowingly introduce a restricted substance.${rohs === 'unknown' ? unknownNote : ''}`);
+      questions.push(`Get updated material declarations for any new or changed component before assuming RoHS/REACH compliance carries over.`);
+    }
+    if (intlCert !== 'no') {
+      score += intlCert === 'yes' ? 2 : 1;
+      flags.push(`<strong>International Re-Certification Needed${intlCert === 'unknown' ? ' — Not Sure' : ''}:</strong> Each target market (PSE, KC, etc.) may require its own re-certification cycle, on its own timeline.${intlCert === 'unknown' ? unknownNote : ''}`);
+      questions.push(`List every target market this product ships to and confirm re-certification status in each individually.`);
+    }
+  } else if (programType === 'automotive') {
+    const ppap = (document.getElementById('eco-ppap') || {}).value || 'no';
+    const iso26262 = (document.getElementById('eco-iso26262') || {}).value || 'no';
+    const fmvss = (document.getElementById('eco-fmvss') || {}).value || 'no';
+    const emissions = (document.getElementById('eco-emissions') || {}).value || 'no';
+    if (ppap !== 'no') {
+      score += ppap === 'yes' ? 3 : 2;
+      flags.push(`<strong>PPAP Re-Submission Required (IATF 16949)${ppap === 'unknown' ? ' — Not Sure' : ''}:</strong> A new Production Part Approval Process submission can add real qualification time before parts can ship to an OEM.${ppap === 'unknown' ? unknownNote : ''}`);
+      questions.push(`Confirm with Quality whether this change meets the customer's PPAP resubmission threshold.`);
+    }
+    if (iso26262 !== 'no') {
+      score += iso26262 === 'yes' ? 4 : 2;
+      flags.push(`<strong>Functional Safety Impact (ISO 26262)${iso26262 === 'unknown' ? ' — Not Sure' : ' — Re-Assessment Needed'}:</strong> Changes affecting a safety-classified system can require re-running the functional safety case, not just a functional test.${iso26262 === 'unknown' ? unknownNote : ''}`);
+      questions.push(`Confirm with Systems/Safety Engineering whether this change affects the item's ASIL classification or safety case.`);
+    }
+    if (fmvss !== 'no') {
+      score += fmvss === 'yes' ? 4 : 2;
+      flags.push(`<strong>FMVSS Compliance Impact${fmvss === 'unknown' ? ' — Not Sure' : ''}:</strong> Federal Motor Vehicle Safety Standards violations carry real regulatory and recall exposure — treat this as high-scrutiny by default.${fmvss === 'unknown' ? unknownNote : ''}`);
+      questions.push(`Get Compliance/Regulatory to explicitly rule FMVSS impact in or out before proceeding.`);
+    }
+    if (emissions !== 'no') {
+      score += emissions === 'yes' ? 3 : 1;
+      flags.push(`<strong>Emissions-Related Component Impact (EPA/CARB)${emissions === 'unknown' ? ' — Not Sure' : ''}:</strong> Changes to emissions-related parts can require re-certification with EPA/CARB before production.${emissions === 'unknown' ? unknownNote : ''}`);
+      questions.push(`Confirm with Regulatory/Compliance whether this component is on the emissions-certified parts list and what re-certification it triggers.`);
+    }
+  } else if (programType === 'unsure') {
+    score += 3;
+    flags.push(`<strong style="color:var(--red);">Regulatory Framework Not Determined:</strong> Not knowing which framework applies (DoD/ITAR, FAA/AS9100, FDA, or none) is itself a risk on a Class I change — the requirements differ enough that guessing wrong could mean missing something entirely.`);
+    questions.push(`Determine the correct regulatory framework before this goes to the board, then re-run this assessment with the right program type selected.`);
+  }
+
+  if (flags.length === 0) {
+    flags.push(`<span style="color:var(--green)">✓ No major downstream risk factors flagged at these inputs — but it's still Class I, so full documentation and traceability still apply.</span>`);
+  }
+  if (questions.length === 0) {
+    questions.push(`No high-priority questions flagged — standard Class I documentation and traceability still apply.`);
+  }
+
+  let severityLabel, severityColor;
+  if (score <= 3) {
+    severityLabel = 'MODERATE — expect real CCB scrutiny';
+    severityColor = 'var(--amber)';
+  } else if (score <= 7) {
+    severityLabel = 'HIGH — multiple downstream systems affected, expect delay';
+    severityColor = 'var(--red)';
+  } else {
+    severityLabel = 'CRITICAL — treat as a program-level event, not routine paperwork';
+    severityColor = 'var(--red)';
+  }
+  outSeverity.innerText = severityLabel;
+  outSeverity.style.color = severityColor;
+
+  const hrs = parseFloat((document.getElementById('eco-hrs') || {}).value) || 0;
+  const rate = parseFloat((document.getElementById('eco-rate') || {}).value) || 0;
+  const scrap = parseFloat((document.getElementById('eco-scrap') || {}).value) || 0;
+  const toolingCost = parseFloat((document.getElementById('eco-tooling-cost') || {}).value) || 0;
   const nre = hrs * rate;
-  const total = nre + scrap + tooling;
+  const dcUtilityCost = programType === 'datacenter' ? (parseFloat((document.getElementById('eco-dc-utility-cost') || {}).value) || 0) : 0;
+  const total = nre + scrap + toolingCost + dcUtilityCost;
 
-  document.getElementById('eco-out-nre').innerText = '$' + nre.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-  document.getElementById('eco-out-total').innerText = '$' + total.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  if (total > 0) {
+    outCost.innerText = '$' + total.toLocaleString('en-US', {maximumFractionDigits: 0}) + ' (known inputs only — excludes unquantified risk factors above)';
+  } else {
+    outCost.innerText = 'No cost inputs entered — see flagged risk drivers below for unquantified exposure';
+  }
+
+  riskList.innerHTML = '';
+  flags.forEach(f => { const li = document.createElement('li'); li.innerHTML = f; riskList.appendChild(li); });
+  questionList.innerHTML = '';
+  questions.forEach(q => { const li = document.createElement('li'); li.innerHTML = q; questionList.appendChild(li); });
 }
 
 function calculateLandedCost() {
@@ -1366,5 +2366,103 @@ window.onload = function() {
   calculateLTB();
 };
 </script>
+  <button class="feedback-fab" onclick="openFeedback()">💬 Feedback</button>
+
+  <div id="feedback-overlay" class="feedback-overlay hidden">
+    <div class="feedback-modal">
+      <h2>Send Feedback</h2>
+      <p class="ctx-note">We'll automatically note which tool you were using — no need to explain that part.</p>
+      <form id="feedback-form">
+        <div class="field">
+          <label>What's this about?</label>
+          <select id="fb-type">
+            <option value="Bug">Something's broken</option>
+            <option value="Feature Idea">A feature or tool I'd want</option>
+            <option value="General">General feedback</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Details</label>
+          <textarea id="fb-message" placeholder="Tell us what happened, or what you'd like to see..." required></textarea>
+        </div>
+        <div class="field">
+          <label>Email (optional, if you'd like a reply)</label>
+          <input type="email" id="fb-email" placeholder="you@example.com">
+        </div>
+        <div class="feedback-actions">
+          <button type="button" class="feedback-cancel" onclick="closeFeedback()">Cancel</button>
+          <button type="submit" class="feedback-submit">Send</button>
+        </div>
+        <div id="feedback-status" class="feedback-status"></div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // TODO: paste your real Formspree endpoint below, e.g. "https://formspree.io/f/abcdwxyz"
+    const FORMSPREE_ENDPOINT = "https://formspree.io/f/xjyvqjll";
+
+    function getCurrentToolContext() {
+      const activePillar = document.querySelector('.tab-pillar.active');
+      if (!activePillar) return 'Unknown';
+      const activeTool = activePillar.querySelector('.tool-view.active');
+      if (!activeTool) return 'Unknown';
+      const heading = activeTool.querySelector('h1');
+      return heading ? heading.innerText.trim() : (activeTool.id || 'Unknown');
+    }
+
+    function openFeedback() {
+      document.getElementById('feedback-status').innerText = '';
+      document.getElementById('feedback-form').reset();
+      document.getElementById('feedback-overlay').classList.remove('hidden');
+    }
+
+    function closeFeedback() {
+      document.getElementById('feedback-overlay').classList.add('hidden');
+    }
+
+    document.getElementById('feedback-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const statusEl = document.getElementById('feedback-status');
+
+      if (FORMSPREE_ENDPOINT === "PASTE_YOUR_FORMSPREE_ENDPOINT_HERE") {
+        statusEl.style.color = 'var(--red)';
+        statusEl.innerText = 'Feedback form is not fully set up yet — the site owner still needs to connect it.';
+        return;
+      }
+
+      const payload = {
+        type: document.getElementById('fb-type').value,
+        message: document.getElementById('fb-message').value,
+        email: document.getElementById('fb-email').value || '(not provided)',
+        tool: getCurrentToolContext(),
+        page_url: window.location.href
+      };
+
+      statusEl.style.color = 'var(--text-dim)';
+      statusEl.innerText = 'Sending...';
+
+      fetch(FORMSPREE_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .then(response => {
+        if (response.ok) {
+          statusEl.style.color = 'var(--green)';
+          statusEl.innerText = 'Thanks — feedback sent!';
+          setTimeout(closeFeedback, 1500);
+        } else {
+          statusEl.style.color = 'var(--red)';
+          statusEl.innerText = 'Something went wrong sending this — please try again.';
+        }
+      })
+      .catch(() => {
+        statusEl.style.color = 'var(--red)';
+        statusEl.innerText = 'Something went wrong sending this — please try again.';
+      });
+    });
+  </script>
+
 </body>
 </html>

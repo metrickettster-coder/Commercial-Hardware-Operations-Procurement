@@ -39,6 +39,37 @@ document.addEventListener('DOMContentLoaded', () => {
   const resultsCard = document.getElementById('resultsCard');
   const flagsContainer = document.getElementById('flagsContainer');
   const redactedOutput = document.getElementById('redactedOutput');
+  const autofillBanner = document.getElementById('autofillBanner');
+  const downloadTemplateLink = document.getElementById('downloadTemplateLink');
+
+  if (downloadTemplateLink) {
+    downloadTemplateLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      const templateText =
+"COMMERCIAL QUOTE INTAKE TEMPLATE\n" +
+"---------------------------------\n" +
+"Fill in what you know below. Leave anything unknown blank -- do not guess just to fill a field.\n" +
+"Save this file, then upload it on the site to auto-fill the Custom Part Quote Audit tool.\n\n" +
+"MATERIAL: \n" +
+"UNIT PRICE: $\n" +
+"SETUP: $\n" +
+"TOOLING: $\n" +
+"QUANTITY: \n" +
+"PAYMENT TERMS: (e.g. Net 30)\n" +
+"INCOTERM: (e.g. FOB, DDP)\n" +
+"LEAD TIME: (e.g. 6 weeks ARO)\n" +
+"WARRANTY: (e.g. 12 months)\n";
+      const blob = new Blob([templateText], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'commercial-quote-template.txt';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+  }
 
   if (!dropzone || !fileInput) return;
 
@@ -118,20 +149,41 @@ document.addEventListener('DOMContentLoaded', () => {
     const qtyMatch = text.match(/(?:quantity|qty|moq|order\s*size)[\:\s]*([\d\.,]+)/i);
     const materialMatch = text.match(/(?:material|alloy|substrate)[\:\s]*([a-zA-Z0-9\-\s]+)/i);
 
+    const filledFieldIds = [];
+
     if (unitPriceMatch && document.getElementById('cp-base-unit')) {
       document.getElementById('cp-base-unit').value = unitPriceMatch[1].replace(/,/g, '');
+      filledFieldIds.push('cp-base-unit');
     }
     if (setupMatch && document.getElementById('cp-setup')) {
       document.getElementById('cp-setup').value = setupMatch[1].replace(/,/g, '');
+      filledFieldIds.push('cp-setup');
     }
     if (toolingMatch && document.getElementById('cp-tooling')) {
       document.getElementById('cp-tooling').value = toolingMatch[1].replace(/,/g, '');
+      filledFieldIds.push('cp-tooling');
     }
     if (qtyMatch && document.getElementById('cp-qty')) {
       document.getElementById('cp-qty').value = qtyMatch[1].replace(/,/g, '');
+      filledFieldIds.push('cp-qty');
     }
     if (materialMatch && document.getElementById('cp-material')) {
       document.getElementById('cp-material').value = materialMatch[1].trim();
+      filledFieldIds.push('cp-material');
+    }
+
+    // Clear any previous highlights, then mark exactly which fields this upload actually touched.
+    ['cp-base-unit', 'cp-setup', 'cp-tooling', 'cp-qty', 'cp-material'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('auto-filled');
+    });
+    filledFieldIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('auto-filled');
+    });
+
+    if (autofillBanner) {
+      autofillBanner.classList.toggle('hidden', filledFieldIds.length === 0);
     }
 
     if (typeof calculateCustomPartBreakdown === 'function') {
