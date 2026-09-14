@@ -49,7 +49,7 @@
   .upload-zone:hover, .upload-zone.dragover { border-color: var(--amber); background-color: var(--panel-2); }
 
   /* Primary Lifecycle Stage Nav */
-  nav.pillar-nav{ display:grid; grid-template-columns: repeat(5, 1fr); gap:8px; margin-bottom:16px; }
+  nav.pillar-nav{ display:grid; grid-template-columns: repeat(6, 1fr); gap:8px; margin-bottom:16px; }
   @media(max-width: 900px){ nav.pillar-nav{ grid-template-columns: repeat(3, 1fr); } }
   @media(max-width: 600px){ nav.pillar-nav{ grid-template-columns: repeat(2, 1fr); } }
 
@@ -106,6 +106,22 @@
   .risk-list { padding-left: 20px; color: var(--text-mid); font-size: 13px; }
   .risk-list li { margin-bottom: 10px; line-height: 1.4; }
   .divider { border: 0; border-top: 1px solid var(--grid-line); margin: 16px 0; }
+
+  /* Dynamic Data-Entry Tables (Supplier Scorecard, Risk Register, etc.) */
+  .data-table-wrap{ overflow-x:auto; margin-bottom:10px; }
+  .data-table{ width:100%; border-collapse:collapse; font-size:12.5px; min-width:760px; }
+  .data-table th{ text-align:left; font-family:'IBM Plex Mono', monospace; font-size:10px; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-dim); padding:6px 6px; border-bottom:1px solid var(--grid-line); white-space:nowrap; }
+  .data-table td{ padding:4px 5px; border-bottom:1px solid var(--grid-line); vertical-align:middle; }
+  .data-table input, .data-table select{ width:100%; background:var(--ink); border:1px solid var(--grid-line); color:var(--text-hi); font-family:'IBM Plex Mono', monospace; font-size:12px; padding:6px 7px; border-radius:4px; outline:none; }
+  .data-table input:focus, .data-table select:focus{ border-color: var(--focus); }
+  .data-table td.score-cell{ font-family:'IBM Plex Mono', monospace; font-weight:700; text-align:center; white-space:nowrap; }
+  .row-dot{ display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; vertical-align:middle; }
+  .btn-row-remove{ background:transparent; border:1px solid var(--red); color:var(--red); border-radius:4px; padding:5px 9px; cursor:pointer; font-size:12px; font-family:'IBM Plex Mono', monospace; }
+  .btn-row-remove:hover{ background:rgba(217,88,79,0.12); }
+  .btn-row-add{ background:transparent; border:1px dashed var(--grid-line); color:var(--text-mid); padding:9px; border-radius:6px; cursor:pointer; width:100%; font-family:'IBM Plex Mono', monospace; font-size:12.5px; font-weight:600; }
+  .btn-row-add:hover{ border-color:var(--amber); color:var(--amber); }
+  textarea.dump-paste{ width:100%; height:140px; background:var(--ink); border:1px solid var(--grid-line); color:var(--text-hi); font-family:'IBM Plex Mono', monospace; font-size:12px; padding:10px; border-radius:6px; resize:vertical; outline:none; }
+  textarea.dump-paste:focus{ border-color: var(--focus); }
   .hidden { display: none !important; }
 .feedback-fab{ position:fixed; bottom:24px; right:24px; background:var(--amber); color:#1a1305; font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:12px; border:none; border-radius:24px; padding:12px 18px; cursor:pointer; box-shadow:0 4px 14px rgba(0,0,0,0.4); z-index:1000; transition:transform 0.15s ease; }
 .feedback-fab:hover{ transform:translateY(-2px); }
@@ -171,6 +187,9 @@
     </div>
     <div class="pillar-btn" onclick="switchPillar('sustaining', this)">
       <span class="title">♻️ 5. Sustaining &amp; EOL Closeout</span>
+    </div>
+    <div class="pillar-btn" onclick="switchPillar('supplierrisk', this)">
+      <span class="title">🛡️ 6. Supplier &amp; Risk Mgmt</span>
     </div>
   </nav>
 
@@ -941,6 +960,7 @@
       <button class="sub-btn" onclick="switchTool('ops', 'eoq', this)">EOQ &amp; Reorder Point</button>
       <button class="sub-btn" onclick="switchTool('ops', 'fpy', this)">First Pass Yield (FPY) / PPM</button>
       <button class="sub-btn" onclick="switchTool('ops', 'budgetkpi', this)">Budget KPI Dashboard</button>
+      <button class="sub-btn" onclick="switchTool('ops', 'datacut', this)">Data Cut / Report Builder</button>
     </div>
 
     <!-- EVM -->
@@ -1055,6 +1075,54 @@
           <h2 style="color: var(--amber);">⚠️ Budget Flags</h2>
           <ul id="bk-risk-list" class="risk-list"></ul>
         </div>
+      </div>
+    </div>
+
+    <!-- Data Cut / Report Builder -->
+    <div id="tool-datacut" class="tool-view">
+      <h1>Data Cut / Report Builder</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Paste a wide export straight out of Excel or your GL/ERP/inventory system, then cut it by any column — GL Code, Cost Center, Part Number, Location, whatever headers are actually in your data. Parsed 100% locally, nothing leaves the browser.</p>
+
+      <div class="panel" style="margin-bottom:20px;">
+        <h2>1. Paste Data</h2>
+        <p style="color:var(--text-mid); font-size:0.85em; margin-bottom:10px;">Include the header row. Tab-delimited (copied straight from Excel) or comma-delimited (CSV) both work — the delimiter is auto-detected.</p>
+        <textarea id="dc-paste" class="dump-paste" placeholder="GL Code&#9;Cost Center&#9;Part Number&#9;Location&#9;Qty&#9;Amount
+5010&#9;CC-100&#9;PN-1001&#9;Austin&#9;120&#9;4800
+5010&#9;CC-200&#9;PN-1002&#9;Reno&#9;40&#9;2200
+5020&#9;CC-100&#9;PN-1003&#9;Austin&#9;300&#9;9000"></textarea>
+        <button type="button" class="btn-action" onclick="parseDataCut()">Parse Data</button>
+        <div id="dc-parse-status" style="color:var(--text-mid); font-size:0.85em; margin-top:8px;"></div>
+      </div>
+
+      <div class="panel" style="margin-bottom:20px;">
+        <h2>2. Cut By</h2>
+        <div class="grid" style="grid-template-columns: repeat(4, 1fr);">
+          <div class="field"><label>Cut By (Group 1)</label><select id="dc-group1"><option value="">— Parse data first —</option></select></div>
+          <div class="field"><label>Then By (Group 2, optional)</label><select id="dc-group2"><option value="">— None —</option></select></div>
+          <div class="field"><label>Value Column</label><select id="dc-value"><option value="">— Parse data first —</option></select></div>
+          <div class="field"><label>Aggregation</label>
+            <select id="dc-agg">
+              <option value="sum">Sum</option>
+              <option value="count">Count of Rows</option>
+              <option value="avg">Average</option>
+              <option value="min">Min</option>
+              <option value="max">Max</option>
+            </select>
+          </div>
+        </div>
+        <button type="button" class="btn-action" onclick="calculateDataCut()">Generate Report</button>
+      </div>
+
+      <div class="panel">
+        <h2>3. Output</h2>
+        <div id="dc-output-status" style="color:var(--text-mid); font-size:0.85em; margin-bottom:10px;">Paste data and generate a report to see output here.</div>
+        <div class="data-table-wrap">
+          <table class="data-table" id="dc-output-table" style="display:none;">
+            <thead id="dc-output-head"></thead>
+            <tbody id="dc-output-body"></tbody>
+          </table>
+        </div>
+        <button type="button" class="btn-action" id="dc-export-btn" style="display:none; margin-top:12px;" onclick="exportDataCutCSV()">Export Report as CSV</button>
       </div>
     </div>
   </div>
@@ -1263,6 +1331,109 @@
         <div class="panel">
           <h2 style="color: var(--amber);">⚠️ LTB Purchase Flags</h2>
           <ul id="ltb-risk-list" class="risk-list"></ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PILLAR 6: SUPPLIER & RISK MANAGEMENT -->
+  <div id="pillar-supplierrisk" class="tab-pillar">
+    <div class="subnav-bar">
+      <button class="sub-btn active" onclick="switchTool('supplierrisk', 'suppscore', this)">Supplier Performance Scorecard</button>
+      <button class="sub-btn" onclick="switchTool('supplierrisk', 'riskreg', this)">Program Risk Register</button>
+    </div>
+
+    <!-- Supplier Performance Scorecard -->
+    <div id="tool-suppscore" class="tool-view active">
+      <h1>Supplier Performance Scorecard</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Rank your supply base on a weighted composite of delivery, quality, cost, and responsiveness — add as many suppliers as you're tracking.</p>
+
+      <div class="panel" style="margin-bottom:20px;">
+        <h2>Composite Score Weights</h2>
+        <p style="color:var(--text-mid); font-size:0.85em; margin-bottom:10px;">Must total 100%. Adjust to match what matters most for this supply base.</p>
+        <div class="grid" style="grid-template-columns: repeat(4, 1fr);">
+          <div class="field"><label>On-Time Delivery Weight (%)</label><input type="number" id="ss-w-otd" value="30" min="0" max="100" oninput="calculateSupplierScorecard()"></div>
+          <div class="field"><label>Quality Weight (%)</label><input type="number" id="ss-w-quality" value="30" min="0" max="100" oninput="calculateSupplierScorecard()"></div>
+          <div class="field"><label>Cost Weight (%)</label><input type="number" id="ss-w-cost" value="20" min="0" max="100" oninput="calculateSupplierScorecard()"></div>
+          <div class="field"><label>Responsiveness Weight (%)</label><input type="number" id="ss-w-resp" value="20" min="0" max="100" oninput="calculateSupplierScorecard()"></div>
+        </div>
+        <div class="readout"><div class="rlabel">Weight Total</div><div class="rvalue" id="ss-weight-total">100%</div></div>
+      </div>
+
+      <div class="panel" style="margin-bottom:20px;">
+        <h2>Supplier Data</h2>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead><tr>
+              <th style="min-width:150px;">Supplier</th>
+              <th>OTD %</th>
+              <th>Quality (PPM)</th>
+              <th>Cost Var. %</th>
+              <th>Responsiveness</th>
+              <th>Annual Spend ($)</th>
+              <th>Composite</th>
+              <th>Status</th>
+              <th></th>
+            </tr></thead>
+            <tbody id="ss-tbody"></tbody>
+          </table>
+        </div>
+        <button type="button" class="btn-row-add" onclick="addSupplierRow()">+ Add Supplier</button>
+      </div>
+
+      <div class="grid">
+        <div class="panel">
+          <h2>Supply Base Summary</h2>
+          <div class="readout"><div class="rlabel">Average Composite Score</div><div class="rvalue" id="ss-out-avg">—</div></div>
+          <div class="readout"><div class="rlabel">Suppliers at Risk (Red Status)</div><div class="rvalue" id="ss-out-atrisk-count">0</div></div>
+          <div class="readout"><div class="rlabel">Annual Spend at Risk</div><div class="rvalue" id="ss-out-atrisk-spend" style="color:var(--red);">$0</div></div>
+          <div class="readout"><div class="rlabel">Top Performer</div><div class="rvalue" id="ss-out-top" style="font-size:14px;">—</div></div>
+        </div>
+        <div class="panel">
+          <h2 style="color: var(--amber);">⚠️ Supply Base Flags</h2>
+          <ul id="ss-risk-list" class="risk-list"></ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Program Risk Register -->
+    <div id="tool-riskreg" class="tool-view">
+      <h1>Program Risk Register</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Track cost, schedule, technical, supplier, and quality risks with a probability-weighted dollar exposure — the same math behind a BCR/LRE conversation.</p>
+
+      <div class="panel" style="margin-bottom:20px;">
+        <h2>Risk Log</h2>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead><tr>
+              <th style="min-width:180px;">Risk Description</th>
+              <th>Category</th>
+              <th>Probability %</th>
+              <th>Impact ($)</th>
+              <th>Owner</th>
+              <th>Status</th>
+              <th>Exposure ($)</th>
+              <th></th>
+            </tr></thead>
+            <tbody id="rr-tbody"></tbody>
+          </table>
+        </div>
+        <button type="button" class="btn-row-add" onclick="addRiskRow()">+ Add Risk</button>
+      </div>
+
+      <div class="grid">
+        <div class="panel">
+          <h2>Risk Exposure Summary</h2>
+          <div class="readout"><div class="rlabel">Total Risk Exposure (Open + Mitigating)</div><div class="rvalue" id="rr-out-total" style="color:var(--red);">$0</div></div>
+          <div class="readout"><div class="rlabel">Open Risk Count</div><div class="rvalue" id="rr-out-open-count">0</div></div>
+          <div class="readout"><div class="rlabel">Largest Single Risk</div><div class="rvalue" id="rr-out-largest" style="font-size:14px;">—</div></div>
+          <hr class="divider">
+          <h2 style="margin-top:15px;">Top Risks by Exposure</h2>
+          <ul id="rr-top-list" class="risk-list"></ul>
+        </div>
+        <div class="panel">
+          <h2 style="color: var(--amber);">⚠️ Risk Register Flags</h2>
+          <ul id="rr-risk-list" class="risk-list"></ul>
         </div>
       </div>
     </div>
@@ -2886,6 +3057,357 @@ function calculateLTB() {
   }
 }
 
+// --- SUPPLIER PERFORMANCE SCORECARD ---
+let ssRowCount = 0;
+function addSupplierRow(vals) {
+  vals = vals || {};
+  ssRowCount++;
+  const id = ssRowCount;
+  const tbody = document.getElementById('ss-tbody');
+  const tr = document.createElement('tr');
+  tr.id = 'ss-row-' + id;
+  tr.innerHTML = `
+    <td><input type="text" id="ss-name-${id}" value="${vals.name || ''}" placeholder="Supplier name" oninput="calculateSupplierScorecard()"></td>
+    <td><input type="number" id="ss-otd-${id}" value="${vals.otd !== undefined ? vals.otd : 95}" min="0" max="100" oninput="calculateSupplierScorecard()"></td>
+    <td><input type="number" id="ss-ppm-${id}" value="${vals.ppm !== undefined ? vals.ppm : 500}" min="0" oninput="calculateSupplierScorecard()"></td>
+    <td><input type="number" id="ss-costvar-${id}" value="${vals.costvar !== undefined ? vals.costvar : 0}" oninput="calculateSupplierScorecard()"></td>
+    <td><select id="ss-resp-${id}" onchange="calculateSupplierScorecard()">
+      <option value="5" ${vals.resp == 5 ? 'selected' : ''}>5 - Excellent</option>
+      <option value="4" ${vals.resp == 4 ? 'selected' : ''}>4 - Good</option>
+      <option value="3" ${(vals.resp == 3 || !vals.resp) ? 'selected' : ''}>3 - Average</option>
+      <option value="2" ${vals.resp == 2 ? 'selected' : ''}>2 - Poor</option>
+      <option value="1" ${vals.resp == 1 ? 'selected' : ''}>1 - Very Poor</option>
+    </select></td>
+    <td><input type="number" id="ss-spend-${id}" value="${vals.spend !== undefined ? vals.spend : 0}" min="0" oninput="calculateSupplierScorecard()"></td>
+    <td class="score-cell" id="ss-score-${id}">—</td>
+    <td class="score-cell" id="ss-status-${id}">—</td>
+    <td><button type="button" class="btn-row-remove" onclick="removeSupplierRow(${id})">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+  calculateSupplierScorecard();
+}
+
+function removeSupplierRow(id) {
+  const row = document.getElementById('ss-row-' + id);
+  if (row) row.remove();
+  calculateSupplierScorecard();
+}
+
+function calculateSupplierScorecard() {
+  const wOtd = parseFloat(document.getElementById('ss-w-otd').value) || 0;
+  const wQuality = parseFloat(document.getElementById('ss-w-quality').value) || 0;
+  const wCost = parseFloat(document.getElementById('ss-w-cost').value) || 0;
+  const wResp = parseFloat(document.getElementById('ss-w-resp').value) || 0;
+  const weightTotal = wOtd + wQuality + wCost + wResp;
+
+  const wtEl = document.getElementById('ss-weight-total');
+  wtEl.innerText = weightTotal + '%';
+  wtEl.style.color = weightTotal === 100 ? 'var(--green)' : 'var(--red)';
+
+  const tbody = document.getElementById('ss-tbody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  let totalScore = 0, atRiskCount = 0, atRiskSpend = 0, totalSpend = 0;
+  let topSupplier = null, topScore = -1;
+  const flags = [];
+
+  rows.forEach(tr => {
+    const id = tr.id.replace('ss-row-', '');
+    const name = document.getElementById('ss-name-' + id).value || 'Unnamed Supplier';
+    const otd = parseFloat(document.getElementById('ss-otd-' + id).value) || 0;
+    const ppm = parseFloat(document.getElementById('ss-ppm-' + id).value) || 0;
+    const costVar = parseFloat(document.getElementById('ss-costvar-' + id).value) || 0;
+    const resp = parseFloat(document.getElementById('ss-resp-' + id).value) || 0;
+    const spend = parseFloat(document.getElementById('ss-spend-' + id).value) || 0;
+
+    const otdScore = Math.max(0, Math.min(100, otd));
+    const qualityScore = Math.max(0, Math.min(100, 100 - (ppm / 100)));
+    const costScore = Math.max(0, Math.min(100, 100 - Math.abs(costVar) * 2));
+    const respScore = Math.max(0, Math.min(100, resp * 20));
+
+    const composite = weightTotal > 0
+      ? ((otdScore * wOtd) + (qualityScore * wQuality) + (costScore * wCost) + (respScore * wResp)) / weightTotal
+      : 0;
+
+    const scoreEl = document.getElementById('ss-score-' + id);
+    const statusEl = document.getElementById('ss-status-' + id);
+    scoreEl.innerText = composite.toFixed(1);
+
+    let status, color;
+    if (composite >= 85) { status = 'GREEN'; color = 'var(--green)'; }
+    else if (composite >= 70) { status = 'AMBER'; color = 'var(--amber)'; }
+    else { status = 'RED'; color = 'var(--red)'; atRiskCount++; atRiskSpend += spend; }
+    statusEl.innerText = status;
+    statusEl.style.color = color;
+    scoreEl.style.color = color;
+
+    totalScore += composite;
+    totalSpend += spend;
+    if (composite > topScore) { topScore = composite; topSupplier = name; }
+
+    if (status === 'RED' && spend > 0) {
+      flags.push(`<strong>${name} — RED (${composite.toFixed(1)}):</strong> Composite score below 70 with $${Math.round(spend).toLocaleString()} in annual spend at risk. Consider a corrective action plan or dual-sourcing this part of spend.`);
+    }
+  });
+
+  document.getElementById('ss-out-avg').innerText = rows.length > 0 ? (totalScore / rows.length).toFixed(1) : '—';
+  document.getElementById('ss-out-atrisk-count').innerText = atRiskCount;
+  document.getElementById('ss-out-atrisk-spend').innerText = '$' + Math.round(atRiskSpend).toLocaleString();
+  document.getElementById('ss-out-top').innerText = topSupplier ? `${topSupplier} (${topScore.toFixed(1)})` : '—';
+
+  if (weightTotal !== 100) {
+    flags.unshift(`<strong>Weights Don't Total 100% (currently ${weightTotal}%):</strong> Composite scores are being normalized by the actual total, but fix the weights so they reflect your intended emphasis.`);
+  }
+  if (totalSpend > 0 && (atRiskSpend / totalSpend) > 0.25) {
+    flags.push(`<strong>Over 25% of Spend is at Risk:</strong> $${Math.round(atRiskSpend).toLocaleString()} of $${Math.round(totalSpend).toLocaleString()} total tracked spend sits with RED-status suppliers — this is a concentration risk worth escalating.`);
+  }
+
+  const riskList = document.getElementById('ss-risk-list');
+  riskList.innerHTML = '';
+  if (rows.length === 0) {
+    riskList.innerHTML = '<li>Add a supplier to see flags.</li>';
+  } else if (flags.length === 0) {
+    riskList.innerHTML = '<li>No supply base flags at current inputs.</li>';
+  } else {
+    flags.forEach(f => { const li = document.createElement('li'); li.innerHTML = f; riskList.appendChild(li); });
+  }
+}
+
+// --- PROGRAM RISK REGISTER ---
+let rrRowCount = 0;
+function addRiskRow(vals) {
+  vals = vals || {};
+  rrRowCount++;
+  const id = rrRowCount;
+  const tbody = document.getElementById('rr-tbody');
+  const tr = document.createElement('tr');
+  tr.id = 'rr-row-' + id;
+  tr.innerHTML = `
+    <td><input type="text" id="rr-desc-${id}" value="${vals.desc || ''}" placeholder="Risk description" oninput="calculateRiskRegister()"></td>
+    <td><select id="rr-cat-${id}" onchange="calculateRiskRegister()">
+      <option value="Schedule" ${vals.cat === 'Schedule' || !vals.cat ? 'selected' : ''}>Schedule</option>
+      <option value="Cost" ${vals.cat === 'Cost' ? 'selected' : ''}>Cost</option>
+      <option value="Technical" ${vals.cat === 'Technical' ? 'selected' : ''}>Technical</option>
+      <option value="Supplier" ${vals.cat === 'Supplier' ? 'selected' : ''}>Supplier</option>
+      <option value="Quality" ${vals.cat === 'Quality' ? 'selected' : ''}>Quality</option>
+      <option value="Regulatory" ${vals.cat === 'Regulatory' ? 'selected' : ''}>Regulatory</option>
+    </select></td>
+    <td><input type="number" id="rr-prob-${id}" value="${vals.prob !== undefined ? vals.prob : 30}" min="0" max="100" oninput="calculateRiskRegister()"></td>
+    <td><input type="number" id="rr-impact-${id}" value="${vals.impact !== undefined ? vals.impact : 50000}" min="0" oninput="calculateRiskRegister()"></td>
+    <td><input type="text" id="rr-owner-${id}" value="${vals.owner || ''}" placeholder="Owner" oninput="calculateRiskRegister()"></td>
+    <td><select id="rr-status-${id}" onchange="calculateRiskRegister()">
+      <option value="Open" ${vals.status === 'Open' || !vals.status ? 'selected' : ''}>Open</option>
+      <option value="Mitigating" ${vals.status === 'Mitigating' ? 'selected' : ''}>Mitigating</option>
+      <option value="Closed" ${vals.status === 'Closed' ? 'selected' : ''}>Closed</option>
+    </select></td>
+    <td class="score-cell" id="rr-exposure-${id}">—</td>
+    <td><button type="button" class="btn-row-remove" onclick="removeRiskRow(${id})">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+  calculateRiskRegister();
+}
+
+function removeRiskRow(id) {
+  const row = document.getElementById('rr-row-' + id);
+  if (row) row.remove();
+  calculateRiskRegister();
+}
+
+function calculateRiskRegister() {
+  const tbody = document.getElementById('rr-tbody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  let totalExposure = 0, openCount = 0;
+  let largestDesc = null, largestExposure = -1;
+  const categoryTotals = {};
+  const riskItems = [];
+
+  rows.forEach(tr => {
+    const id = tr.id.replace('rr-row-', '');
+    const desc = document.getElementById('rr-desc-' + id).value || 'Unnamed Risk';
+    const cat = document.getElementById('rr-cat-' + id).value;
+    const prob = parseFloat(document.getElementById('rr-prob-' + id).value) || 0;
+    const impact = parseFloat(document.getElementById('rr-impact-' + id).value) || 0;
+    const status = document.getElementById('rr-status-' + id).value;
+
+    const exposure = (status === 'Closed') ? 0 : (prob / 100) * impact;
+    const exposureEl = document.getElementById('rr-exposure-' + id);
+    exposureEl.innerText = '$' + Math.round(exposure).toLocaleString();
+    exposureEl.style.color = status === 'Closed' ? 'var(--text-dim)' : (exposure > 100000 ? 'var(--red)' : (exposure > 25000 ? 'var(--amber)' : 'var(--green)'));
+
+    if (status !== 'Closed') {
+      totalExposure += exposure;
+      if (status === 'Open') openCount++;
+      categoryTotals[cat] = (categoryTotals[cat] || 0) + exposure;
+      riskItems.push({ desc, exposure, cat, status });
+      if (exposure > largestExposure) { largestExposure = exposure; largestDesc = desc; }
+    }
+  });
+
+  document.getElementById('rr-out-total').innerText = '$' + Math.round(totalExposure).toLocaleString();
+  document.getElementById('rr-out-open-count').innerText = openCount;
+  document.getElementById('rr-out-largest').innerText = largestDesc ? `${largestDesc} ($${Math.round(largestExposure).toLocaleString()})` : '—';
+
+  riskItems.sort((a, b) => b.exposure - a.exposure);
+  const topList = document.getElementById('rr-top-list');
+  topList.innerHTML = '';
+  if (riskItems.length === 0) {
+    topList.innerHTML = '<li>No open or mitigating risks logged.</li>';
+  } else {
+    riskItems.slice(0, 3).forEach(r => {
+      const li = document.createElement('li');
+      li.innerHTML = `<strong>${r.desc} (${r.cat}):</strong> $${Math.round(r.exposure).toLocaleString()} exposure — ${r.status}`;
+      topList.appendChild(li);
+    });
+  }
+
+  const flags = [];
+  if (largestExposure > 0 && totalExposure > 0 && (largestExposure / totalExposure) > 0.2) {
+    flags.push(`<strong>Concentration Risk:</strong> "${largestDesc}" alone accounts for ${((largestExposure / totalExposure) * 100).toFixed(0)}% of total risk exposure — a single mitigation would materially de-risk the program.`);
+  }
+  if (openCount >= 5) {
+    flags.push(`<strong>${openCount} Open Risks:</strong> A large open count with no mitigation started is itself a signal — prioritize moving the highest-exposure items to Mitigating.`);
+  }
+  const scheduleExposure = categoryTotals['Schedule'] || 0;
+  if (totalExposure > 0 && (scheduleExposure / totalExposure) > 0.4) {
+    flags.push(`<strong>Schedule Risk Dominates:</strong> Schedule-category risks make up ${((scheduleExposure / totalExposure) * 100).toFixed(0)}% of total exposure — worth a dedicated schedule risk review with the program team.`);
+  }
+
+  const riskList = document.getElementById('rr-risk-list');
+  riskList.innerHTML = '';
+  if (rows.length === 0) {
+    riskList.innerHTML = '<li>Add a risk to see flags.</li>';
+  } else if (flags.length === 0) {
+    riskList.innerHTML = '<li>No register-level flags at current inputs.</li>';
+  } else {
+    flags.forEach(f => { const li = document.createElement('li'); li.innerHTML = f; riskList.appendChild(li); });
+  }
+}
+
+// --- DATA CUT / REPORT BUILDER ---
+let dcHeaders = [];
+let dcRows = [];
+let dcLastReport = null;
+
+function parseDataCut() {
+  const raw = document.getElementById('dc-paste').value;
+  const statusEl = document.getElementById('dc-parse-status');
+  const lines = raw.split(/\r\n|\r|\n/).filter(l => l.trim().length > 0);
+  if (lines.length < 2) {
+    statusEl.innerText = 'Paste a header row plus at least one data row.';
+    statusEl.style.color = 'var(--red)';
+    return;
+  }
+  const delimiter = lines[0].includes('\t') ? '\t' : ',';
+  dcHeaders = lines[0].split(delimiter).map(h => h.trim());
+  dcRows = lines.slice(1).map(line => {
+    const cells = line.split(delimiter);
+    const row = {};
+    dcHeaders.forEach((h, i) => { row[h] = (cells[i] !== undefined ? cells[i].trim() : ''); });
+    return row;
+  });
+
+  const group1Sel = document.getElementById('dc-group1');
+  const group2Sel = document.getElementById('dc-group2');
+  const valueSel = document.getElementById('dc-value');
+  group1Sel.innerHTML = dcHeaders.map(h => `<option value="${h}">${h}</option>`).join('');
+  group2Sel.innerHTML = '<option value="">— None —</option>' + dcHeaders.map(h => `<option value="${h}">${h}</option>`).join('');
+  valueSel.innerHTML = dcHeaders.map(h => `<option value="${h}">${h}</option>`).join('');
+
+  statusEl.innerText = `Parsed ${dcRows.length} rows across ${dcHeaders.length} columns (${delimiter === '\t' ? 'tab' : 'comma'}-delimited). Pick your cut and value columns below.`;
+  statusEl.style.color = 'var(--green)';
+}
+
+function dcParseNumeric(val) {
+  if (val === undefined || val === null) return 0;
+  const cleaned = String(val).replace(/[$,]/g, '').trim();
+  const n = parseFloat(cleaned);
+  return isNaN(n) ? 0 : n;
+}
+
+function calculateDataCut() {
+  const statusEl = document.getElementById('dc-output-status');
+  if (dcRows.length === 0) {
+    statusEl.innerText = 'Parse data first.';
+    statusEl.style.color = 'var(--red)';
+    return;
+  }
+  const group1 = document.getElementById('dc-group1').value;
+  const group2 = document.getElementById('dc-group2').value;
+  const valueCol = document.getElementById('dc-value').value;
+  const agg = document.getElementById('dc-agg').value;
+
+  if (!group1 || !valueCol) {
+    statusEl.innerText = 'Choose at least a Cut By column and a Value column.';
+    statusEl.style.color = 'var(--red)';
+    return;
+  }
+
+  const groups = {};
+  dcRows.forEach(row => {
+    const key1 = row[group1] || '(blank)';
+    const key2 = group2 ? (row[group2] || '(blank)') : null;
+    const key = key2 !== null ? key1 + ' | ' + key2 : key1;
+    if (!groups[key]) {
+      groups[key] = { key1, key2, count: 0, sum: 0, min: Infinity, max: -Infinity };
+    }
+    const val = dcParseNumeric(row[valueCol]);
+    groups[key].count++;
+    groups[key].sum += val;
+    groups[key].min = Math.min(groups[key].min, val);
+    groups[key].max = Math.max(groups[key].max, val);
+  });
+
+  const resultRows = Object.values(groups).map(g => {
+    let aggVal;
+    if (agg === 'count') aggVal = g.count;
+    else if (agg === 'avg') aggVal = g.count > 0 ? g.sum / g.count : 0;
+    else if (agg === 'min') aggVal = g.min === Infinity ? 0 : g.min;
+    else if (agg === 'max') aggVal = g.max === -Infinity ? 0 : g.max;
+    else aggVal = g.sum;
+    return { key1: g.key1, key2: g.key2, rowCount: g.count, aggVal };
+  });
+  resultRows.sort((a, b) => b.aggVal - a.aggVal);
+
+  const aggLabel = agg.charAt(0).toUpperCase() + agg.slice(1);
+  const headHtml = group2
+    ? `<tr><th>${group1}</th><th>${group2}</th><th># Rows</th><th>${aggLabel} of ${valueCol}</th></tr>`
+    : `<tr><th>${group1}</th><th># Rows</th><th>${aggLabel} of ${valueCol}</th></tr>`;
+  document.getElementById('dc-output-head').innerHTML = headHtml;
+
+  const bodyEl = document.getElementById('dc-output-body');
+  bodyEl.innerHTML = '';
+  resultRows.forEach(r => {
+    const tr = document.createElement('tr');
+    const valDisplay = Number.isInteger(r.aggVal) ? r.aggVal.toLocaleString() : r.aggVal.toFixed(2);
+    tr.innerHTML = group2
+      ? `<td>${r.key1}</td><td>${r.key2}</td><td>${r.rowCount.toLocaleString()}</td><td>${valDisplay}</td>`
+      : `<td>${r.key1}</td><td>${r.rowCount.toLocaleString()}</td><td>${valDisplay}</td>`;
+    bodyEl.appendChild(tr);
+  });
+
+  document.getElementById('dc-output-table').style.display = '';
+  document.getElementById('dc-export-btn').style.display = '';
+  statusEl.innerText = `${resultRows.length} groups from ${dcRows.length} source rows.`;
+  statusEl.style.color = 'var(--text-mid)';
+
+  dcLastReport = {
+    headers: group2 ? [group1, group2, '# Rows', `${agg} of ${valueCol}`] : [group1, '# Rows', `${agg} of ${valueCol}`],
+    rows: resultRows.map(r => group2 ? [r.key1, r.key2, r.rowCount, r.aggVal] : [r.key1, r.rowCount, r.aggVal])
+  };
+}
+
+function exportDataCutCSV() {
+  if (!dcLastReport) return;
+  const rows = [dcLastReport.headers, ...dcLastReport.rows];
+  let csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement("a");
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", "data_cut_report.csv");
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
 // --- EXPORT FUNCTIONALITY ---
 function exportCSV() {
   const rows = [
@@ -2918,7 +3440,12 @@ function exportCSV() {
     ["EOL Phase-Out", "Total EOL Phase-Out Cost Exposure", document.getElementById('eol-out-total').innerText],
     ["LTB Planning", "Total LTB Unit Quantity to Order", document.getElementById('ltb-out-qty').innerText],
     ["LTB Planning", "Total LTB Program Cost", document.getElementById('ltb-out-total-program').innerText],
-    ["LTB Planning", "Budget Utilization", document.getElementById('ltb-out-budget-util').innerText]
+    ["LTB Planning", "Budget Utilization", document.getElementById('ltb-out-budget-util').innerText],
+    ["Supplier Scorecard", "Average Composite Score", document.getElementById('ss-out-avg').innerText],
+    ["Supplier Scorecard", "Suppliers at Risk (Red)", document.getElementById('ss-out-atrisk-count').innerText],
+    ["Supplier Scorecard", "Annual Spend at Risk", document.getElementById('ss-out-atrisk-spend').innerText],
+    ["Risk Register", "Total Risk Exposure", document.getElementById('rr-out-total').innerText],
+    ["Risk Register", "Open Risk Count", document.getElementById('rr-out-open-count').innerText]
   ];
 
   let csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
@@ -2963,6 +3490,16 @@ window.onload = function() {
   calculateFFF();
   calculateEOL();
   calculateLTB();
+
+  addSupplierRow({ name: 'Acme Precision Machining', otd: 96, ppm: 280, costvar: -2, resp: 5, spend: 1250000 });
+  addSupplierRow({ name: 'Global Bearing Co', otd: 88, ppm: 1200, costvar: 5, resp: 3, spend: 640000 });
+  addSupplierRow({ name: 'Rapid Molded Plastics', otd: 74, ppm: 3400, costvar: 12, resp: 2, spend: 410000 });
+  addSupplierRow({ name: 'Northline Electronics', otd: 99, ppm: 90, costvar: -1, resp: 5, spend: 2100000 });
+
+  addRiskRow({ desc: 'Single-source magnetic bearing supplier at capacity', cat: 'Supplier', prob: 40, impact: 600000, owner: 'J. Alvarez', status: 'Open' });
+  addRiskRow({ desc: 'PVT tooling qualification slipping 3 weeks', cat: 'Schedule', prob: 60, impact: 150000, owner: 'M. Chen', status: 'Mitigating' });
+  addRiskRow({ desc: 'Forging alloy price volatility', cat: 'Cost', prob: 35, impact: 220000, owner: 'R. Singh', status: 'Open' });
+  addRiskRow({ desc: 'Enclosure IP rating re-test after design change', cat: 'Technical', prob: 25, impact: 90000, owner: 'T. Brooks', status: 'Open' });
 };
 </script>
   <button class="feedback-fab" onclick="openFeedback()">💬 Feedback</button>
