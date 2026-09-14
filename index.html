@@ -48,6 +48,12 @@
   .upload-zone { background: var(--panel); border: 2px dashed var(--grid-line); border-radius: var(--radius); padding: 24px; text-align: center; margin-bottom: 20px; cursor: pointer; transition: border-color 0.2s, background-color 0.2s; }
   .upload-zone:hover, .upload-zone.dragover { border-color: var(--amber); background-color: var(--panel-2); }
 
+  .info-tip { position:relative; display:inline-flex; align-items:center; justify-content:center; width:15px; height:15px; border-radius:50%; border:1px solid var(--text-dim); color:var(--text-dim); font-size:10.5px; font-family:'IBM Plex Mono', monospace; font-weight:700; cursor:help; margin-left:6px; vertical-align:middle; }
+  .info-tip:hover, .info-tip:focus { border-color:var(--amber); color:var(--amber); }
+  .info-tip .tip-bubble { display:none; position:absolute; bottom:135%; left:50%; transform:translateX(-50%); width:250px; background:var(--panel-2); border:1px solid var(--amber); color:var(--text-hi); font-size:11.5px; font-family:'IBM Plex Mono', monospace; font-weight:400; padding:9px 11px; border-radius:6px; z-index:50; text-align:left; line-height:1.45; box-shadow:0 4px 14px rgba(0,0,0,0.45); cursor:default; }
+  .info-tip:hover .tip-bubble, .info-tip:focus .tip-bubble { display:block; }
+  @media (max-width:600px){ .info-tip .tip-bubble{ width:200px; } }
+
   /* Primary Lifecycle Stage Nav */
   nav.pillar-nav{ display:grid; grid-template-columns: repeat(7, 1fr); gap:8px; margin-bottom:16px; }
   @media(max-width: 1100px){ nav.pillar-nav{ grid-template-columns: repeat(4, 1fr); } }
@@ -163,6 +169,8 @@
   </div>
   <p style="font-size:12px; color:var(--text-dim); margin:-12px 0 20px 0; text-align:center;">
     Don't have a formatted quote? <a href="#" id="downloadTemplateLink" style="color:var(--amber); text-decoration:underline;">Download a blank template</a> to fill in and upload — this gives the most reliable auto-fill. Freeform quotes work too, but extraction may miss or mismatch fields on unusual formats.
+    Comparing more than one supplier?
+    <span class="info-tip" tabindex="0">i<span class="tip-bubble">Upload 3–5 quotes at once in the <strong>Multi-Quote Comparison</strong> tool (Sourcing &amp; Costing pillar) to see them side-by-side — what's the same, what's different, and a % match against the requirements you set.</span></span>
   </p>
 
   <div id="resultsCard" class="panel hidden" style="margin-bottom:20px;">
@@ -700,6 +708,7 @@
       <button class="sub-btn" onclick="switchTool('sourcing', 'leadtime', this)">Procurement Lead Time</button>
       <button class="sub-btn" onclick="switchTool('sourcing', 'makevsbuy', this)">Make-vs-Buy Analysis</button>
       <button class="sub-btn" onclick="switchTool('sourcing', 'dutydrawback', this)">Duty Drawback / Tariff Impact</button>
+      <button class="sub-btn" onclick="switchTool('sourcing', 'multiquote', this)">Multi-Quote Comparison</button>
     </div>
 
     <!-- Total Landed Cost Engine -->
@@ -1018,6 +1027,50 @@
         <div class="panel">
           <h2 style="color: var(--amber);">⚠️ Duty &amp; Tariff Flags</h2>
           <ul id="dd-risk-list" class="risk-list"></ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Multi-Quote Comparison -->
+    <div id="tool-multiquote" class="tool-view">
+      <h1>Multi-Quote Comparison</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Upload 2–5 supplier quotes to see what's the same, what's different, and how each stacks up against the requirements you set. Parsed 100% locally — nothing is uploaded anywhere.</p>
+
+      <div class="panel" style="margin-bottom:20px;">
+        <h2>1. Upload Quotes (2–5)</h2>
+        <div class="upload-zone" id="mq-dropzone" style="margin-bottom:14px;">
+          <strong style="color:var(--amber); font-family:'IBM Plex Mono', monospace;">📂 CLICK OR DRAG TO UPLOAD MULTIPLE QUOTES (.PDF, .DOCX, .TXT)</strong>
+          <p style="font-size:12px; color:var(--text-dim); margin:6px 0 0 0;">Select or drop several files at once — each one becomes its own column below.</p>
+          <input type="file" id="mq-fileinput" accept=".pdf,.docx,.txt" multiple style="display:none;">
+        </div>
+        <div id="mq-file-list"></div>
+        <div id="mq-parse-status" style="color:var(--text-mid); font-size:0.85em; margin-top:8px;"></div>
+      </div>
+
+      <div class="panel" style="margin-bottom:20px;">
+        <h2>2. Your Requirements (Optional — Sharpens the Match Score)</h2>
+        <p style="color:var(--text-mid); font-size:0.85em; margin-bottom:10px;">Leave any field blank to exclude it from scoring. Only fields you set here count toward each quote's match %.</p>
+        <div class="grid" style="grid-template-columns: repeat(4, 1fr);">
+          <div class="field"><label>Max Unit Price ($)</label><input type="number" id="mq-req-price" placeholder="e.g. 12.50" min="0"></div>
+          <div class="field"><label>Max Setup Fee ($)</label><input type="number" id="mq-req-setup" placeholder="e.g. 500" min="0"></div>
+          <div class="field"><label>Max Tooling/NRE Fee ($)</label><input type="number" id="mq-req-tooling" placeholder="e.g. 15000" min="0"></div>
+          <div class="field"><label>Max MOQ (Units)</label><input type="number" id="mq-req-moq" placeholder="e.g. 5000" min="0"></div>
+          <div class="field"><label>Min Warranty (Months)</label><input type="number" id="mq-req-warranty" placeholder="e.g. 12" min="0"></div>
+          <div class="field"><label>Max Lead Time (Weeks)</label><input type="number" id="mq-req-leadtime" placeholder="e.g. 8" min="0"></div>
+          <div class="field"><label>Required Payment Terms</label><input type="text" id="mq-req-payment" placeholder="e.g. Net 30"></div>
+          <div class="field"><label>Required Incoterm</label><input type="text" id="mq-req-incoterm" placeholder="e.g. FOB"></div>
+        </div>
+        <button type="button" class="btn-action" onclick="compareQuotes()">Compare Quotes</button>
+      </div>
+
+      <div class="panel">
+        <h2>3. Comparison</h2>
+        <div id="mq-output-status" style="color:var(--text-mid); font-size:0.85em; margin-bottom:10px;">Upload at least 2 quotes and click Compare Quotes.</div>
+        <div class="data-table-wrap">
+          <table class="data-table" id="mq-output-table" style="display:none;">
+            <thead id="mq-output-head"></thead>
+            <tbody id="mq-output-body"></tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -4069,6 +4122,236 @@ function calculateCapexOpex() {
   }
 }
 
+// --- MULTI-QUOTE COMPARISON ---
+let mqQuotes = [];
+let mqIdCounter = 0;
+
+function mqNum(str) {
+  if (str === null || str === undefined || str === '') return null;
+  const cleaned = String(str).replace(/[$,]/g, '').trim();
+  const n = parseFloat(cleaned);
+  return isNaN(n) ? null : n;
+}
+
+async function mqExtractText(file) {
+  if (file.type === "application/pdf" || file.name.endsWith('.pdf')) {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    let fullText = "";
+    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+      const page = await pdf.getPage(pageNum);
+      const textContent = await page.getTextContent();
+      fullText += textContent.items.map(item => item.str).join(" ") + "\n";
+    }
+    return fullText;
+  } else if (file.name.endsWith('.docx')) {
+    const arrayBuffer = await file.arrayBuffer();
+    const result = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
+    return result.value;
+  } else {
+    return await file.text();
+  }
+}
+
+function mqParseFields(text) {
+  const unitPriceMatch = text.match(/(?:unit\s*price|piece\s*price|ea\.?|price\/unit)[\:\$\s]*([\d\.,]+)/i);
+  const setupMatch = text.match(/(?:setup|set-up|fixture\s*setup)[\:\$\s]*([\d\.,]+)/i);
+  const toolingMatch = text.match(/(?:tooling|nre|non-recurring|fixture\s*cost)[\:\$\s]*([\d\.,]+)/i);
+  const moqMatch = text.match(/(?:MOQ|minimum order quantity|min order)[\:\s]*([\d\.,]+)/i);
+  const paymentMatch = text.match(/net\s*(15|30|45|60|90)/i) || text.match(/(prepayment|due upon receipt)/i);
+  const incotermMatch = text.match(/\b(EXW|FOB|DDP|CIF|FCA|DAP)\b/i);
+  const leadTimeMatch = text.match(/(\d+)\s*(?:-\s*\d+\s*)?weeks?\b/i);
+  const warrantyMatch = text.match(/(\d+)\s*(month|year)s?\s*warranty/i);
+
+  let warrantyMonths = null;
+  if (warrantyMatch) {
+    const n = parseFloat(warrantyMatch[1]);
+    warrantyMonths = warrantyMatch[2].toLowerCase().startsWith('year') ? n * 12 : n;
+  }
+
+  return {
+    unitPrice: unitPriceMatch ? mqNum(unitPriceMatch[1]) : null,
+    setup: setupMatch ? mqNum(setupMatch[1]) : null,
+    tooling: toolingMatch ? mqNum(toolingMatch[1]) : null,
+    moq: moqMatch ? mqNum(moqMatch[1]) : null,
+    paymentTerms: paymentMatch ? paymentMatch[0] : null,
+    incoterm: incotermMatch ? incotermMatch[1].toUpperCase() : null,
+    leadTimeWeeks: leadTimeMatch ? mqNum(leadTimeMatch[1]) : null,
+    warrantyMonths: warrantyMonths
+  };
+}
+
+function initMultiQuoteUpload() {
+  const dropzone = document.getElementById('mq-dropzone');
+  const fileInput = document.getElementById('mq-fileinput');
+  if (!dropzone || !fileInput) return;
+
+  dropzone.addEventListener('click', () => fileInput.click());
+  dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzone.classList.remove('dragover');
+    if (e.dataTransfer.files.length > 0) handleMqFiles(e.dataTransfer.files);
+  });
+  fileInput.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) handleMqFiles(e.target.files);
+    fileInput.value = '';
+  });
+}
+
+async function handleMqFiles(fileList) {
+  const statusEl = document.getElementById('mq-parse-status');
+  const files = Array.from(fileList);
+  if (mqQuotes.length + files.length > 5) {
+    statusEl.innerText = 'Max 5 quotes at a time — remove one before adding more.';
+    statusEl.style.color = 'var(--red)';
+    return;
+  }
+  for (const file of files) {
+    const id = ++mqIdCounter;
+    const entry = { id, name: file.name, label: file.name.replace(/\.[^/.]+$/, ''), text: '', parsed: null, status: 'Parsing...' };
+    mqQuotes.push(entry);
+    renderMqFileList();
+    try {
+      const text = await mqExtractText(file);
+      entry.text = text;
+      entry.parsed = mqParseFields(text);
+      entry.status = 'Parsed';
+    } catch (err) {
+      entry.status = 'Error: ' + err.message;
+    }
+    renderMqFileList();
+  }
+  statusEl.innerText = `${mqQuotes.length} quote${mqQuotes.length !== 1 ? 's' : ''} loaded. ${mqQuotes.length < 5 ? `Add up to ${5 - mqQuotes.length} more, or ` : ''}click Compare Quotes below.`;
+  statusEl.style.color = 'var(--text-mid)';
+}
+
+function renderMqFileList() {
+  const listEl = document.getElementById('mq-file-list');
+  listEl.innerHTML = '';
+  mqQuotes.forEach(q => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--grid-line);';
+    const statusColor = q.status === 'Parsed' ? 'var(--green)' : (q.status.startsWith('Error') ? 'var(--red)' : 'var(--text-dim)');
+    row.innerHTML = `
+      <input type="text" value="${q.label}" style="flex:1; background:var(--ink); border:1px solid var(--grid-line); color:var(--text-hi); font-family:'IBM Plex Mono', monospace; font-size:12px; padding:6px 8px; border-radius:4px;" onchange="mqUpdateLabel(${q.id}, this.value)">
+      <span style="font-size:11px; color:${statusColor}; min-width:90px;">${q.status}</span>
+      <button type="button" class="btn-row-remove" onclick="mqRemoveQuote(${q.id})">✕</button>
+    `;
+    listEl.appendChild(row);
+  });
+}
+
+function mqUpdateLabel(id, val) {
+  const q = mqQuotes.find(q => q.id === id);
+  if (q) q.label = val;
+}
+
+function mqRemoveQuote(id) {
+  mqQuotes = mqQuotes.filter(q => q.id !== id);
+  renderMqFileList();
+  document.getElementById('mq-output-table').style.display = 'none';
+  document.getElementById('mq-output-status').innerText = 'Upload at least 2 quotes and click Compare Quotes.';
+  document.getElementById('mq-output-status').style.color = 'var(--text-mid)';
+}
+
+function compareQuotes() {
+  const statusEl = document.getElementById('mq-output-status');
+  if (mqQuotes.length < 2) {
+    statusEl.innerText = 'Upload at least 2 quotes to compare.';
+    statusEl.style.color = 'var(--red)';
+    return;
+  }
+  if (mqQuotes.some(q => !q.parsed)) {
+    statusEl.innerText = 'Still parsing — wait a moment and try again.';
+    statusEl.style.color = 'var(--amber)';
+    return;
+  }
+
+  const reqPrice = mqNum(document.getElementById('mq-req-price').value);
+  const reqSetup = mqNum(document.getElementById('mq-req-setup').value);
+  const reqTooling = mqNum(document.getElementById('mq-req-tooling').value);
+  const reqMoq = mqNum(document.getElementById('mq-req-moq').value);
+  const reqWarranty = mqNum(document.getElementById('mq-req-warranty').value);
+  const reqLeadTime = mqNum(document.getElementById('mq-req-leadtime').value);
+  const reqPayment = document.getElementById('mq-req-payment').value.trim();
+  const reqIncoterm = document.getElementById('mq-req-incoterm').value.trim();
+
+  const requirements = [
+    { key: 'unitPrice', set: reqPrice !== null, check: (v) => v !== null && v <= reqPrice },
+    { key: 'setup', set: reqSetup !== null, check: (v) => v !== null && v <= reqSetup },
+    { key: 'tooling', set: reqTooling !== null, check: (v) => v !== null && v <= reqTooling },
+    { key: 'moq', set: reqMoq !== null, check: (v) => v !== null && v <= reqMoq },
+    { key: 'warrantyMonths', set: reqWarranty !== null, check: (v) => v !== null && v >= reqWarranty },
+    { key: 'leadTimeWeeks', set: reqLeadTime !== null, check: (v) => v !== null && v <= reqLeadTime },
+    { key: 'paymentTerms', set: reqPayment.length > 0, check: (v) => v !== null && v.toLowerCase().includes(reqPayment.toLowerCase()) },
+    { key: 'incoterm', set: reqIncoterm.length > 0, check: (v) => v !== null && v.toLowerCase().includes(reqIncoterm.toLowerCase()) }
+  ];
+  const activeRequirements = requirements.filter(r => r.set);
+
+  const scores = mqQuotes.map(q => {
+    if (activeRequirements.length === 0) return { quote: q, pct: null, met: 0, total: 0 };
+    let met = 0;
+    activeRequirements.forEach(r => { if (r.check(q.parsed[r.key])) met++; });
+    return { quote: q, pct: (met / activeRequirements.length) * 100, met, total: activeRequirements.length };
+  });
+
+  const fieldsAll = [
+    { key: 'unitPrice', label: 'Unit Price', fmt: (v) => v !== null ? '$' + v.toFixed(2) : '—' },
+    { key: 'setup', label: 'Setup Fee', fmt: (v) => v !== null ? '$' + Math.round(v).toLocaleString() : '—' },
+    { key: 'tooling', label: 'Tooling / NRE Fee', fmt: (v) => v !== null ? '$' + Math.round(v).toLocaleString() : '—' },
+    { key: 'moq', label: 'MOQ', fmt: (v) => v !== null ? Math.round(v).toLocaleString() + ' units' : '—' },
+    { key: 'warrantyMonths', label: 'Warranty', fmt: (v) => v !== null ? v + ' months' : '—' },
+    { key: 'leadTimeWeeks', label: 'Lead Time', fmt: (v) => v !== null ? v + ' weeks' : '—' },
+    { key: 'paymentTerms', label: 'Payment Terms', fmt: (v) => v || '—' },
+    { key: 'incoterm', label: 'Incoterm', fmt: (v) => v || '—' }
+  ];
+
+  let headHtml = '<tr><th>Field</th>';
+  mqQuotes.forEach(q => { headHtml += `<th>${q.label}</th>`; });
+  headHtml += '</tr>';
+  document.getElementById('mq-output-head').innerHTML = headHtml;
+
+  const bodyEl = document.getElementById('mq-output-body');
+  bodyEl.innerHTML = '';
+
+  if (activeRequirements.length > 0) {
+    const bestPct = Math.max(...scores.map(s => s.pct));
+    const scoreRow = document.createElement('tr');
+    scoreRow.style.borderBottom = '2px solid var(--amber)';
+    let scoreHtml = '<td><strong>Requirements Match</strong></td>';
+    scores.forEach(s => {
+      const isBest = s.pct === bestPct;
+      const color = s.pct >= 80 ? 'var(--green)' : (s.pct >= 50 ? 'var(--amber)' : 'var(--red)');
+      scoreHtml += `<td class="score-cell" style="color:${color};">${s.pct.toFixed(0)}% (${s.met}/${s.total})${isBest ? ' 🏆' : ''}</td>`;
+    });
+    scoreRow.innerHTML = scoreHtml;
+    bodyEl.appendChild(scoreRow);
+  }
+
+  fieldsAll.forEach(f => {
+    const values = mqQuotes.map(q => q.parsed[f.key]);
+    const nonNull = values.filter(v => v !== null && v !== undefined);
+    const allSame = nonNull.length > 1 && nonNull.every(v => String(v).toLowerCase() === String(nonNull[0]).toLowerCase());
+    const hasDiff = nonNull.length > 1 && !allSame;
+
+    const tr = document.createElement('tr');
+    let rowHtml = `<td>${f.label}${hasDiff ? ' <span style="color:var(--amber);">●</span>' : ''}</td>`;
+    values.forEach(v => {
+      rowHtml += `<td${hasDiff ? ' style="color:var(--amber); font-weight:600;"' : ''}>${f.fmt(v)}</td>`;
+    });
+    tr.innerHTML = rowHtml;
+    bodyEl.appendChild(tr);
+  });
+
+  document.getElementById('mq-output-table').style.display = '';
+  statusEl.innerText = activeRequirements.length > 0
+    ? `Compared ${mqQuotes.length} quotes against ${activeRequirements.length} requirement${activeRequirements.length > 1 ? 's' : ''}. Amber ● marks fields that differ across quotes.`
+    : `Compared ${mqQuotes.length} quotes. Set requirements above to see a match score. Amber ● marks fields that differ across quotes.`;
+  statusEl.style.color = 'var(--text-mid)';
+}
+
 // --- EXPORT FUNCTIONALITY ---
 function exportCSV() {
   const rows = [
@@ -4188,6 +4471,8 @@ window.onload = function() {
   addCapexOpexRow({ desc: 'Contract manufacturer per-unit labor', amount: 210000, cls: 'OpEx', type: 'Direct' });
   addCapexOpexRow({ desc: 'Facilities & IT overhead allocation', amount: 48000, cls: 'OpEx', type: 'Indirect' });
   addCapexOpexRow({ desc: 'Raw material / BOM spend', amount: 540000, cls: 'OpEx', type: 'Direct' });
+
+  initMultiQuoteUpload();
 };
 </script>
   <button class="feedback-fab" onclick="openFeedback()">💬 Feedback</button>
