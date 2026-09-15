@@ -759,6 +759,7 @@
   <div id="pillar-sourcing" class="tab-pillar">
     <div class="subnav-bar">
       <button class="sub-btn active" onclick="switchTool('sourcing', 'landedcost', this)">Total Landed Cost Engine</button>
+      <button class="sub-btn" onclick="switchTool('sourcing', 'freightmode', this)">Freight Mode Comparator</button>
       <button class="sub-btn" onclick="switchTool('sourcing', 'custom-part-breakdown', this)">Custom Part Risk Review</button>
       <button class="sub-btn" onclick="switchTool('sourcing', 'shouldcost', this)">Bottom-Up Should-Cost</button>
       <button class="sub-btn" onclick="switchTool('sourcing', 'leadtime', this)">Procurement Lead Time</button>
@@ -785,6 +786,51 @@
           <div class="readout"><div class="rlabel">Tariff Duty Amount</div><div class="rvalue" id="tlc-out-tariff">$6.38</div></div>
           <div class="readout"><div class="rlabel">Total Unit Landed Cost</div><div class="rvalue" id="tlc-out-total" style="color:var(--amber);">$100.13</div></div>
           <div class="readout"><div class="rlabel">Landed Markup Burden %</div><div class="rvalue" id="tlc-out-burden">17.8%</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Freight & Transportation Mode Comparator -->
+    <div id="tool-freightmode" class="tool-view">
+      <h1>Freight &amp; Transportation Mode Comparator</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Compare freight modes on more than freight cost alone — a slower mode ties up inventory value in transit, which has its own carrying cost.</p>
+
+      <div class="panel" style="margin-bottom:20px;">
+        <div class="grid" style="grid-template-columns: repeat(2, 1fr);">
+          <div class="field"><label>Shipment Value ($)</label><div class="prefix-wrap"><span>$</span><input type="number" id="fm-shipvalue" value="50000" oninput="calculateFreightMode()"></div></div>
+          <div class="field"><label>Annual Inventory Carrying Cost Rate (%)</label><input type="number" id="fm-carryrate" value="20" oninput="calculateFreightMode()"></div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-bottom:20px;">
+        <h2>Mode Options</h2>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead><tr>
+              <th style="min-width:120px;">Mode</th>
+              <th>Freight Cost ($)</th>
+              <th>Transit Time (Days)</th>
+              <th>On-Time Reliability %</th>
+              <th>Capital Cost in Transit</th>
+              <th>Total Effective Cost</th>
+              <th></th>
+            </tr></thead>
+            <tbody id="fm-tbody"></tbody>
+          </table>
+        </div>
+        <button type="button" class="btn-row-add" onclick="addFreightModeRow()">+ Add Mode</button>
+      </div>
+
+      <div class="grid">
+        <div class="panel">
+          <h2>Mode Comparison Summary</h2>
+          <div class="readout"><div class="rlabel">Lowest Freight-Only Cost</div><div class="rvalue" id="fm-out-cheapest-freight" style="font-size:14px;">—</div></div>
+          <div class="readout"><div class="rlabel">Lowest Total Effective Cost (Recommended)</div><div class="rvalue" id="fm-out-cheapest-total" style="font-size:14px; color:var(--green);">—</div></div>
+          <div class="readout"><div class="rlabel">Fastest Mode</div><div class="rvalue" id="fm-out-fastest" style="font-size:14px;">—</div></div>
+        </div>
+        <div class="panel">
+          <h2 style="color: var(--amber);">⚠️ Mode Selection Flags</h2>
+          <ul id="fm-risk-list" class="risk-list"></ul>
         </div>
       </div>
     </div>
@@ -1181,7 +1227,9 @@
     <div class="subnav-bar">
       <button class="sub-btn active" onclick="switchTool('ops', 'evm', this)">Earned Value Management (EVM)</button>
       <button class="sub-btn" onclick="switchTool('ops', 'eoq', this)">EOQ &amp; Reorder Point</button>
+      <button class="sub-btn" onclick="switchTool('ops', 'forecastacc', this)">Demand Forecast Accuracy</button>
       <button class="sub-btn" onclick="switchTool('ops', 'fpy', this)">First Pass Yield (FPY) / PPM</button>
+      <button class="sub-btn" onclick="switchTool('ops', 'oee', this)">OEE / Downtime Tracker</button>
       <button class="sub-btn" onclick="switchTool('ops', 'budgetkpi', this)">Budget KPI Dashboard</button>
       <button class="sub-btn" onclick="switchTool('ops', 'datacut', this)">Data Cut / Report Builder</button>
       <button class="sub-btn" onclick="switchTool('ops', 'capexopex', this)">CapEx/OpEx Classifier</button>
@@ -1237,6 +1285,44 @@
       </div>
     </div>
 
+    <!-- Demand Forecast Accuracy -->
+    <div id="tool-forecastacc" class="tool-view">
+      <h1>Demand Forecast Accuracy (MAPE)</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Track forecast vs. actual by SKU or period — a wide MAPE or a persistent bias is what actually drives the safety stock in the EOQ engine, so this is worth checking before you trust that buffer.</p>
+
+      <div class="panel" style="margin-bottom:20px;">
+        <h2>Forecast vs. Actual Log</h2>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead><tr>
+              <th style="min-width:150px;">SKU / Period</th>
+              <th>Forecast Qty</th>
+              <th>Actual Qty</th>
+              <th>Error %</th>
+              <th>Bias</th>
+              <th></th>
+            </tr></thead>
+            <tbody id="df-tbody"></tbody>
+          </table>
+        </div>
+        <button type="button" class="btn-row-add" onclick="addForecastAccRow()">+ Add Row</button>
+      </div>
+
+      <div class="grid">
+        <div class="panel">
+          <h2>Accuracy Summary</h2>
+          <div class="readout"><div class="rlabel">MAPE (Mean Absolute % Error)</div><div class="rvalue" id="df-out-mape" style="color:var(--amber);">—</div></div>
+          <div class="readout"><div class="rlabel">Forecast Accuracy</div><div class="rvalue" id="df-out-accuracy">—</div></div>
+          <div class="readout"><div class="rlabel">Average Bias (Signed)</div><div class="rvalue" id="df-out-bias">—</div></div>
+          <div class="readout"><div class="rlabel">Bias Direction</div><div class="rvalue" id="df-out-bias-dir" style="font-size:14px;">—</div></div>
+        </div>
+        <div class="panel">
+          <h2 style="color: var(--amber);">⚠️ Forecast Flags</h2>
+          <ul id="df-risk-list" class="risk-list"></ul>
+        </div>
+      </div>
+    </div>
+
     <!-- FPY / PPM -->
     <div id="tool-fpy" class="tool-view">
       <h1>Factory First Pass Yield (FPY) &amp; Defect Rate (PPM)</h1>
@@ -1252,6 +1338,46 @@
           <h2>Rolled Yield Metrics</h2>
           <div class="readout"><div class="rlabel">Rolled First Pass Yield (RFPY)</div><div class="rvalue" id="fpy-out-rfpy" style="color:var(--amber);">94.59%</div></div>
           <div class="readout"><div class="rlabel">Defect Rate (PPM)</div><div class="rvalue" id="fpy-out-ppm" style="color:var(--red);">54,055 PPM</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- OEE / Downtime Tracker -->
+    <div id="tool-oee" class="tool-view">
+      <h1>OEE / Machine Downtime Tracker</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Availability × Performance × Quality, per line or shift, with a downtime log to see where the hours are actually going.</p>
+
+      <div class="panel" style="margin-bottom:20px;">
+        <h2>Line / Shift Log</h2>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead><tr>
+              <th style="min-width:140px;">Line / Machine / Shift</th>
+              <th>Planned Time (min)</th>
+              <th>Downtime (min)</th>
+              <th>Ideal Cycle Time (sec/unit)</th>
+              <th>Total Count</th>
+              <th>Good Count</th>
+              <th>OEE %</th>
+              <th></th>
+            </tr></thead>
+            <tbody id="oee-tbody"></tbody>
+          </table>
+        </div>
+        <button type="button" class="btn-row-add" onclick="addOeeRow()">+ Add Line/Shift</button>
+      </div>
+
+      <div class="grid">
+        <div class="panel">
+          <h2>OEE Summary</h2>
+          <div class="readout"><div class="rlabel">Average OEE</div><div class="rvalue" id="oee-out-avg" style="color:var(--amber);">—</div></div>
+          <div class="readout"><div class="rlabel">vs. World-Class Benchmark (85%)</div><div class="rvalue" id="oee-out-vs-benchmark" style="font-size:14px;">—</div></div>
+          <div class="readout"><div class="rlabel">Total Downtime Logged</div><div class="rvalue" id="oee-out-total-downtime">0 min</div></div>
+          <div class="readout"><div class="rlabel">Worst-Performing Line/Shift</div><div class="rvalue" id="oee-out-worst" style="font-size:14px;">—</div></div>
+        </div>
+        <div class="panel">
+          <h2 style="color: var(--amber);">⚠️ OEE Flags</h2>
+          <ul id="oee-risk-list" class="risk-list"></ul>
         </div>
       </div>
     </div>
@@ -1684,14 +1810,59 @@
   <!-- PILLAR 6: SUPPLIER & RISK MANAGEMENT -->
   <div id="pillar-supplierrisk" class="tab-pillar">
     <div class="subnav-bar">
-      <button class="sub-btn active" onclick="switchTool('supplierrisk', 'suppscore', this)">Supplier Performance Scorecard</button>
+      <button class="sub-btn active" onclick="switchTool('supplierrisk', 'suppqual', this)">Supplier Qualification (New)</button>
+      <button class="sub-btn" onclick="switchTool('supplierrisk', 'suppscore', this)">Supplier Performance Scorecard</button>
       <button class="sub-btn" onclick="switchTool('supplierrisk', 'riskreg', this)">Program Risk Register</button>
       <button class="sub-btn" onclick="switchTool('supplierrisk', 'kraljic', this)">Supplier Segmentation (Kraljic)</button>
       <button class="sub-btn" onclick="switchTool('supplierrisk', 'contracts', this)">Contract Renewal Tracker</button>
+      <button class="sub-btn" onclick="switchTool('supplierrisk', 'suppaudit', this)">Supplier Audit / Compliance</button>
+    </div>
+
+    <!-- Supplier Qualification / Onboarding -->
+    <div id="tool-suppqual" class="tool-view active">
+      <h1>Supplier Qualification &amp; Onboarding Scorecard</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Gate new/candidate suppliers before you award business — separate from the Performance Scorecard, which tracks suppliers you're already running.</p>
+
+      <div class="panel" style="margin-bottom:20px;">
+        <h2>Candidate Suppliers</h2>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead><tr>
+              <th style="min-width:150px;">Candidate Supplier</th>
+              <th>Quality System Cert</th>
+              <th>Facility/Process Audit (0-100)</th>
+              <th>Financial Health (0-100)</th>
+              <th>Capacity Fit (0-100)</th>
+              <th>First Article Result</th>
+              <th>Cost Competitiveness (0-100)</th>
+              <th>Composite</th>
+              <th>Decision</th>
+              <th></th>
+            </tr></thead>
+            <tbody id="sq-tbody"></tbody>
+          </table>
+        </div>
+        <button type="button" class="btn-row-add" onclick="addSuppQualRow()">+ Add Candidate</button>
+      </div>
+
+      <div class="grid">
+        <div class="panel">
+          <h2>Qualification Summary</h2>
+          <div class="readout"><div class="rlabel">Candidates Evaluated</div><div class="rvalue" id="sq-out-count">0</div></div>
+          <div class="readout"><div class="rlabel">Approved</div><div class="rvalue" id="sq-out-approved" style="color:var(--green);">0</div></div>
+          <div class="readout"><div class="rlabel">Conditional (Corrective Action Plan)</div><div class="rvalue" id="sq-out-conditional" style="color:var(--amber);">0</div></div>
+          <div class="readout"><div class="rlabel">Rejected</div><div class="rvalue" id="sq-out-rejected" style="color:var(--red);">0</div></div>
+          <div class="readout"><div class="rlabel">Average Composite Score</div><div class="rvalue" id="sq-out-avg">—</div></div>
+        </div>
+        <div class="panel">
+          <h2 style="color: var(--amber);">⚠️ Qualification Flags</h2>
+          <ul id="sq-risk-list" class="risk-list"></ul>
+        </div>
+      </div>
     </div>
 
     <!-- Supplier Performance Scorecard -->
-    <div id="tool-suppscore" class="tool-view active">
+    <div id="tool-suppscore" class="tool-view">
       <h1>Supplier Performance Scorecard</h1>
       <p style="color:var(--text-mid); margin-bottom:20px;">Rank your supply base on a weighted composite of delivery, quality, cost, and responsiveness — add as many suppliers as you're tracking.</p>
 
@@ -1873,6 +2044,49 @@
         <div class="panel">
           <h2 style="color: var(--amber);">⚠️ Renewal Flags</h2>
           <ul id="ct-risk-list" class="risk-list"></ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Supplier Audit / Compliance Scorecard -->
+    <div id="tool-suppaudit" class="tool-view">
+      <h1>Supplier Audit / Compliance Scorecard</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Log periodic supplier audits — quality system, labor/social compliance, business continuity, and environmental — and turn them into a pass/conditional/fail call.</p>
+
+      <div class="panel" style="margin-bottom:20px;">
+        <h2>Audit Log</h2>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead><tr>
+              <th style="min-width:150px;">Supplier</th>
+              <th>Audit Date</th>
+              <th>Quality System (0-100)</th>
+              <th>Labor/Social (0-100)</th>
+              <th>Business Continuity (0-100)</th>
+              <th>Environmental/ESG (0-100)</th>
+              <th>Major Findings (#)</th>
+              <th>Composite</th>
+              <th>Result</th>
+              <th></th>
+            </tr></thead>
+            <tbody id="sa-tbody"></tbody>
+          </table>
+        </div>
+        <button type="button" class="btn-row-add" onclick="addSuppAuditRow()">+ Add Audit</button>
+      </div>
+
+      <div class="grid">
+        <div class="panel">
+          <h2>Audit Summary</h2>
+          <div class="readout"><div class="rlabel">Audits Logged</div><div class="rvalue" id="sa-out-count">0</div></div>
+          <div class="readout"><div class="rlabel">Pass</div><div class="rvalue" id="sa-out-pass" style="color:var(--green);">0</div></div>
+          <div class="readout"><div class="rlabel">Conditional</div><div class="rvalue" id="sa-out-conditional" style="color:var(--amber);">0</div></div>
+          <div class="readout"><div class="rlabel">Fail</div><div class="rvalue" id="sa-out-fail" style="color:var(--red);">0</div></div>
+          <div class="readout"><div class="rlabel">Average Composite Score</div><div class="rvalue" id="sa-out-avg">—</div></div>
+        </div>
+        <div class="panel">
+          <h2 style="color: var(--amber);">⚠️ Audit Flags</h2>
+          <ul id="sa-risk-list" class="risk-list"></ul>
         </div>
       </div>
     </div>
@@ -5138,6 +5352,469 @@ function calculateCutOver() {
   }
 }
 
+// --- SUPPLIER QUALIFICATION / ONBOARDING ---
+let sqRowCount = 0;
+function addSuppQualRow(vals) {
+  vals = vals || {};
+  sqRowCount++;
+  const id = sqRowCount;
+  const tbody = document.getElementById('sq-tbody');
+  const tr = document.createElement('tr');
+  tr.id = 'sq-row-' + id;
+  tr.innerHTML = `
+    <td><input type="text" id="sq-name-${id}" value="${vals.name || ''}" placeholder="Candidate name" oninput="calculateSuppQual()"></td>
+    <td><select id="sq-cert-${id}" onchange="calculateSuppQual()">
+      <option value="ISO 9001" ${(vals.cert === 'ISO 9001' || !vals.cert) ? 'selected' : ''}>ISO 9001</option>
+      <option value="IATF 16949" ${vals.cert === 'IATF 16949' ? 'selected' : ''}>IATF 16949</option>
+      <option value="AS9100" ${vals.cert === 'AS9100' ? 'selected' : ''}>AS9100</option>
+      <option value="ISO 13485" ${vals.cert === 'ISO 13485' ? 'selected' : ''}>ISO 13485</option>
+      <option value="None" ${vals.cert === 'None' ? 'selected' : ''}>None</option>
+    </select></td>
+    <td><input type="number" id="sq-audit-${id}" value="${vals.audit !== undefined ? vals.audit : 80}" min="0" max="100" oninput="calculateSuppQual()"></td>
+    <td><input type="number" id="sq-financial-${id}" value="${vals.financial !== undefined ? vals.financial : 80}" min="0" max="100" oninput="calculateSuppQual()"></td>
+    <td><input type="number" id="sq-capacity-${id}" value="${vals.capacity !== undefined ? vals.capacity : 80}" min="0" max="100" oninput="calculateSuppQual()"></td>
+    <td><select id="sq-fai-${id}" onchange="calculateSuppQual()">
+      <option value="Pass" ${(vals.fai === 'Pass' || !vals.fai) ? 'selected' : ''}>Pass</option>
+      <option value="Conditional" ${vals.fai === 'Conditional' ? 'selected' : ''}>Conditional</option>
+      <option value="Fail" ${vals.fai === 'Fail' ? 'selected' : ''}>Fail</option>
+    </select></td>
+    <td><input type="number" id="sq-cost-${id}" value="${vals.cost !== undefined ? vals.cost : 75}" min="0" max="100" oninput="calculateSuppQual()"></td>
+    <td class="score-cell" id="sq-score-${id}">—</td>
+    <td class="score-cell" id="sq-decision-${id}">—</td>
+    <td><button type="button" class="btn-row-remove" onclick="removeSuppQualRow(${id})">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+  calculateSuppQual();
+}
+
+function removeSuppQualRow(id) {
+  const row = document.getElementById('sq-row-' + id);
+  if (row) row.remove();
+  calculateSuppQual();
+}
+
+function calculateSuppQual() {
+  const tbody = document.getElementById('sq-tbody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  let approved = 0, conditional = 0, rejected = 0, totalScore = 0;
+  const flags = [];
+
+  rows.forEach(tr => {
+    const id = tr.id.replace('sq-row-', '');
+    const name = document.getElementById('sq-name-' + id).value || 'Unnamed Candidate';
+    const cert = document.getElementById('sq-cert-' + id).value;
+    const audit = parseFloat(document.getElementById('sq-audit-' + id).value) || 0;
+    const financial = parseFloat(document.getElementById('sq-financial-' + id).value) || 0;
+    const capacity = parseFloat(document.getElementById('sq-capacity-' + id).value) || 0;
+    const fai = document.getElementById('sq-fai-' + id).value;
+    const cost = parseFloat(document.getElementById('sq-cost-' + id).value) || 0;
+
+    const composite = (audit + financial + capacity + cost) / 4;
+    const scoreEl = document.getElementById('sq-score-' + id);
+    const decisionEl = document.getElementById('sq-decision-' + id);
+    scoreEl.innerText = composite.toFixed(1);
+
+    let decision, color;
+    if (fai === 'Fail') { decision = 'REJECTED'; color = 'var(--red)'; }
+    else if (composite >= 80) { decision = 'APPROVED'; color = 'var(--green)'; }
+    else if (composite >= 60) { decision = 'CONDITIONAL'; color = 'var(--amber)'; }
+    else { decision = 'REJECTED'; color = 'var(--red)'; }
+    decisionEl.innerText = decision;
+    decisionEl.style.color = color;
+    scoreEl.style.color = color;
+
+    if (decision === 'APPROVED') approved++;
+    else if (decision === 'CONDITIONAL') conditional++;
+    else rejected++;
+    totalScore += composite;
+
+    if (fai === 'Fail') {
+      flags.push(`<strong>${name} — First Article FAILED:</strong> Automatic reject regardless of composite score (${composite.toFixed(1)}) until a new FAI passes.`);
+    } else if (cert === 'None') {
+      flags.push(`<strong>${name} has No Quality System Certification:</strong> Even at a ${composite.toFixed(1)} composite, weigh whether an uncertified supplier fits your quality risk tolerance for this category.`);
+    }
+  });
+
+  document.getElementById('sq-out-count').innerText = rows.length;
+  document.getElementById('sq-out-approved').innerText = approved;
+  document.getElementById('sq-out-conditional').innerText = conditional;
+  document.getElementById('sq-out-rejected').innerText = rejected;
+  document.getElementById('sq-out-avg').innerText = rows.length > 0 ? (totalScore / rows.length).toFixed(1) : '—';
+
+  const riskList = document.getElementById('sq-risk-list');
+  riskList.innerHTML = '';
+  if (rows.length === 0) {
+    riskList.innerHTML = '<li>Add a candidate supplier to see flags.</li>';
+  } else if (flags.length === 0) {
+    riskList.innerHTML = '<li>No qualification flags at current inputs.</li>';
+  } else {
+    flags.forEach(f => { const li = document.createElement('li'); li.innerHTML = f; riskList.appendChild(li); });
+  }
+}
+
+// --- SUPPLIER AUDIT / COMPLIANCE SCORECARD ---
+let saRowCount = 0;
+function addSuppAuditRow(vals) {
+  vals = vals || {};
+  saRowCount++;
+  const id = saRowCount;
+  const tbody = document.getElementById('sa-tbody');
+  const tr = document.createElement('tr');
+  tr.id = 'sa-row-' + id;
+  tr.innerHTML = `
+    <td><input type="text" id="sa-name-${id}" value="${vals.name || ''}" placeholder="Supplier name" oninput="calculateSuppAudit()"></td>
+    <td><input type="date" id="sa-date-${id}" value="${vals.date || ''}" oninput="calculateSuppAudit()"></td>
+    <td><input type="number" id="sa-quality-${id}" value="${vals.quality !== undefined ? vals.quality : 85}" min="0" max="100" oninput="calculateSuppAudit()"></td>
+    <td><input type="number" id="sa-labor-${id}" value="${vals.labor !== undefined ? vals.labor : 85}" min="0" max="100" oninput="calculateSuppAudit()"></td>
+    <td><input type="number" id="sa-bc-${id}" value="${vals.bc !== undefined ? vals.bc : 80}" min="0" max="100" oninput="calculateSuppAudit()"></td>
+    <td><input type="number" id="sa-esg-${id}" value="${vals.esg !== undefined ? vals.esg : 75}" min="0" max="100" oninput="calculateSuppAudit()"></td>
+    <td><input type="number" id="sa-findings-${id}" value="${vals.findings !== undefined ? vals.findings : 0}" min="0" oninput="calculateSuppAudit()"></td>
+    <td class="score-cell" id="sa-score-${id}">—</td>
+    <td class="score-cell" id="sa-result-${id}">—</td>
+    <td><button type="button" class="btn-row-remove" onclick="removeSuppAuditRow(${id})">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+  calculateSuppAudit();
+}
+
+function removeSuppAuditRow(id) {
+  const row = document.getElementById('sa-row-' + id);
+  if (row) row.remove();
+  calculateSuppAudit();
+}
+
+function calculateSuppAudit() {
+  const tbody = document.getElementById('sa-tbody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  let pass = 0, conditional = 0, fail = 0, totalScore = 0;
+  const flags = [];
+
+  rows.forEach(tr => {
+    const id = tr.id.replace('sa-row-', '');
+    const name = document.getElementById('sa-name-' + id).value || 'Unnamed Supplier';
+    const date = document.getElementById('sa-date-' + id).value;
+    const quality = parseFloat(document.getElementById('sa-quality-' + id).value) || 0;
+    const labor = parseFloat(document.getElementById('sa-labor-' + id).value) || 0;
+    const bc = parseFloat(document.getElementById('sa-bc-' + id).value) || 0;
+    const esg = parseFloat(document.getElementById('sa-esg-' + id).value) || 0;
+    const findings = parseFloat(document.getElementById('sa-findings-' + id).value) || 0;
+
+    const composite = Math.max(0, ((quality + labor + bc + esg) / 4) - (findings * 5));
+    const scoreEl = document.getElementById('sa-score-' + id);
+    const resultEl = document.getElementById('sa-result-' + id);
+    scoreEl.innerText = composite.toFixed(1);
+
+    let result, color;
+    if (findings >= 3 || composite < 60) { result = 'FAIL'; color = 'var(--red)'; }
+    else if (findings >= 1 || composite < 85) { result = 'CONDITIONAL'; color = 'var(--amber)'; }
+    else { result = 'PASS'; color = 'var(--green)'; }
+    resultEl.innerText = result;
+    resultEl.style.color = color;
+    scoreEl.style.color = color;
+
+    if (result === 'PASS') pass++;
+    else if (result === 'CONDITIONAL') conditional++;
+    else fail++;
+    totalScore += composite;
+
+    if (result === 'FAIL') {
+      flags.push(`<strong>${name}${date ? ' (' + date + ')' : ''} — FAIL:</strong> ${findings} major finding(s) and a ${composite.toFixed(1)} composite. This needs a corrective action plan with a re-audit date before more business is placed.`);
+    }
+  });
+
+  document.getElementById('sa-out-count').innerText = rows.length;
+  document.getElementById('sa-out-pass').innerText = pass;
+  document.getElementById('sa-out-conditional').innerText = conditional;
+  document.getElementById('sa-out-fail').innerText = fail;
+  document.getElementById('sa-out-avg').innerText = rows.length > 0 ? (totalScore / rows.length).toFixed(1) : '—';
+
+  const riskList = document.getElementById('sa-risk-list');
+  riskList.innerHTML = '';
+  if (rows.length === 0) {
+    riskList.innerHTML = '<li>Log an audit to see flags.</li>';
+  } else if (flags.length === 0) {
+    riskList.innerHTML = '<li>No audit flags at current inputs.</li>';
+  } else {
+    flags.forEach(f => { const li = document.createElement('li'); li.innerHTML = f; riskList.appendChild(li); });
+  }
+}
+
+// --- FREIGHT & TRANSPORTATION MODE COMPARATOR ---
+let fmRowCount = 0;
+function addFreightModeRow(vals) {
+  vals = vals || {};
+  fmRowCount++;
+  const id = fmRowCount;
+  const tbody = document.getElementById('fm-tbody');
+  const tr = document.createElement('tr');
+  tr.id = 'fm-row-' + id;
+  tr.innerHTML = `
+    <td><input type="text" id="fm-mode-${id}" value="${vals.mode || ''}" placeholder="e.g. Ocean, Air" oninput="calculateFreightMode()"></td>
+    <td><input type="number" id="fm-cost-${id}" value="${vals.cost !== undefined ? vals.cost : 0}" min="0" oninput="calculateFreightMode()"></td>
+    <td><input type="number" id="fm-transit-${id}" value="${vals.transit !== undefined ? vals.transit : 0}" min="0" oninput="calculateFreightMode()"></td>
+    <td><input type="number" id="fm-reliability-${id}" value="${vals.reliability !== undefined ? vals.reliability : 95}" min="0" max="100" oninput="calculateFreightMode()"></td>
+    <td class="score-cell" id="fm-capital-${id}">—</td>
+    <td class="score-cell" id="fm-total-${id}">—</td>
+    <td><button type="button" class="btn-row-remove" onclick="removeFreightModeRow(${id})">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+  calculateFreightMode();
+}
+
+function removeFreightModeRow(id) {
+  const row = document.getElementById('fm-row-' + id);
+  if (row) row.remove();
+  calculateFreightMode();
+}
+
+function calculateFreightMode() {
+  const shipValue = parseFloat(document.getElementById('fm-shipvalue').value) || 0;
+  const carryRate = (parseFloat(document.getElementById('fm-carryrate').value) || 0) / 100;
+
+  const tbody = document.getElementById('fm-tbody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  let cheapestFreight = null, cheapestFreightVal = Infinity;
+  let cheapestTotal = null, cheapestTotalVal = Infinity, cheapestTotalReliability = 0;
+  let fastest = null, fastestVal = Infinity;
+  const flags = [];
+
+  rows.forEach(tr => {
+    const id = tr.id.replace('fm-row-', '');
+    const mode = document.getElementById('fm-mode-' + id).value || 'Unnamed Mode';
+    const cost = parseFloat(document.getElementById('fm-cost-' + id).value) || 0;
+    const transit = parseFloat(document.getElementById('fm-transit-' + id).value) || 0;
+    const reliability = parseFloat(document.getElementById('fm-reliability-' + id).value) || 0;
+
+    const capitalCost = shipValue * carryRate / 365 * transit;
+    const totalEffective = cost + capitalCost;
+
+    document.getElementById('fm-capital-' + id).innerText = '$' + Math.round(capitalCost).toLocaleString();
+    document.getElementById('fm-total-' + id).innerText = '$' + Math.round(totalEffective).toLocaleString();
+
+    if (cost < cheapestFreightVal) { cheapestFreightVal = cost; cheapestFreight = mode; }
+    if (totalEffective < cheapestTotalVal) { cheapestTotalVal = totalEffective; cheapestTotal = mode; cheapestTotalReliability = reliability; }
+    if (transit < fastestVal) { fastestVal = transit; fastest = mode; }
+  });
+
+  document.getElementById('fm-out-cheapest-freight').innerText = cheapestFreight ? `${cheapestFreight} ($${Math.round(cheapestFreightVal).toLocaleString()})` : '—';
+  document.getElementById('fm-out-cheapest-total').innerText = cheapestTotal ? `${cheapestTotal} ($${Math.round(cheapestTotalVal).toLocaleString()})` : '—';
+  document.getElementById('fm-out-fastest').innerText = fastest ? `${fastest} (${fastestVal} days)` : '—';
+
+  if (rows.length > 0 && cheapestFreight !== cheapestTotal) {
+    flags.push(`<strong>${cheapestFreight} Looks Cheapest on Freight Alone, but ${cheapestTotal} Wins on Total Effective Cost:</strong> The longer transit on the freight-only "cheap" option ties up $${Math.round(shipValue).toLocaleString()} of inventory value in transit — factor that carrying cost in before booking on freight rate alone.`);
+  }
+  if (cheapestTotal && cheapestTotalReliability < 90) {
+    flags.push(`<strong>${cheapestTotal} (Recommended) Has Sub-90% On-Time Reliability (${cheapestTotalReliability}%):</strong> The lowest total-cost mode isn't the most dependable one — build schedule buffer around this lane or dual-source the mode for critical shipments.`);
+  }
+
+  const riskList = document.getElementById('fm-risk-list');
+  riskList.innerHTML = '';
+  if (rows.length === 0) {
+    riskList.innerHTML = '<li>Add a mode option to see flags.</li>';
+  } else if (flags.length === 0) {
+    riskList.innerHTML = '<li>No mode selection flags at current inputs.</li>';
+  } else {
+    flags.forEach(f => { const li = document.createElement('li'); li.innerHTML = f; riskList.appendChild(li); });
+  }
+}
+
+// --- DEMAND FORECAST ACCURACY (MAPE) ---
+let dfRowCount = 0;
+function addForecastAccRow(vals) {
+  vals = vals || {};
+  dfRowCount++;
+  const id = dfRowCount;
+  const tbody = document.getElementById('df-tbody');
+  const tr = document.createElement('tr');
+  tr.id = 'df-row-' + id;
+  tr.innerHTML = `
+    <td><input type="text" id="df-label-${id}" value="${vals.label || ''}" placeholder="e.g. SKU-1042 / Q1" oninput="calculateForecastAcc()"></td>
+    <td><input type="number" id="df-forecast-${id}" value="${vals.forecast !== undefined ? vals.forecast : 0}" min="0" oninput="calculateForecastAcc()"></td>
+    <td><input type="number" id="df-actual-${id}" value="${vals.actual !== undefined ? vals.actual : 0}" min="0" oninput="calculateForecastAcc()"></td>
+    <td class="score-cell" id="df-error-${id}">—</td>
+    <td class="score-cell" id="df-bias-${id}">—</td>
+    <td><button type="button" class="btn-row-remove" onclick="removeForecastAccRow(${id})">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+  calculateForecastAcc();
+}
+
+function removeForecastAccRow(id) {
+  const row = document.getElementById('df-row-' + id);
+  if (row) row.remove();
+  calculateForecastAcc();
+}
+
+function calculateForecastAcc() {
+  const tbody = document.getElementById('df-tbody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  let errorSum = 0, biasSum = 0, validRows = 0;
+
+  rows.forEach(tr => {
+    const id = tr.id.replace('df-row-', '');
+    const forecast = parseFloat(document.getElementById('df-forecast-' + id).value) || 0;
+    const actual = parseFloat(document.getElementById('df-actual-' + id).value) || 0;
+
+    const errorEl = document.getElementById('df-error-' + id);
+    const biasEl = document.getElementById('df-bias-' + id);
+
+    if (actual > 0) {
+      const errorPct = Math.abs(forecast - actual) / actual * 100;
+      const bias = (forecast - actual) / actual * 100;
+      errorEl.innerText = errorPct.toFixed(1) + '%';
+      biasEl.innerText = (bias >= 0 ? '+' : '') + bias.toFixed(1) + '%';
+      biasEl.style.color = bias > 0 ? 'var(--amber)' : (bias < 0 ? 'var(--red)' : 'var(--text-hi)');
+      errorSum += errorPct;
+      biasSum += bias;
+      validRows++;
+    } else {
+      errorEl.innerText = '—';
+      biasEl.innerText = '—';
+    }
+  });
+
+  const mape = validRows > 0 ? errorSum / validRows : 0;
+  const avgBias = validRows > 0 ? biasSum / validRows : 0;
+
+  document.getElementById('df-out-mape').innerText = validRows > 0 ? mape.toFixed(1) + '%' : '—';
+  document.getElementById('df-out-accuracy').innerText = validRows > 0 ? Math.max(0, 100 - mape).toFixed(1) + '%' : '—';
+  document.getElementById('df-out-bias').innerText = validRows > 0 ? (avgBias >= 0 ? '+' : '') + avgBias.toFixed(1) + '%' : '—';
+
+  const biasDirEl = document.getElementById('df-out-bias-dir');
+  const flags = [];
+  if (validRows === 0) {
+    biasDirEl.innerText = '—';
+  } else if (avgBias > 10) {
+    biasDirEl.innerText = 'Systematically OVER-forecasting';
+    biasDirEl.style.color = 'var(--amber)';
+  } else if (avgBias < -10) {
+    biasDirEl.innerText = 'Systematically UNDER-forecasting';
+    biasDirEl.style.color = 'var(--red)';
+  } else {
+    biasDirEl.innerText = 'Roughly balanced';
+    biasDirEl.style.color = 'var(--green)';
+  }
+
+  if (validRows > 0 && mape > 20) {
+    flags.push(`<strong>MAPE is ${mape.toFixed(1)}% — Forecast Accuracy is Weak:</strong> At this error rate, the safety stock buffer in the EOQ &amp; Safety Stock Engine is likely undersized for the actual demand swings — worth widening it or shortening the review cycle.`);
+  }
+  if (validRows > 0 && avgBias > 10) {
+    flags.push(`<strong>Persistent Over-Forecasting (avg bias +${avgBias.toFixed(1)}%):</strong> Consistently forecasting above actual demand ties up working capital in excess inventory — investigate whether the forecast model or sales input needs recalibrating.`);
+  } else if (validRows > 0 && avgBias < -10) {
+    flags.push(`<strong>Persistent Under-Forecasting (avg bias ${avgBias.toFixed(1)}%):</strong> Consistently forecasting below actual demand risks stockouts — this is the more expensive direction to get wrong for a hardware supply chain.`);
+  }
+
+  const riskList = document.getElementById('df-risk-list');
+  riskList.innerHTML = '';
+  if (rows.length === 0) {
+    riskList.innerHTML = '<li>Add a row to see flags.</li>';
+  } else if (flags.length === 0) {
+    riskList.innerHTML = '<li>No forecast flags at current inputs.</li>';
+  } else {
+    flags.forEach(f => { const li = document.createElement('li'); li.innerHTML = f; riskList.appendChild(li); });
+  }
+}
+
+// --- OEE / MACHINE DOWNTIME TRACKER ---
+let oeeRowCount = 0;
+function addOeeRow(vals) {
+  vals = vals || {};
+  oeeRowCount++;
+  const id = oeeRowCount;
+  const tbody = document.getElementById('oee-tbody');
+  const tr = document.createElement('tr');
+  tr.id = 'oee-row-' + id;
+  tr.innerHTML = `
+    <td><input type="text" id="oee-label-${id}" value="${vals.label || ''}" placeholder="e.g. Line 2 / Day Shift" oninput="calculateOee()"></td>
+    <td><input type="number" id="oee-planned-${id}" value="${vals.planned !== undefined ? vals.planned : 480}" min="0" oninput="calculateOee()"></td>
+    <td><input type="number" id="oee-downtime-${id}" value="${vals.downtime !== undefined ? vals.downtime : 0}" min="0" oninput="calculateOee()"></td>
+    <td><input type="number" id="oee-cycle-${id}" value="${vals.cycle !== undefined ? vals.cycle : 30}" min="0" oninput="calculateOee()"></td>
+    <td><input type="number" id="oee-total-${id}" value="${vals.total !== undefined ? vals.total : 0}" min="0" oninput="calculateOee()"></td>
+    <td><input type="number" id="oee-good-${id}" value="${vals.good !== undefined ? vals.good : 0}" min="0" oninput="calculateOee()"></td>
+    <td class="score-cell" id="oee-score-${id}">—</td>
+    <td><button type="button" class="btn-row-remove" onclick="removeOeeRow(${id})">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+  calculateOee();
+}
+
+function removeOeeRow(id) {
+  const row = document.getElementById('oee-row-' + id);
+  if (row) row.remove();
+  calculateOee();
+}
+
+function calculateOee() {
+  const tbody = document.getElementById('oee-tbody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  let oeeSum = 0, validRows = 0, totalDowntime = 0;
+  let worstLabel = null, worstOee = 101;
+
+  rows.forEach(tr => {
+    const id = tr.id.replace('oee-row-', '');
+    const label = document.getElementById('oee-label-' + id).value || 'Unnamed Line/Shift';
+    const planned = parseFloat(document.getElementById('oee-planned-' + id).value) || 0;
+    const downtime = parseFloat(document.getElementById('oee-downtime-' + id).value) || 0;
+    const cycle = parseFloat(document.getElementById('oee-cycle-' + id).value) || 0;
+    const total = parseFloat(document.getElementById('oee-total-' + id).value) || 0;
+    const good = parseFloat(document.getElementById('oee-good-' + id).value) || 0;
+
+    const runTime = Math.max(0, planned - downtime);
+    const availability = planned > 0 ? runTime / planned : 0;
+    const performance = runTime > 0 ? Math.min(1, (cycle * total) / (runTime * 60)) : 0;
+    const quality = total > 0 ? Math.min(1, good / total) : 0;
+    const oee = availability * performance * quality * 100;
+
+    const scoreEl = document.getElementById('oee-score-' + id);
+    scoreEl.innerText = oee.toFixed(1) + '%';
+    scoreEl.style.color = oee >= 85 ? 'var(--green)' : (oee >= 60 ? 'var(--amber)' : 'var(--red)');
+
+    totalDowntime += downtime;
+    if (planned > 0) {
+      oeeSum += oee;
+      validRows++;
+      if (oee < worstOee) { worstOee = oee; worstLabel = label; }
+    }
+  });
+
+  const avgOee = validRows > 0 ? oeeSum / validRows : 0;
+  const avgEl = document.getElementById('oee-out-avg');
+  avgEl.innerText = validRows > 0 ? avgOee.toFixed(1) + '%' : '—';
+  avgEl.style.color = avgOee >= 85 ? 'var(--green)' : (avgOee >= 60 ? 'var(--amber)' : 'var(--red)');
+
+  const vsBenchEl = document.getElementById('oee-out-vs-benchmark');
+  if (validRows === 0) {
+    vsBenchEl.innerText = '—';
+  } else {
+    const gap = avgOee - 85;
+    vsBenchEl.innerText = gap >= 0 ? `+${gap.toFixed(1)} pts above benchmark` : `${gap.toFixed(1)} pts below benchmark`;
+    vsBenchEl.style.color = gap >= 0 ? 'var(--green)' : 'var(--amber)';
+  }
+
+  document.getElementById('oee-out-total-downtime').innerText = Math.round(totalDowntime).toLocaleString() + ' min';
+  document.getElementById('oee-out-worst').innerText = worstLabel ? `${worstLabel} (${worstOee.toFixed(1)}%)` : '—';
+
+  const flags = [];
+  if (validRows > 0 && avgOee < 60) {
+    flags.push(`<strong>Average OEE is ${avgOee.toFixed(1)}% — Below the Typical 60% Acceptable Floor:</strong> This usually points to a specific, fixable driver (chronic downtime, running slower than ideal cycle, or scrap) rather than a systemic capacity shortfall — break the three factors apart per line to find which one is dragging it down.`);
+  } else if (validRows > 0 && avgOee < 85) {
+    flags.push(`<strong>Average OEE is ${avgOee.toFixed(1)}% — Below the 85% World-Class Benchmark:</strong> Solid but with room to close; check whether Availability, Performance, or Quality is the biggest single lever before investing broadly.`);
+  }
+  if (worstLabel && worstOee < 40) {
+    flags.push(`<strong>${worstLabel} is at ${worstOee.toFixed(1)}% OEE:</strong> This line/shift is dragging the average down disproportionately — worth a focused root-cause pass before spreading improvement effort elsewhere.`);
+  }
+
+  const riskList = document.getElementById('oee-risk-list');
+  riskList.innerHTML = '';
+  if (rows.length === 0) {
+    riskList.innerHTML = '<li>Add a line/shift to see flags.</li>';
+  } else if (flags.length === 0) {
+    riskList.innerHTML = '<li>No OEE flags at current inputs.</li>';
+  } else {
+    flags.forEach(f => { const li = document.createElement('li'); li.innerHTML = f; riskList.appendChild(li); });
+  }
+}
+
 // --- EXPORT FUNCTIONALITY ---
 function exportCSV() {
   const rows = [
@@ -5198,7 +5875,16 @@ function exportCSV() {
     ["Build Readiness", "Gate Decision", document.getElementById('br-out-decision').innerText],
     ["Inventory Record Accuracy", "IRA %", document.getElementById('cc-out-ira').innerText],
     ["Inventory Record Accuracy", "$ Value of Discrepancies", document.getElementById('cc-out-dollarimpact').innerText],
-    ["Generation Cut-Over", "Last Safe Order Date (Base)", document.getElementById('cov-out-lastdate-base').innerText]
+    ["Generation Cut-Over", "Last Safe Order Date (Base)", document.getElementById('cov-out-lastdate-base').innerText],
+    ["Supplier Qualification", "Approved Candidates", document.getElementById('sq-out-approved').innerText],
+    ["Supplier Qualification", "Rejected Candidates", document.getElementById('sq-out-rejected').innerText],
+    ["Supplier Audit", "Pass", document.getElementById('sa-out-pass').innerText],
+    ["Supplier Audit", "Fail", document.getElementById('sa-out-fail').innerText],
+    ["Freight Mode Comparator", "Lowest Total Effective Cost Mode", document.getElementById('fm-out-cheapest-total').innerText],
+    ["Demand Forecast Accuracy", "MAPE", document.getElementById('df-out-mape').innerText],
+    ["Demand Forecast Accuracy", "Average Bias", document.getElementById('df-out-bias').innerText],
+    ["OEE / Downtime", "Average OEE", document.getElementById('oee-out-avg').innerText],
+    ["OEE / Downtime", "Total Downtime Logged", document.getElementById('oee-out-total-downtime').innerText]
   ];
 
   let csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
@@ -5244,6 +5930,10 @@ window.onload = function() {
   calculateEOL();
   calculateLTB();
 
+  addSuppQualRow({ name: 'Meridian Stamping Co', cert: 'ISO 9001', audit: 88, financial: 82, capacity: 75, fai: 'Pass', cost: 70 });
+  addSuppQualRow({ name: 'Delta Precision Castings', cert: 'None', audit: 65, financial: 60, capacity: 80, fai: 'Conditional', cost: 85 });
+  addSuppQualRow({ name: 'Harborline Connectors', cert: 'IATF 16949', audit: 72, financial: 78, capacity: 68, fai: 'Fail', cost: 60 });
+
   addSupplierRow({ name: 'Acme Precision Machining', otd: 96, ppm: 280, costvar: -2, resp: 5, esg: 82, spend: 1250000 });
   addSupplierRow({ name: 'Global Bearing Co', otd: 88, ppm: 1200, costvar: 5, resp: 3, esg: 65, spend: 640000 });
   addSupplierRow({ name: 'Rapid Molded Plastics', otd: 74, ppm: 3400, costvar: 12, resp: 2, esg: 48, spend: 410000 });
@@ -5287,6 +5977,21 @@ window.onload = function() {
   addContractRow({ name: 'Northline Electronics — Master Supply Agreement', cat: 'Electronics', spend: 2100000, months: 1.5, auto: 'Yes', notice: 60 });
   addContractRow({ name: 'Freight Forwarder — Asia Lanes', cat: 'Logistics', spend: 480000, months: 8, auto: 'Yes', notice: 90 });
   addContractRow({ name: 'Test Fixture Maintenance', cat: 'Services', spend: 65000, months: 3, auto: 'No', notice: 30 });
+
+  addSuppAuditRow({ name: 'Northline Electronics', date: '2026-06-12', quality: 92, labor: 88, bc: 85, esg: 80, findings: 0 });
+  addSuppAuditRow({ name: 'Rapid Molded Plastics', date: '2026-07-03', quality: 68, labor: 72, bc: 60, esg: 55, findings: 2 });
+  addSuppAuditRow({ name: 'Global Bearing Co', date: '2026-08-20', quality: 55, labor: 60, bc: 50, esg: 48, findings: 3 });
+
+  addFreightModeRow({ mode: 'Ocean (FCL)', cost: 3200, transit: 32, reliability: 88 });
+  addFreightModeRow({ mode: 'Air Freight', cost: 14500, transit: 5, reliability: 97 });
+  addFreightModeRow({ mode: 'Expedited Air / Courier', cost: 22000, transit: 2, reliability: 99 });
+
+  addForecastAccRow({ label: 'PN-1001 Enclosure / Aug', forecast: 4200, actual: 3950 });
+  addForecastAccRow({ label: 'PN-2044 Connector / Aug', forecast: 8000, actual: 9100 });
+  addForecastAccRow({ label: 'PN-3390 Bearing / Aug', forecast: 1500, actual: 1480 });
+
+  addOeeRow({ label: 'Line 1 / Day Shift', planned: 480, downtime: 35, cycle: 28, total: 820, good: 795 });
+  addOeeRow({ label: 'Line 2 / Night Shift', planned: 480, downtime: 95, cycle: 28, total: 650, good: 590 });
 
   calculateBuildReadiness();
   calculateCutOver();
