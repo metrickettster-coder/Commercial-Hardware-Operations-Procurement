@@ -2097,6 +2097,7 @@
     <div class="subnav-bar">
       <button class="sub-btn active" onclick="switchTool('quality', 'cpk', this)">Process Capability (Cp/Cpk)</button>
       <button class="sub-btn" onclick="switchTool('quality', 'pfmea', this)">FMEA / 8D Tracker</button>
+      <button class="sub-btn" onclick="switchTool('quality', 'factorydefect', this)">Factory Defect Pareto / RCA</button>
       <button class="sub-btn" onclick="switchTool('quality', 'reliability', this)">Reliability Prediction (MTBF)</button>
     </div>
 
@@ -2173,6 +2174,58 @@
         <div class="panel">
           <h2 style="color: var(--amber);">⚠️ FMEA Flags</h2>
           <ul id="pf-risk-list" class="risk-list"></ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Factory Defect Pareto / RCA Tracker -->
+    <div id="tool-factorydefect" class="tool-view">
+      <h1>Factory Defect Pareto &amp; RCA Workflow Tracker</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Reactive, not proactive: log defects actually found on the line, rank them by how much factory yield each one is destroying, and move each through containment → root cause → ECO → verification. This complements FMEA/8D (which scores anticipated risk) rather than replacing it.</p>
+
+      <div class="panel" style="margin-bottom:20px;">
+        <div class="grid" style="grid-template-columns: repeat(3, 1fr);">
+          <div class="field"><label>Total Units Built (Period)</label><input type="number" id="fd-totalbuilt" value="10000" min="0" oninput="calculateFactoryDefects()"></div>
+          <div class="field"><label>Critical Threshold — Yield Loss ≥ (%)</label><input type="number" id="fd-critthresh" value="3" min="0" oninput="calculateFactoryDefects()"></div>
+          <div class="field"><label>Major Threshold — Yield Loss ≥ (%)</label><input type="number" id="fd-majorthresh" value="1" min="0" oninput="calculateFactoryDefects()"></div>
+        </div>
+        <p style="color:var(--text-dim); font-size:0.8em; margin-top:8px;">These thresholds aren't a fixed industry standard — they vary a lot by industry and process (e.g., semiconductor fabs commonly use much higher cutoffs). Set them to match your own line's tolerance.</p>
+      </div>
+
+      <div class="panel" style="margin-bottom:20px;">
+        <h2>Defect Log</h2>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead><tr>
+              <th style="min-width:180px;">Defect / Issue</th>
+              <th>Station</th>
+              <th>Root Cause</th>
+              <th>Units Affected</th>
+              <th>Workflow Status</th>
+              <th>Yield Loss %</th>
+              <th>Severity</th>
+              <th></th>
+            </tr></thead>
+            <tbody id="fd-tbody"></tbody>
+          </table>
+        </div>
+        <button type="button" class="btn-row-add" onclick="addFactoryDefectRow()">+ Add Defect</button>
+      </div>
+
+      <div class="grid">
+        <div class="panel">
+          <h2>Pareto Summary</h2>
+          <div class="readout"><div class="rlabel">Open Defect Count</div><div class="rvalue" id="fd-out-open-count">0</div></div>
+          <div class="readout"><div class="rlabel">Critical Severity (Open)</div><div class="rvalue" id="fd-out-critical-count" style="color:var(--red);">0</div></div>
+          <div class="readout"><div class="rlabel">Total Open Yield Loss</div><div class="rvalue" id="fd-out-total-yieldloss" style="color:var(--amber);">0%</div></div>
+          <div class="readout"><div class="rlabel">Closure Rate</div><div class="rvalue" id="fd-out-closure-rate">0%</div></div>
+          <hr class="divider">
+          <h2 style="margin-top:15px;">Vital Few (Pareto Top, ~80% of Yield Loss)</h2>
+          <ul id="fd-pareto-list" class="risk-list"></ul>
+        </div>
+        <div class="panel">
+          <h2 style="color: var(--amber);">⚠️ Defect Flags</h2>
+          <ul id="fd-risk-list" class="risk-list"></ul>
         </div>
       </div>
     </div>
@@ -5820,6 +5873,140 @@ function calculateOee() {
   }
 }
 
+// --- FACTORY DEFECT PARETO / RCA WORKFLOW TRACKER ---
+let fdRowCount = 0;
+function addFactoryDefectRow(vals) {
+  vals = vals || {};
+  fdRowCount++;
+  const id = fdRowCount;
+  const tbody = document.getElementById('fd-tbody');
+  const tr = document.createElement('tr');
+  tr.id = 'fd-row-' + id;
+  tr.innerHTML = `
+    <td><input type="text" id="fd-desc-${id}" value="${vals.desc || ''}" placeholder="e.g. Connector pin misalignment" oninput="calculateFactoryDefects()"></td>
+    <td><input type="text" id="fd-station-${id}" value="${vals.station || ''}" placeholder="e.g. SMT-AOI" oninput="calculateFactoryDefects()"></td>
+    <td><select id="fd-rootcause-${id}" onchange="calculateFactoryDefects()">
+      <option value="Design Flaw" ${(vals.rootcause === 'Design Flaw' || !vals.rootcause) ? 'selected' : ''}>Design Flaw</option>
+      <option value="Component Quality" ${vals.rootcause === 'Component Quality' ? 'selected' : ''}>Component Quality</option>
+      <option value="Fixture/Test Error" ${vals.rootcause === 'Fixture/Test Error' ? 'selected' : ''}>Fixture/Test Error</option>
+      <option value="Operator/Process Error" ${vals.rootcause === 'Operator/Process Error' ? 'selected' : ''}>Operator/Process Error</option>
+      <option value="Unknown" ${vals.rootcause === 'Unknown' ? 'selected' : ''}>Unknown / Under Investigation</option>
+    </select></td>
+    <td><input type="number" id="fd-units-${id}" value="${vals.units !== undefined ? vals.units : 0}" min="0" oninput="calculateFactoryDefects()"></td>
+    <td><select id="fd-status-${id}" onchange="calculateFactoryDefects()">
+      <option value="To Do" ${(vals.status === 'To Do' || !vals.status) ? 'selected' : ''}>To Do (Logged)</option>
+      <option value="Under RCA" ${vals.status === 'Under RCA' ? 'selected' : ''}>Under RCA</option>
+      <option value="Containment" ${vals.status === 'Containment' ? 'selected' : ''}>Containment</option>
+      <option value="ECO Pending" ${vals.status === 'ECO Pending' ? 'selected' : ''}>ECO Pending</option>
+      <option value="Verification" ${vals.status === 'Verification' ? 'selected' : ''}>Verification</option>
+      <option value="Closed" ${vals.status === 'Closed' ? 'selected' : ''}>Closed</option>
+    </select></td>
+    <td class="score-cell" id="fd-yieldloss-${id}">—</td>
+    <td class="score-cell" id="fd-severity-${id}">—</td>
+    <td><button type="button" class="btn-row-remove" onclick="removeFactoryDefectRow(${id})">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+  calculateFactoryDefects();
+}
+
+function removeFactoryDefectRow(id) {
+  const row = document.getElementById('fd-row-' + id);
+  if (row) row.remove();
+  calculateFactoryDefects();
+}
+
+function calculateFactoryDefects() {
+  const totalBuilt = parseFloat(document.getElementById('fd-totalbuilt').value) || 0;
+  const critThresh = parseFloat(document.getElementById('fd-critthresh').value) || 0;
+  const majorThresh = parseFloat(document.getElementById('fd-majorthresh').value) || 0;
+
+  const tbody = document.getElementById('fd-tbody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  const items = [];
+
+  rows.forEach(tr => {
+    const id = tr.id.replace('fd-row-', '');
+    const desc = document.getElementById('fd-desc-' + id).value || 'Unnamed Defect';
+    const units = parseFloat(document.getElementById('fd-units-' + id).value) || 0;
+    const status = document.getElementById('fd-status-' + id).value;
+
+    const yieldLossPct = totalBuilt > 0 ? (units / totalBuilt) * 100 : 0;
+    const yieldLossEl = document.getElementById('fd-yieldloss-' + id);
+    const severityEl = document.getElementById('fd-severity-' + id);
+    yieldLossEl.innerText = yieldLossPct.toFixed(2) + '%';
+
+    let severity, color;
+    if (yieldLossPct >= critThresh) { severity = 'CRITICAL'; color = 'var(--red)'; }
+    else if (yieldLossPct >= majorThresh) { severity = 'MAJOR'; color = 'var(--amber)'; }
+    else { severity = 'MINOR'; color = 'var(--text-mid)'; }
+    severityEl.innerText = severity;
+    severityEl.style.color = color;
+    yieldLossEl.style.color = color;
+
+    items.push({ id, desc, units, status, yieldLossPct, severity });
+  });
+
+  const openItems = items.filter(i => i.status !== 'Closed');
+  const closedCount = items.length - openItems.length;
+  const criticalOpenCount = openItems.filter(i => i.severity === 'CRITICAL').length;
+  const totalOpenYieldLoss = openItems.reduce((sum, i) => sum + i.yieldLossPct, 0);
+  const closureRate = items.length > 0 ? (closedCount / items.length) * 100 : 0;
+
+  document.getElementById('fd-out-open-count').innerText = openItems.length;
+  document.getElementById('fd-out-critical-count').innerText = criticalOpenCount;
+  document.getElementById('fd-out-total-yieldloss').innerText = totalOpenYieldLoss.toFixed(2) + '%';
+  document.getElementById('fd-out-closure-rate').innerText = closureRate.toFixed(0) + '%';
+
+  // Classic Pareto: rank by yield loss and find the "vital few" driving ~80% of total loss.
+  const sorted = [...items].sort((a, b) => b.yieldLossPct - a.yieldLossPct);
+  const totalAllYieldLoss = items.reduce((sum, i) => sum + i.yieldLossPct, 0);
+  const paretoList = document.getElementById('fd-pareto-list');
+  paretoList.innerHTML = '';
+  if (items.length === 0) {
+    paretoList.innerHTML = '<li>Add a defect to see the Pareto ranking.</li>';
+  } else if (totalAllYieldLoss === 0) {
+    paretoList.innerHTML = '<li>No yield loss logged yet.</li>';
+  } else {
+    let cumulative = 0;
+    let shown = 0;
+    for (const item of sorted) {
+      if (item.yieldLossPct <= 0) continue;
+      cumulative += item.yieldLossPct;
+      const li = document.createElement('li');
+      li.innerHTML = `<strong>${item.desc}${item.status === 'Closed' ? ' (Closed)' : ''}:</strong> ${item.yieldLossPct.toFixed(2)}% yield loss — ${(item.yieldLossPct / totalAllYieldLoss * 100).toFixed(0)}% of total`;
+      paretoList.appendChild(li);
+      shown++;
+      if (cumulative / totalAllYieldLoss >= 0.8 || shown >= 5) break;
+    }
+  }
+
+  const flags = [];
+  openItems.forEach(item => {
+    if (item.severity === 'CRITICAL' && item.status === 'To Do') {
+      flags.push(`<strong>${item.desc} — CRITICAL and Still Unassigned (${item.yieldLossPct.toFixed(2)}% yield loss):</strong> This is logged but nobody's started RCA yet — at this severity it should be the first thing picked up.`);
+    }
+  });
+  if (criticalOpenCount > 0) {
+    const topCritical = sorted.find(i => i.severity === 'CRITICAL' && i.status !== 'Closed');
+    if (topCritical) {
+      flags.push(`<strong>${criticalOpenCount} Open Critical Defect(s) — Worst is "${topCritical.desc}" (${topCritical.yieldLossPct.toFixed(2)}%):</strong> Critical-severity defects are destroying enough yield to justify factory-floor containment now, not just an engineering ticket.`);
+    }
+  }
+  if (items.length > 0 && closureRate < 50 && items.length >= 3) {
+    flags.push(`<strong>Closure Rate is ${closureRate.toFixed(0)}%:</strong> Less than half of logged defects have made it to Closed — worth checking whether ECOs are backing up in approval or verification batches aren't getting run.`);
+  }
+
+  const riskList = document.getElementById('fd-risk-list');
+  riskList.innerHTML = '';
+  if (rows.length === 0) {
+    riskList.innerHTML = '<li>Add a defect to see flags.</li>';
+  } else if (flags.length === 0) {
+    riskList.innerHTML = '<li>No defect flags at current inputs.</li>';
+  } else {
+    flags.forEach(f => { const li = document.createElement('li'); li.innerHTML = f; riskList.appendChild(li); });
+  }
+}
+
 // --- EXPORT FUNCTIONALITY ---
 function exportCSV() {
   const rows = [
@@ -5889,7 +6076,11 @@ function exportCSV() {
     ["Demand Forecast Accuracy", "MAPE", document.getElementById('df-out-mape').innerText],
     ["Demand Forecast Accuracy", "Average Bias", document.getElementById('df-out-bias').innerText],
     ["OEE / Downtime", "Average OEE", document.getElementById('oee-out-avg').innerText],
-    ["OEE / Downtime", "Total Downtime Logged", document.getElementById('oee-out-total-downtime').innerText]
+    ["OEE / Downtime", "Total Downtime Logged", document.getElementById('oee-out-total-downtime').innerText],
+    ["Factory Defect Pareto", "Open Defect Count", document.getElementById('fd-out-open-count').innerText],
+    ["Factory Defect Pareto", "Critical Severity (Open)", document.getElementById('fd-out-critical-count').innerText],
+    ["Factory Defect Pareto", "Total Open Yield Loss", document.getElementById('fd-out-total-yieldloss').innerText],
+    ["Factory Defect Pareto", "Closure Rate", document.getElementById('fd-out-closure-rate').innerText]
   ];
 
   let csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
@@ -5956,6 +6147,12 @@ window.onload = function() {
   addPfmeaRow({ desc: 'Enclosure snap-fit cracks under drop test', cat: 'Design', sev: 8, occ: 3, det: 6, owner: 'Mech Eng - Patel', status: 'Open' });
   addPfmeaRow({ desc: 'Battery/BMS interface loses comms under thermal cycling', cat: 'System', sev: 7, occ: 2, det: 7, owner: 'Systems Eng - Ortiz', status: 'Open' });
   addPfmeaRow({ desc: 'Test fixture false-fail on boundary units', cat: 'Test', sev: 4, occ: 5, det: 3, owner: 'Test Eng', status: 'Corrective Action Verified' });
+
+  addFactoryDefectRow({ desc: 'Connector pin misalignment during reflow', station: 'SMT-AOI', rootcause: 'Fixture/Test Error', units: 380, status: 'Containment' });
+  addFactoryDefectRow({ desc: 'Camera module dead pixel cluster', station: 'Optical Chamber', rootcause: 'Component Quality', units: 145, status: 'Under RCA' });
+  addFactoryDefectRow({ desc: 'RF shield box intermittent solder bridge', station: 'RF Shield Box', rootcause: 'Operator/Process Error', units: 62, status: 'ECO Pending' });
+  addFactoryDefectRow({ desc: 'Enclosure snap-fit cracks under drop test', station: 'FFT', rootcause: 'Design Flaw', units: 210, status: 'Verification' });
+  addFactoryDefectRow({ desc: 'ICT test lead cold solder joint', station: 'ICT', rootcause: 'Fixture/Test Error', units: 55, status: 'Closed' });
 
   calculateMakeVsBuy();
   calculateDutyDrawback();
