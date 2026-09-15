@@ -5410,13 +5410,16 @@ function calculateSuppQual() {
     const cost = parseFloat(document.getElementById('sq-cost-' + id).value) || 0;
 
     const composite = (audit + financial + capacity + cost) / 4;
+    const weakestDim = Math.min(audit, financial, capacity, cost);
     const scoreEl = document.getElementById('sq-score-' + id);
     const decisionEl = document.getElementById('sq-decision-' + id);
     scoreEl.innerText = composite.toFixed(1);
 
+    // Per IATF 16949 supplier-qualification practice: full approval requires >=80 composite
+    // AND >=70 on every individual dimension — a high average can't paper over one weak one.
     let decision, color;
     if (fai === 'Fail') { decision = 'REJECTED'; color = 'var(--red)'; }
-    else if (composite >= 80) { decision = 'APPROVED'; color = 'var(--green)'; }
+    else if (composite >= 80 && weakestDim >= 70) { decision = 'APPROVED'; color = 'var(--green)'; }
     else if (composite >= 60) { decision = 'CONDITIONAL'; color = 'var(--amber)'; }
     else { decision = 'REJECTED'; color = 'var(--red)'; }
     decisionEl.innerText = decision;
@@ -5430,6 +5433,8 @@ function calculateSuppQual() {
 
     if (fai === 'Fail') {
       flags.push(`<strong>${name} — First Article FAILED:</strong> Automatic reject regardless of composite score (${composite.toFixed(1)}) until a new FAI passes.`);
+    } else if (composite >= 80 && weakestDim < 70) {
+      flags.push(`<strong>${name} — Composite Passes but One Dimension Doesn't (weakest: ${weakestDim.toFixed(0)}):</strong> A ${composite.toFixed(1)} average clears the 80 bar, but a dimension below 70 holds this at CONDITIONAL rather than full approval — that weak dimension is what will actually bite later.`);
     } else if (cert === 'None') {
       flags.push(`<strong>${name} has No Quality System Certification:</strong> Even at a ${composite.toFixed(1)} composite, weigh whether an uncertified supplier fits your quality risk tolerance for this category.`);
     }
