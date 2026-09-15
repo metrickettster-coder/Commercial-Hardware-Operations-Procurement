@@ -326,6 +326,7 @@
       <button class="sub-btn active" onclick="switchTool('npi', 'stagegate', this)">Gate Exit Verification</button>
       <button class="sub-btn" onclick="switchTool('npi', 'buildyields', this)">EVT/DVT/PVT Build Yields</button>
       <button class="sub-btn" onclick="switchTool('npi', 'eco', this)">ECO Impact Analysis</button>
+      <button class="sub-btn" onclick="switchTool('npi', 'buildready', this)">Build Readiness Scorecard</button>
     </div>
 
     <!-- Gate Exit Verification -->
@@ -721,6 +722,37 @@
         </div>
       </div>
     </div>
+
+    <!-- Build Readiness Scorecard -->
+    <div id="tool-buildready" class="tool-view">
+      <h1>NPI Build Readiness Scorecard</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Assess whether a build is actually ready to start — equipment, test coverage, staffing, material, capacity, and documentation — before committing the line and burning the schedule finding out live.</p>
+      <div class="grid">
+        <div class="panel">
+          <h2>Readiness by Dimension (%)</h2>
+          <div class="field"><label>Equipment &amp; Tooling Readiness</label><input type="number" id="br-equipment" value="85" min="0" max="100" oninput="calculateBuildReadiness()"></div>
+          <div class="field"><label>Test Coverage Readiness</label><input type="number" id="br-test" value="70" min="0" max="100" oninput="calculateBuildReadiness()"></div>
+          <div class="field"><label>Staffing Readiness</label><input type="number" id="br-staffing" value="90" min="0" max="100" oninput="calculateBuildReadiness()"></div>
+          <div class="field"><label>Material Availability</label><input type="number" id="br-material" value="75" min="0" max="100" oninput="calculateBuildReadiness()"></div>
+          <div class="field"><label>Line / Capacity Readiness</label><input type="number" id="br-capacity" value="80" min="0" max="100" oninput="calculateBuildReadiness()"></div>
+          <div class="field"><label>Documentation / Work Instructions Readiness</label><input type="number" id="br-docs" value="95" min="0" max="100" oninput="calculateBuildReadiness()"></div>
+        </div>
+        <div class="panel">
+          <h2>Build Readiness Outputs</h2>
+          <div class="readout"><div class="rlabel">Overall Readiness Score</div><div class="rvalue" id="br-out-score" style="color:var(--amber);">—</div></div>
+          <div class="readout"><div class="rlabel">Gate Decision</div><div class="rvalue" id="br-out-decision" style="font-size:15px;">—</div></div>
+          <hr class="divider">
+          <h2 style="margin-top:15px;">Gaps to Close</h2>
+          <ul id="br-gap-list" class="risk-list"></ul>
+        </div>
+      </div>
+      <div class="grid" style="margin-top:20px;">
+        <div class="panel">
+          <h2 style="color: var(--amber);">⚠️ Build Readiness Flags</h2>
+          <ul id="br-risk-list" class="risk-list"></ul>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- PILLAR 3: SOURCING & COSTING -->
@@ -733,6 +765,7 @@
       <button class="sub-btn" onclick="switchTool('sourcing', 'makevsbuy', this)">Make-vs-Buy Analysis</button>
       <button class="sub-btn" onclick="switchTool('sourcing', 'dutydrawback', this)">Duty Drawback / Tariff Impact</button>
       <button class="sub-btn" onclick="switchTool('sourcing', 'multiquote', this)">Multi-Quote Comparison</button>
+      <button class="sub-btn" onclick="switchTool('sourcing', 'vepipeline', this)">Cost Reduction / VE Pipeline</button>
     </div>
 
     <!-- Total Landed Cost Engine -->
@@ -1098,6 +1131,49 @@
         </div>
       </div>
     </div>
+
+    <!-- Cost Reduction / VE Pipeline -->
+    <div id="tool-vepipeline" class="tool-view">
+      <h1>Cost Reduction / Value Engineering Pipeline</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Track savings initiatives from identified through realized — the same pipeline finance wants to see before crediting a cost-down number to the forecast.</p>
+
+      <div class="panel" style="margin-bottom:20px;">
+        <h2>Savings Initiatives</h2>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead><tr>
+              <th style="min-width:190px;">Initiative</th>
+              <th>Category</th>
+              <th>Stage</th>
+              <th>Annualized Savings ($)</th>
+              <th>One-Time Cost ($)</th>
+              <th>Owner</th>
+              <th></th>
+            </tr></thead>
+            <tbody id="ve-tbody"></tbody>
+          </table>
+        </div>
+        <button type="button" class="btn-row-add" onclick="addVeRow()">+ Add Initiative</button>
+      </div>
+
+      <div class="grid">
+        <div class="panel">
+          <h2>Pipeline Summary</h2>
+          <div class="readout"><div class="rlabel">Total Pipeline (All Stages)</div><div class="rvalue" id="ve-out-total">$0</div></div>
+          <div class="readout"><div class="rlabel">Identified (Unvalidated)</div><div class="rvalue" id="ve-out-identified" style="color:var(--text-mid);">$0</div></div>
+          <div class="readout"><div class="rlabel">Validated</div><div class="rvalue" id="ve-out-validated" style="color:var(--amber);">$0</div></div>
+          <div class="readout"><div class="rlabel">Implementing</div><div class="rvalue" id="ve-out-implementing" style="color:var(--amber);">$0</div></div>
+          <div class="readout"><div class="rlabel">Realized (Run-Rate Booked)</div><div class="rvalue" id="ve-out-realized" style="color:var(--green);">$0</div></div>
+          <hr class="divider">
+          <div class="readout"><div class="rlabel">Pipeline Conversion Rate (Realized / Total)</div><div class="rvalue" id="ve-out-conversion">0%</div></div>
+          <div class="readout"><div class="rlabel">Net Implementation Cost (All Stages)</div><div class="rvalue" id="ve-out-implcost">$0</div></div>
+        </div>
+        <div class="panel">
+          <h2 style="color: var(--amber);">⚠️ Pipeline Flags</h2>
+          <ul id="ve-risk-list" class="risk-list"></ul>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- PILLAR 4: OPS & QUALITY EXECUTION -->
@@ -1109,6 +1185,7 @@
       <button class="sub-btn" onclick="switchTool('ops', 'budgetkpi', this)">Budget KPI Dashboard</button>
       <button class="sub-btn" onclick="switchTool('ops', 'datacut', this)">Data Cut / Report Builder</button>
       <button class="sub-btn" onclick="switchTool('ops', 'capexopex', this)">CapEx/OpEx Classifier</button>
+      <button class="sub-btn" onclick="switchTool('ops', 'cyclecount', this)">Inventory Record Accuracy</button>
     </div>
 
     <!-- EVM -->
@@ -1321,6 +1398,47 @@
         </div>
       </div>
     </div>
+
+    <!-- Inventory Record Accuracy / Cycle Count -->
+    <div id="tool-cyclecount" class="tool-view">
+      <h1>Inventory Record Accuracy / Cycle Count</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Compare system quantity to physical count by location and see whether your ERP/MRP data is trustworthy enough to plan against.</p>
+
+      <div class="panel" style="margin-bottom:20px;">
+        <h2>Cycle Count Data</h2>
+        <div class="field" style="max-width:280px;"><label>Accuracy Tolerance (%)</label><div class="hint">Variance within this band still counts as "accurate" — 2% is a common default.</div><input type="number" id="cc-tolerance" value="2" min="0" step="0.1" oninput="calculateCycleCount()"></div>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead><tr>
+              <th style="min-width:150px;">SKU / Part Number</th>
+              <th>Location</th>
+              <th>System Qty</th>
+              <th>Physical Qty</th>
+              <th>Unit Cost ($)</th>
+              <th>Variance %</th>
+              <th>Accurate?</th>
+              <th></th>
+            </tr></thead>
+            <tbody id="cc-tbody"></tbody>
+          </table>
+        </div>
+        <button type="button" class="btn-row-add" onclick="addCycleCountRow()">+ Add Count</button>
+      </div>
+
+      <div class="grid">
+        <div class="panel">
+          <h2>Accuracy Summary</h2>
+          <div class="readout"><div class="rlabel">Inventory Record Accuracy (IRA)</div><div class="rvalue" id="cc-out-ira" style="color:var(--amber);">—</div></div>
+          <div class="readout"><div class="rlabel">SKUs Out of Tolerance</div><div class="rvalue" id="cc-out-outcount" style="color:var(--red);">0</div></div>
+          <div class="readout"><div class="rlabel">Total $ Value of Discrepancies</div><div class="rvalue" id="cc-out-dollarimpact" style="color:var(--red);">$0</div></div>
+          <div class="readout"><div class="rlabel">Largest Single Discrepancy</div><div class="rvalue" id="cc-out-largest" style="font-size:14px;">—</div></div>
+        </div>
+        <div class="panel">
+          <h2 style="color: var(--amber);">⚠️ Accuracy Flags</h2>
+          <ul id="cc-risk-list" class="risk-list"></ul>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- PILLAR 5: SUSTAINING & EOL CLOSEOUT -->
@@ -1529,6 +1647,37 @@
           <ul id="ltb-risk-list" class="risk-list"></ul>
         </div>
       </div>
+
+      <h2 style="margin-top:30px; color:var(--text-mid); font-size:13px; letter-spacing:0.08em; text-transform:uppercase;">Generation Cut-Over Planning — Bridge to the Next Hardware Generation</h2>
+      <div class="grid">
+        <div class="panel">
+          <h2>Transition Inputs</h2>
+          <div class="field"><label>Legacy On-Hand Inventory (Units)</label><input type="number" id="cov-legacy-onhand" value="4000" min="0" oninput="calculateCutOver()"></div>
+          <div class="field"><label>Monthly Demand Rate (Units/Month)</label><input type="number" id="cov-demand" value="500" min="0" oninput="calculateCutOver()"></div>
+          <div class="field"><label>Legacy Part Order Lead Time (Months)</label><input type="number" id="cov-leadtime" value="2" min="0" step="0.5" oninput="calculateCutOver()"></div>
+          <div class="field"><label>Months Until New Hardware Ready (Planned Ramp)</label><input type="number" id="cov-newready" value="6" min="0" step="0.5" oninput="calculateCutOver()"></div>
+          <div class="field"><label>Schedule Risk Buffer (Months)</label><div class="hint">How many months of new-hardware slip you want to protect against.</div><input type="number" id="cov-buffer" value="2" min="0" step="0.5" oninput="calculateCutOver()"></div>
+          <div class="field"><label>Legacy Unit Cost</label><div class="prefix-wrap"><span>$</span><input type="number" id="cov-unitcost" value="42.00" min="0" oninput="calculateCutOver()"></div></div>
+        </div>
+        <div class="panel">
+          <h2>Cut-Over Outputs</h2>
+          <div class="readout"><div class="rlabel">Months of Coverage from Current On-Hand</div><div class="rvalue" id="cov-out-coverage">—</div></div>
+          <div class="readout"><div class="rlabel">Additional Legacy Units Needed (Base Case)</div><div class="rvalue" id="cov-out-additional-base">—</div></div>
+          <div class="readout"><div class="rlabel">Last Safe Order Date, Base Case (Months From Now)</div><div class="rvalue" id="cov-out-lastdate-base" style="color:var(--amber);">—</div></div>
+          <hr class="divider">
+          <div class="readout"><div class="rlabel">Additional Units Needed (With Schedule Buffer)</div><div class="rvalue" id="cov-out-additional-buffer">—</div></div>
+          <div class="readout"><div class="rlabel">Last Safe Order Date, With Buffer (Months From Now)</div><div class="rvalue" id="cov-out-lastdate-buffer" style="color:var(--amber);">—</div></div>
+          <hr class="divider">
+          <div class="readout"><div class="rlabel">Stranding Cost if Buffer Turns Out Unneeded</div><div class="rvalue" id="cov-out-strand-cost" style="color:var(--red);">—</div></div>
+          <div class="readout"><div class="rlabel">Units Short if No Buffer and Ramp Slips</div><div class="rvalue" id="cov-out-shortfall-units" style="color:var(--red);">—</div></div>
+        </div>
+      </div>
+      <div class="grid" style="margin-top:20px;">
+        <div class="panel">
+          <h2 style="color: var(--amber);">⚠️ Cut-Over Flags</h2>
+          <ul id="cov-risk-list" class="risk-list"></ul>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1537,6 +1686,8 @@
     <div class="subnav-bar">
       <button class="sub-btn active" onclick="switchTool('supplierrisk', 'suppscore', this)">Supplier Performance Scorecard</button>
       <button class="sub-btn" onclick="switchTool('supplierrisk', 'riskreg', this)">Program Risk Register</button>
+      <button class="sub-btn" onclick="switchTool('supplierrisk', 'kraljic', this)">Supplier Segmentation (Kraljic)</button>
+      <button class="sub-btn" onclick="switchTool('supplierrisk', 'contracts', this)">Contract Renewal Tracker</button>
     </div>
 
     <!-- Supplier Performance Scorecard -->
@@ -1547,11 +1698,12 @@
       <div class="panel" style="margin-bottom:20px;">
         <h2>Composite Score Weights</h2>
         <p style="color:var(--text-mid); font-size:0.85em; margin-bottom:10px;">Must total 100%. Adjust to match what matters most for this supply base.</p>
-        <div class="grid" style="grid-template-columns: repeat(4, 1fr);">
-          <div class="field"><label>On-Time Delivery Weight (%)</label><input type="number" id="ss-w-otd" value="30" min="0" max="100" oninput="calculateSupplierScorecard()"></div>
-          <div class="field"><label>Quality Weight (%)</label><input type="number" id="ss-w-quality" value="30" min="0" max="100" oninput="calculateSupplierScorecard()"></div>
+        <div class="grid" style="grid-template-columns: repeat(5, 1fr);">
+          <div class="field"><label>On-Time Delivery Weight (%)</label><input type="number" id="ss-w-otd" value="25" min="0" max="100" oninput="calculateSupplierScorecard()"></div>
+          <div class="field"><label>Quality Weight (%)</label><input type="number" id="ss-w-quality" value="25" min="0" max="100" oninput="calculateSupplierScorecard()"></div>
           <div class="field"><label>Cost Weight (%)</label><input type="number" id="ss-w-cost" value="20" min="0" max="100" oninput="calculateSupplierScorecard()"></div>
-          <div class="field"><label>Responsiveness Weight (%)</label><input type="number" id="ss-w-resp" value="20" min="0" max="100" oninput="calculateSupplierScorecard()"></div>
+          <div class="field"><label>Responsiveness Weight (%)</label><input type="number" id="ss-w-resp" value="15" min="0" max="100" oninput="calculateSupplierScorecard()"></div>
+          <div class="field"><label>ESG / Compliance Weight (%)</label><input type="number" id="ss-w-esg" value="15" min="0" max="100" oninput="calculateSupplierScorecard()"></div>
         </div>
         <div class="readout"><div class="rlabel">Weight Total</div><div class="rvalue" id="ss-weight-total">100%</div></div>
       </div>
@@ -1566,6 +1718,7 @@
               <th>Quality (PPM)</th>
               <th>Cost Var. %</th>
               <th>Responsiveness</th>
+              <th>ESG Score (0-100)</th>
               <th>Annual Spend ($)</th>
               <th>Composite</th>
               <th>Status</th>
@@ -1584,6 +1737,9 @@
           <div class="readout"><div class="rlabel">Suppliers at Risk (Red Status)</div><div class="rvalue" id="ss-out-atrisk-count">0</div></div>
           <div class="readout"><div class="rlabel">Annual Spend at Risk</div><div class="rvalue" id="ss-out-atrisk-spend" style="color:var(--red);">$0</div></div>
           <div class="readout"><div class="rlabel">Top Performer</div><div class="rvalue" id="ss-out-top" style="font-size:14px;">—</div></div>
+          <hr class="divider">
+          <div class="readout"><div class="rlabel">Spend Concentration (HHI)</div><div class="rvalue" id="ss-out-hhi" style="color:var(--amber);">—</div></div>
+          <div class="readout"><div class="rlabel">Concentration Rating</div><div class="rvalue" id="ss-out-hhi-rating" style="font-size:14px;">—</div></div>
         </div>
         <div class="panel">
           <h2 style="color: var(--amber);">⚠️ Supply Base Flags</h2>
@@ -1630,6 +1786,93 @@
         <div class="panel">
           <h2 style="color: var(--amber);">⚠️ Risk Register Flags</h2>
           <ul id="rr-risk-list" class="risk-list"></ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Supplier Segmentation (Kraljic Matrix) -->
+    <div id="tool-kraljic" class="tool-view">
+      <h1>Supplier Segmentation (Kraljic Matrix)</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Plot each supplier or category on supply risk vs. business impact to decide where to partner closely, negotiate hard, secure alternates, or simplify.</p>
+
+      <div class="panel" style="margin-bottom:20px;">
+        <h2>Supplier / Category Positioning</h2>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead><tr>
+              <th style="min-width:190px;">Supplier / Category</th>
+              <th>Supply Risk (1-10)</th>
+              <th>Business Impact (1-10)</th>
+              <th>Quadrant</th>
+              <th></th>
+            </tr></thead>
+            <tbody id="kr-tbody"></tbody>
+          </table>
+        </div>
+        <button type="button" class="btn-row-add" onclick="addKraljicRow()">+ Add Supplier / Category</button>
+      </div>
+
+      <div class="grid">
+        <div class="panel">
+          <h2>Segmentation Summary</h2>
+          <div class="readout"><div class="rlabel">Strategic (High Impact, High Risk)</div><div class="rvalue" id="kr-out-strategic" style="color:var(--red);">0</div></div>
+          <div class="readout"><div class="rlabel">Leverage (High Impact, Low Risk)</div><div class="rvalue" id="kr-out-leverage" style="color:var(--green);">0</div></div>
+          <div class="readout"><div class="rlabel">Bottleneck (Low Impact, High Risk)</div><div class="rvalue" id="kr-out-bottleneck" style="color:var(--amber);">0</div></div>
+          <div class="readout"><div class="rlabel">Non-Critical (Low Impact, Low Risk)</div><div class="rvalue" id="kr-out-noncritical">0</div></div>
+          <hr class="divider">
+          <h2 style="margin-top:15px;">Quadrant Strategy Guide</h2>
+          <ul class="risk-list">
+            <li><strong>Strategic:</strong> Partner closely — joint planning, dual-source, executive-level relationship.</li>
+            <li><strong>Leverage:</strong> Competitive bidding — use your buying power, negotiate hard on price.</li>
+            <li><strong>Bottleneck:</strong> Secure supply — find alternates even though spend is low; risk is disproportionate to value.</li>
+            <li><strong>Non-Critical:</strong> Simplify — automate, consolidate, or reduce transaction overhead.</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h2 style="color: var(--amber);">⚠️ Segmentation Flags</h2>
+          <ul id="kr-risk-list" class="risk-list"></ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contract Renewal Tracker -->
+    <div id="tool-contracts" class="tool-view">
+      <h1>Contract Renewal Tracker</h1>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Track upcoming renewals against their notice periods so an auto-renewal clause never catches you after the window has closed.</p>
+
+      <div class="panel" style="margin-bottom:20px;">
+        <h2>Contracts</h2>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead><tr>
+              <th style="min-width:180px;">Contract / Supplier</th>
+              <th>Category</th>
+              <th>Annual Spend ($)</th>
+              <th>Months Until Renewal</th>
+              <th>Auto-Renews?</th>
+              <th>Notice Period (Days)</th>
+              <th>Status</th>
+              <th></th>
+            </tr></thead>
+            <tbody id="ct-tbody"></tbody>
+          </table>
+        </div>
+        <button type="button" class="btn-row-add" onclick="addContractRow()">+ Add Contract</button>
+      </div>
+
+      <div class="grid">
+        <div class="panel">
+          <h2>Renewal Summary</h2>
+          <div class="readout"><div class="rlabel">Total Contracted Spend Under Management</div><div class="rvalue" id="ct-out-total">$0</div></div>
+          <div class="readout"><div class="rlabel">Contracts Needing Action</div><div class="rvalue" id="ct-out-action-count" style="color:var(--red);">0</div></div>
+          <div class="readout"><div class="rlabel">Spend at Risk of Silent Auto-Renewal</div><div class="rvalue" id="ct-out-atrisk-spend" style="color:var(--red);">$0</div></div>
+          <hr class="divider">
+          <h2 style="margin-top:15px;">Most Urgent Renewals</h2>
+          <ul id="ct-top-list" class="risk-list"></ul>
+        </div>
+        <div class="panel">
+          <h2 style="color: var(--amber);">⚠️ Renewal Flags</h2>
+          <ul id="ct-risk-list" class="risk-list"></ul>
         </div>
       </div>
     </div>
@@ -3390,6 +3633,7 @@ function addSupplierRow(vals) {
       <option value="2" ${vals.resp == 2 ? 'selected' : ''}>2 - Poor</option>
       <option value="1" ${vals.resp == 1 ? 'selected' : ''}>1 - Very Poor</option>
     </select></td>
+    <td><input type="number" id="ss-esg-${id}" value="${vals.esg !== undefined ? vals.esg : 75}" min="0" max="100" oninput="calculateSupplierScorecard()"></td>
     <td><input type="number" id="ss-spend-${id}" value="${vals.spend !== undefined ? vals.spend : 0}" min="0" oninput="calculateSupplierScorecard()"></td>
     <td class="score-cell" id="ss-score-${id}">—</td>
     <td class="score-cell" id="ss-status-${id}">—</td>
@@ -3410,7 +3654,8 @@ function calculateSupplierScorecard() {
   const wQuality = parseFloat(document.getElementById('ss-w-quality').value) || 0;
   const wCost = parseFloat(document.getElementById('ss-w-cost').value) || 0;
   const wResp = parseFloat(document.getElementById('ss-w-resp').value) || 0;
-  const weightTotal = wOtd + wQuality + wCost + wResp;
+  const wEsg = parseFloat(document.getElementById('ss-w-esg').value) || 0;
+  const weightTotal = wOtd + wQuality + wCost + wResp + wEsg;
 
   const wtEl = document.getElementById('ss-weight-total');
   wtEl.innerText = weightTotal + '%';
@@ -3421,6 +3666,7 @@ function calculateSupplierScorecard() {
   let totalScore = 0, atRiskCount = 0, atRiskSpend = 0, totalSpend = 0;
   let topSupplier = null, topScore = -1;
   const flags = [];
+  const spendValues = [];
 
   rows.forEach(tr => {
     const id = tr.id.replace('ss-row-', '');
@@ -3429,15 +3675,17 @@ function calculateSupplierScorecard() {
     const ppm = parseFloat(document.getElementById('ss-ppm-' + id).value) || 0;
     const costVar = parseFloat(document.getElementById('ss-costvar-' + id).value) || 0;
     const resp = parseFloat(document.getElementById('ss-resp-' + id).value) || 0;
+    const esg = parseFloat(document.getElementById('ss-esg-' + id).value) || 0;
     const spend = parseFloat(document.getElementById('ss-spend-' + id).value) || 0;
 
     const otdScore = Math.max(0, Math.min(100, otd));
     const qualityScore = Math.max(0, Math.min(100, 100 - (ppm / 100)));
     const costScore = Math.max(0, Math.min(100, 100 - Math.abs(costVar) * 2));
     const respScore = Math.max(0, Math.min(100, resp * 20));
+    const esgScore = Math.max(0, Math.min(100, esg));
 
     const composite = weightTotal > 0
-      ? ((otdScore * wOtd) + (qualityScore * wQuality) + (costScore * wCost) + (respScore * wResp)) / weightTotal
+      ? ((otdScore * wOtd) + (qualityScore * wQuality) + (costScore * wCost) + (respScore * wResp) + (esgScore * wEsg)) / weightTotal
       : 0;
 
     const scoreEl = document.getElementById('ss-score-' + id);
@@ -3454,6 +3702,7 @@ function calculateSupplierScorecard() {
 
     totalScore += composite;
     totalSpend += spend;
+    spendValues.push(spend);
     if (composite > topScore) { topScore = composite; topSupplier = name; }
 
     if (status === 'RED' && spend > 0) {
@@ -3466,11 +3715,26 @@ function calculateSupplierScorecard() {
   document.getElementById('ss-out-atrisk-spend').innerText = '$' + Math.round(atRiskSpend).toLocaleString();
   document.getElementById('ss-out-top').innerText = topSupplier ? `${topSupplier} (${topScore.toFixed(1)})` : '—';
 
+  const hhi = totalSpend > 0 ? spendValues.reduce((sum, s) => sum + Math.pow((s / totalSpend) * 100, 2), 0) : 0;
+  const hhiEl = document.getElementById('ss-out-hhi');
+  const hhiRatingEl = document.getElementById('ss-out-hhi-rating');
+  hhiEl.innerText = totalSpend > 0 ? Math.round(hhi).toLocaleString() : '—';
+  let hhiRating, hhiColor;
+  if (hhi >= 2500) { hhiRating = 'HIGH — concentrated in few suppliers'; hhiColor = 'var(--red)'; }
+  else if (hhi >= 1500) { hhiRating = 'MODERATE concentration'; hhiColor = 'var(--amber)'; }
+  else { hhiRating = 'LOW — well diversified'; hhiColor = 'var(--green)'; }
+  hhiRatingEl.innerText = totalSpend > 0 ? hhiRating : '—';
+  hhiRatingEl.style.color = totalSpend > 0 ? hhiColor : 'var(--text-mid)';
+  hhiEl.style.color = totalSpend > 0 ? hhiColor : 'var(--text-mid)';
+
   if (weightTotal !== 100) {
     flags.unshift(`<strong>Weights Don't Total 100% (currently ${weightTotal}%):</strong> Composite scores are being normalized by the actual total, but fix the weights so they reflect your intended emphasis.`);
   }
   if (totalSpend > 0 && (atRiskSpend / totalSpend) > 0.25) {
     flags.push(`<strong>Over 25% of Spend is at Risk:</strong> $${Math.round(atRiskSpend).toLocaleString()} of $${Math.round(totalSpend).toLocaleString()} total tracked spend sits with RED-status suppliers — this is a concentration risk worth escalating.`);
+  }
+  if (hhi >= 2500 && totalSpend > 0) {
+    flags.push(`<strong>Spend Concentration is HIGH (HHI ${Math.round(hhi).toLocaleString()}):</strong> A small number of suppliers account for most of this spend — a single-supplier disruption would hit disproportionately hard. Worth a dual-sourcing or diversification push on the largest positions.`);
   }
 
   const riskList = document.getElementById('ss-risk-list');
@@ -4397,6 +4661,483 @@ function toggleTheme() {
   initTheme();
 }
 
+// --- COST REDUCTION / VE PIPELINE ---
+let veRowCount = 0;
+function addVeRow(vals) {
+  vals = vals || {};
+  veRowCount++;
+  const id = veRowCount;
+  const tbody = document.getElementById('ve-tbody');
+  const tr = document.createElement('tr');
+  tr.id = 've-row-' + id;
+  tr.innerHTML = `
+    <td><input type="text" id="ve-desc-${id}" value="${vals.desc || ''}" placeholder="Savings initiative" oninput="calculateVePipeline()"></td>
+    <td><select id="ve-cat-${id}" onchange="calculateVePipeline()">
+      <option value="Material" ${vals.cat === 'Material' || !vals.cat ? 'selected' : ''}>Material</option>
+      <option value="Labor" ${vals.cat === 'Labor' ? 'selected' : ''}>Labor</option>
+      <option value="Overhead" ${vals.cat === 'Overhead' ? 'selected' : ''}>Overhead</option>
+      <option value="Logistics" ${vals.cat === 'Logistics' ? 'selected' : ''}>Logistics</option>
+      <option value="Design" ${vals.cat === 'Design' ? 'selected' : ''}>Design/VE</option>
+    </select></td>
+    <td><select id="ve-stage-${id}" onchange="calculateVePipeline()">
+      <option value="Identified" ${vals.stage === 'Identified' || !vals.stage ? 'selected' : ''}>Identified</option>
+      <option value="Validated" ${vals.stage === 'Validated' ? 'selected' : ''}>Validated</option>
+      <option value="Implementing" ${vals.stage === 'Implementing' ? 'selected' : ''}>Implementing</option>
+      <option value="Realized" ${vals.stage === 'Realized' ? 'selected' : ''}>Realized</option>
+    </select></td>
+    <td><input type="number" id="ve-savings-${id}" value="${vals.savings !== undefined ? vals.savings : 0}" min="0" oninput="calculateVePipeline()"></td>
+    <td><input type="number" id="ve-cost-${id}" value="${vals.cost !== undefined ? vals.cost : 0}" min="0" oninput="calculateVePipeline()"></td>
+    <td><input type="text" id="ve-owner-${id}" value="${vals.owner || ''}" placeholder="Owner" oninput="calculateVePipeline()"></td>
+    <td><button type="button" class="btn-row-remove" onclick="removeVeRow(${id})">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+  calculateVePipeline();
+}
+
+function removeVeRow(id) {
+  const row = document.getElementById('ve-row-' + id);
+  if (row) row.remove();
+  calculateVePipeline();
+}
+
+function calculateVePipeline() {
+  const tbody = document.getElementById('ve-tbody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  let total = 0, identified = 0, validated = 0, implementing = 0, realized = 0, totalCost = 0;
+  const badPayback = [];
+
+  rows.forEach(tr => {
+    const id = tr.id.replace('ve-row-', '');
+    const desc = document.getElementById('ve-desc-' + id).value || 'Unnamed Initiative';
+    const stage = document.getElementById('ve-stage-' + id).value;
+    const savings = parseFloat(document.getElementById('ve-savings-' + id).value) || 0;
+    const cost = parseFloat(document.getElementById('ve-cost-' + id).value) || 0;
+
+    total += savings;
+    totalCost += cost;
+    if (stage === 'Identified') identified += savings;
+    else if (stage === 'Validated') validated += savings;
+    else if (stage === 'Implementing') implementing += savings;
+    else if (stage === 'Realized') realized += savings;
+
+    if (cost > savings && savings > 0) {
+      badPayback.push(`<strong>${desc}:</strong> One-time cost ($${Math.round(cost).toLocaleString()}) exceeds first-year annualized savings ($${Math.round(savings).toLocaleString()}) — payback runs past year one, confirm that's still worth doing.`);
+    }
+  });
+
+  document.getElementById('ve-out-total').innerText = '$' + Math.round(total).toLocaleString();
+  document.getElementById('ve-out-identified').innerText = '$' + Math.round(identified).toLocaleString();
+  document.getElementById('ve-out-validated').innerText = '$' + Math.round(validated).toLocaleString();
+  document.getElementById('ve-out-implementing').innerText = '$' + Math.round(implementing).toLocaleString();
+  document.getElementById('ve-out-realized').innerText = '$' + Math.round(realized).toLocaleString();
+  document.getElementById('ve-out-implcost').innerText = '$' + Math.round(totalCost).toLocaleString();
+
+  const conversionPct = total > 0 ? (realized / total) * 100 : 0;
+  document.getElementById('ve-out-conversion').innerText = conversionPct.toFixed(1) + '%';
+
+  const flags = [];
+  if (total > 0 && (identified / total) > 0.5) {
+    flags.push(`<strong>Over Half the Pipeline is Still Unvalidated:</strong> $${Math.round(identified).toLocaleString()} of $${Math.round(total).toLocaleString()} total pipeline sits in Identified stage — none of it should be credited to a forecast until it's Validated.`);
+  }
+  badPayback.forEach(f => flags.push(f));
+  if (rows.length > 0 && realized === 0 && total > 0) {
+    flags.push(`<strong>Nothing Realized Yet:</strong> The full pipeline value is still aspirational — useful for planning, but don't report it as booked savings until initiatives land in Realized.`);
+  }
+
+  const riskList = document.getElementById('ve-risk-list');
+  riskList.innerHTML = '';
+  if (rows.length === 0) {
+    riskList.innerHTML = '<li>Add an initiative to see flags.</li>';
+  } else if (flags.length === 0) {
+    riskList.innerHTML = '<li>No pipeline flags at current inputs.</li>';
+  } else {
+    flags.forEach(f => { const li = document.createElement('li'); li.innerHTML = f; riskList.appendChild(li); });
+  }
+}
+
+// --- SUPPLIER SEGMENTATION (KRALJIC MATRIX) ---
+let krRowCount = 0;
+function addKraljicRow(vals) {
+  vals = vals || {};
+  krRowCount++;
+  const id = krRowCount;
+  const tbody = document.getElementById('kr-tbody');
+  const tr = document.createElement('tr');
+  tr.id = 'kr-row-' + id;
+  tr.innerHTML = `
+    <td><input type="text" id="kr-name-${id}" value="${vals.name || ''}" placeholder="Supplier or category" oninput="calculateKraljic()"></td>
+    <td><input type="number" id="kr-risk-${id}" value="${vals.risk !== undefined ? vals.risk : 5}" min="1" max="10" oninput="calculateKraljic()"></td>
+    <td><input type="number" id="kr-impact-${id}" value="${vals.impact !== undefined ? vals.impact : 5}" min="1" max="10" oninput="calculateKraljic()"></td>
+    <td class="score-cell" id="kr-quad-${id}">—</td>
+    <td><button type="button" class="btn-row-remove" onclick="removeKraljicRow(${id})">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+  calculateKraljic();
+}
+
+function removeKraljicRow(id) {
+  const row = document.getElementById('kr-row-' + id);
+  if (row) row.remove();
+  calculateKraljic();
+}
+
+function calculateKraljic() {
+  const tbody = document.getElementById('kr-tbody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  let strategic = 0, leverage = 0, bottleneck = 0, nonCritical = 0;
+
+  rows.forEach(tr => {
+    const id = tr.id.replace('kr-row-', '');
+    const risk = parseFloat(document.getElementById('kr-risk-' + id).value) || 0;
+    const impact = parseFloat(document.getElementById('kr-impact-' + id).value) || 0;
+    const quadEl = document.getElementById('kr-quad-' + id);
+
+    let quad, color;
+    if (impact >= 5.5 && risk >= 5.5) { quad = 'STRATEGIC'; color = 'var(--red)'; strategic++; }
+    else if (impact >= 5.5 && risk < 5.5) { quad = 'LEVERAGE'; color = 'var(--green)'; leverage++; }
+    else if (impact < 5.5 && risk >= 5.5) { quad = 'BOTTLENECK'; color = 'var(--amber)'; bottleneck++; }
+    else { quad = 'NON-CRITICAL'; color = 'var(--text-mid)'; nonCritical++; }
+    quadEl.innerText = quad;
+    quadEl.style.color = color;
+  });
+
+  document.getElementById('kr-out-strategic').innerText = strategic;
+  document.getElementById('kr-out-leverage').innerText = leverage;
+  document.getElementById('kr-out-bottleneck').innerText = bottleneck;
+  document.getElementById('kr-out-noncritical').innerText = nonCritical;
+
+  const flags = [];
+  if (bottleneck > 0) {
+    flags.push(`<strong>${bottleneck} Bottleneck Supplier${bottleneck > 1 ? 's' : ''}:</strong> Low business impact but high supply risk — these are easy to overlook since spend is small, but the risk they carry is out of proportion to the value. Confirm alternates exist.`);
+  }
+  if (rows.length > 0 && strategic === 0) {
+    flags.push(`<strong>No Suppliers Flagged as Strategic:</strong> If nothing scores as high-impact/high-risk, double check the scoring reflects true criticality — most supply bases have at least one supplier here.`);
+  }
+  if (strategic > rows.length * 0.5 && rows.length >= 4) {
+    flags.push(`<strong>Over Half the Supply Base is "Strategic":</strong> Treating most suppliers as strategic dilutes the point of segmentation — revisit whether the impact/risk scoring is too generous.`);
+  }
+
+  const riskList = document.getElementById('kr-risk-list');
+  riskList.innerHTML = '';
+  if (rows.length === 0) {
+    riskList.innerHTML = '<li>Add a supplier or category to see flags.</li>';
+  } else if (flags.length === 0) {
+    riskList.innerHTML = '<li>No segmentation flags at current inputs.</li>';
+  } else {
+    flags.forEach(f => { const li = document.createElement('li'); li.innerHTML = f; riskList.appendChild(li); });
+  }
+}
+
+// --- CONTRACT RENEWAL TRACKER ---
+let ctRowCount = 0;
+function addContractRow(vals) {
+  vals = vals || {};
+  ctRowCount++;
+  const id = ctRowCount;
+  const tbody = document.getElementById('ct-tbody');
+  const tr = document.createElement('tr');
+  tr.id = 'ct-row-' + id;
+  tr.innerHTML = `
+    <td><input type="text" id="ct-name-${id}" value="${vals.name || ''}" placeholder="Contract / supplier" oninput="calculateContracts()"></td>
+    <td><input type="text" id="ct-cat-${id}" value="${vals.cat || ''}" placeholder="e.g. Logistics" oninput="calculateContracts()"></td>
+    <td><input type="number" id="ct-spend-${id}" value="${vals.spend !== undefined ? vals.spend : 0}" min="0" oninput="calculateContracts()"></td>
+    <td><input type="number" id="ct-months-${id}" value="${vals.months !== undefined ? vals.months : 6}" min="0" step="0.5" oninput="calculateContracts()"></td>
+    <td><select id="ct-auto-${id}" onchange="calculateContracts()">
+      <option value="Yes" ${vals.auto === 'Yes' || !vals.auto ? 'selected' : ''}>Yes</option>
+      <option value="No" ${vals.auto === 'No' ? 'selected' : ''}>No</option>
+    </select></td>
+    <td><input type="number" id="ct-notice-${id}" value="${vals.notice !== undefined ? vals.notice : 60}" min="0" oninput="calculateContracts()"></td>
+    <td class="score-cell" id="ct-status-${id}">—</td>
+    <td><button type="button" class="btn-row-remove" onclick="removeContractRow(${id})">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+  calculateContracts();
+}
+
+function removeContractRow(id) {
+  const row = document.getElementById('ct-row-' + id);
+  if (row) row.remove();
+  calculateContracts();
+}
+
+function calculateContracts() {
+  const tbody = document.getElementById('ct-tbody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  let totalSpend = 0, actionCount = 0, atRiskSpend = 0;
+  const items = [];
+
+  rows.forEach(tr => {
+    const id = tr.id.replace('ct-row-', '');
+    const name = document.getElementById('ct-name-' + id).value || 'Unnamed Contract';
+    const cat = document.getElementById('ct-cat-' + id).value;
+    const spend = parseFloat(document.getElementById('ct-spend-' + id).value) || 0;
+    const months = parseFloat(document.getElementById('ct-months-' + id).value) || 0;
+    const auto = document.getElementById('ct-auto-' + id).value;
+    const notice = parseFloat(document.getElementById('ct-notice-' + id).value) || 0;
+
+    const daysUntilRenewal = months * 30;
+    let status, color;
+    if (daysUntilRenewal <= notice) { status = 'ACTION REQUIRED'; color = 'var(--red)'; actionCount++; }
+    else if (months <= 3) { status = 'REVIEW SOON'; color = 'var(--amber)'; }
+    else { status = 'ON TRACK'; color = 'var(--green)'; }
+
+    const statusEl = document.getElementById('ct-status-' + id);
+    statusEl.innerText = status;
+    statusEl.style.color = color;
+
+    totalSpend += spend;
+    if (auto === 'Yes' && status !== 'ON TRACK') atRiskSpend += spend;
+    items.push({ name, cat, months, status, spend, auto });
+  });
+
+  document.getElementById('ct-out-total').innerText = '$' + Math.round(totalSpend).toLocaleString();
+  document.getElementById('ct-out-action-count').innerText = actionCount;
+  document.getElementById('ct-out-atrisk-spend').innerText = '$' + Math.round(atRiskSpend).toLocaleString();
+
+  items.sort((a, b) => a.months - b.months);
+  const topList = document.getElementById('ct-top-list');
+  topList.innerHTML = '';
+  if (items.length === 0) {
+    topList.innerHTML = '<li>No contracts logged.</li>';
+  } else {
+    items.slice(0, 3).forEach(it => {
+      const li = document.createElement('li');
+      li.innerHTML = `<strong>${it.name}:</strong> ${it.months} months out — ${it.status}${it.auto === 'Yes' ? ' (auto-renews)' : ''}`;
+      topList.appendChild(li);
+    });
+  }
+
+  const flags = [];
+  if (actionCount > 0) {
+    flags.push(`<strong>${actionCount} Contract${actionCount > 1 ? 's' : ''} Inside the Notice Window:</strong> These are already within their cancellation/renegotiation notice period — a decision is needed now, not next quarter.`);
+  }
+  if (atRiskSpend > 0) {
+    flags.push(`<strong>$${Math.round(atRiskSpend).toLocaleString()} of Spend at Risk of Silent Auto-Renewal:</strong> These contracts auto-renew and are already inside their review window — confirm someone owns the renew/renegotiate/exit decision before the notice period closes.`);
+  }
+
+  const riskList = document.getElementById('ct-risk-list');
+  riskList.innerHTML = '';
+  if (rows.length === 0) {
+    riskList.innerHTML = '<li>Add a contract to see flags.</li>';
+  } else if (flags.length === 0) {
+    riskList.innerHTML = '<li>No renewal flags at current inputs.</li>';
+  } else {
+    flags.forEach(f => { const li = document.createElement('li'); li.innerHTML = f; riskList.appendChild(li); });
+  }
+}
+
+// --- NPI BUILD READINESS SCORECARD ---
+function calculateBuildReadiness() {
+  const dims = [
+    { id: 'br-equipment', label: 'Equipment & Tooling' },
+    { id: 'br-test', label: 'Test Coverage' },
+    { id: 'br-staffing', label: 'Staffing' },
+    { id: 'br-material', label: 'Material Availability' },
+    { id: 'br-capacity', label: 'Line / Capacity' },
+    { id: 'br-docs', label: 'Documentation / Work Instructions' }
+  ];
+
+  let sum = 0;
+  const gaps = [];
+  dims.forEach(d => {
+    const val = Math.max(0, Math.min(100, parseFloat(document.getElementById(d.id).value) || 0));
+    sum += val;
+    if (val < 80) {
+      gaps.push({ label: d.label, val });
+    }
+  });
+  const score = sum / dims.length;
+
+  const scoreEl = document.getElementById('br-out-score');
+  scoreEl.innerText = score.toFixed(1) + '%';
+
+  const decisionEl = document.getElementById('br-out-decision');
+  let decision, color;
+  if (score >= 90) { decision = 'GO'; color = 'var(--green)'; }
+  else if (score >= 75) { decision = 'CONDITIONAL GO — close gaps before build start'; color = 'var(--amber)'; }
+  else { decision = 'NO-GO — not ready to start'; color = 'var(--red)'; }
+  decisionEl.innerText = decision;
+  decisionEl.style.color = color;
+  scoreEl.style.color = color;
+
+  gaps.sort((a, b) => a.val - b.val);
+  const gapList = document.getElementById('br-gap-list');
+  gapList.innerHTML = '';
+  if (gaps.length === 0) {
+    gapList.innerHTML = '<li>No dimension below 80% — no open gaps at current inputs.</li>';
+  } else {
+    gaps.forEach(g => {
+      const li = document.createElement('li');
+      li.innerHTML = `<strong>${g.label}:</strong> ${g.val}% — below the 80% readiness bar.`;
+      gapList.appendChild(li);
+    });
+  }
+
+  const flags = [];
+  if (score < 75) {
+    flags.push(`<strong>Overall Readiness Below 75%:</strong> Starting a build at this readiness level usually means the gaps get found live, on the line, at the worst possible time to find them.`);
+  }
+  const lowest = dims.reduce((min, d) => {
+    const val = parseFloat(document.getElementById(d.id).value) || 0;
+    return val < min.val ? { label: d.label, val } : min;
+  }, { label: dims[0].label, val: 101 });
+  if (lowest.val < 70) {
+    flags.push(`<strong>${lowest.label} is the Long Pole (${lowest.val}%):</strong> This is the dimension most likely to set the actual start date — focus recovery effort here first.`);
+  }
+
+  const riskList = document.getElementById('br-risk-list');
+  riskList.innerHTML = '';
+  if (flags.length === 0) {
+    riskList.innerHTML = '<li>No build readiness flags at current inputs.</li>';
+  } else {
+    flags.forEach(f => { const li = document.createElement('li'); li.innerHTML = f; riskList.appendChild(li); });
+  }
+}
+
+// --- INVENTORY RECORD ACCURACY / CYCLE COUNT ---
+let ccRowCount = 0;
+function addCycleCountRow(vals) {
+  vals = vals || {};
+  ccRowCount++;
+  const id = ccRowCount;
+  const tbody = document.getElementById('cc-tbody');
+  const tr = document.createElement('tr');
+  tr.id = 'cc-row-' + id;
+  tr.innerHTML = `
+    <td><input type="text" id="cc-sku-${id}" value="${vals.sku || ''}" placeholder="SKU / part number" oninput="calculateCycleCount()"></td>
+    <td><input type="text" id="cc-loc-${id}" value="${vals.loc || ''}" placeholder="Location" oninput="calculateCycleCount()"></td>
+    <td><input type="number" id="cc-sys-${id}" value="${vals.sys !== undefined ? vals.sys : 0}" min="0" oninput="calculateCycleCount()"></td>
+    <td><input type="number" id="cc-phys-${id}" value="${vals.phys !== undefined ? vals.phys : 0}" min="0" oninput="calculateCycleCount()"></td>
+    <td><input type="number" id="cc-cost-${id}" value="${vals.cost !== undefined ? vals.cost : 0}" min="0" oninput="calculateCycleCount()"></td>
+    <td class="score-cell" id="cc-var-${id}">—</td>
+    <td class="score-cell" id="cc-acc-${id}">—</td>
+    <td><button type="button" class="btn-row-remove" onclick="removeCycleCountRow(${id})">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+  calculateCycleCount();
+}
+
+function removeCycleCountRow(id) {
+  const row = document.getElementById('cc-row-' + id);
+  if (row) row.remove();
+  calculateCycleCount();
+}
+
+function calculateCycleCount() {
+  const tolerance = parseFloat(document.getElementById('cc-tolerance').value) || 0;
+  const tbody = document.getElementById('cc-tbody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  let accurateCount = 0, totalDollarImpact = 0, outOfToleranceCount = 0;
+  let largestSku = null, largestImpact = -1;
+
+  rows.forEach(tr => {
+    const id = tr.id.replace('cc-row-', '');
+    const sku = document.getElementById('cc-sku-' + id).value || 'Unnamed SKU';
+    const sys = parseFloat(document.getElementById('cc-sys-' + id).value) || 0;
+    const phys = parseFloat(document.getElementById('cc-phys-' + id).value) || 0;
+    const cost = parseFloat(document.getElementById('cc-cost-' + id).value) || 0;
+
+    const variancePct = sys > 0 ? (Math.abs(sys - phys) / sys) * 100 : (phys > 0 ? 100 : 0);
+    const dollarImpact = Math.abs(sys - phys) * cost;
+    const accurate = variancePct <= tolerance;
+
+    const varEl = document.getElementById('cc-var-' + id);
+    varEl.innerText = variancePct.toFixed(1) + '%';
+    varEl.style.color = accurate ? 'var(--green)' : 'var(--red)';
+
+    const accEl = document.getElementById('cc-acc-' + id);
+    accEl.innerText = accurate ? 'YES' : 'NO';
+    accEl.style.color = accurate ? 'var(--green)' : 'var(--red)';
+
+    if (accurate) accurateCount++; else outOfToleranceCount++;
+    totalDollarImpact += dollarImpact;
+    if (dollarImpact > largestImpact) { largestImpact = dollarImpact; largestSku = sku; }
+  });
+
+  const ira = rows.length > 0 ? (accurateCount / rows.length) * 100 : 0;
+  const iraEl = document.getElementById('cc-out-ira');
+  iraEl.innerText = rows.length > 0 ? ira.toFixed(1) + '%' : '—';
+  iraEl.style.color = ira >= 95 ? 'var(--green)' : (ira >= 90 ? 'var(--amber)' : 'var(--red)');
+
+  document.getElementById('cc-out-outcount').innerText = outOfToleranceCount;
+  document.getElementById('cc-out-dollarimpact').innerText = '$' + Math.round(totalDollarImpact).toLocaleString();
+  document.getElementById('cc-out-largest').innerText = largestSku && largestImpact > 0 ? `${largestSku} ($${Math.round(largestImpact).toLocaleString()})` : '—';
+
+  const flags = [];
+  if (rows.length > 0 && ira < 95) {
+    flags.push(`<strong>IRA Below 95% (${ira.toFixed(1)}%):</strong> Below the common best-practice threshold — planning, MRP, and available-to-promise numbers built on this data will be unreliable until accuracy improves.`);
+  }
+  if (rows.length > 0 && ira < 90) {
+    flags.push(`<strong>IRA Below 90%:</strong> This is a materials-management red flag, not just a data-quality nit — expect shortages and excess to both be happening simultaneously at different locations.`);
+  }
+  if (totalDollarImpact > 0) {
+    flags.push(`<strong>$${Math.round(totalDollarImpact).toLocaleString()} in Discrepancy Value:</strong> This is the dollar exposure sitting in the gap between what the system says you have and what's physically on the shelf.`);
+  }
+
+  const riskList = document.getElementById('cc-risk-list');
+  riskList.innerHTML = '';
+  if (rows.length === 0) {
+    riskList.innerHTML = '<li>Add a cycle count to see flags.</li>';
+  } else if (flags.length === 0) {
+    riskList.innerHTML = '<li>No accuracy flags at current inputs.</li>';
+  } else {
+    flags.forEach(f => { const li = document.createElement('li'); li.innerHTML = f; riskList.appendChild(li); });
+  }
+}
+
+// --- GENERATION CUT-OVER PLANNING ---
+function calculateCutOver() {
+  const onHand = parseFloat(document.getElementById('cov-legacy-onhand').value) || 0;
+  const demand = parseFloat(document.getElementById('cov-demand').value) || 0;
+  const leadTime = parseFloat(document.getElementById('cov-leadtime').value) || 0;
+  const newReady = parseFloat(document.getElementById('cov-newready').value) || 0;
+  const buffer = parseFloat(document.getElementById('cov-buffer').value) || 0;
+  const unitCost = parseFloat(document.getElementById('cov-unitcost').value) || 0;
+
+  const coverage = demand > 0 ? (onHand / demand) : (onHand > 0 ? Infinity : 0);
+  const additionalBase = Math.max(0, (newReady - coverage) * demand);
+  const lastDateBase = newReady - leadTime;
+  const additionalBuffer = Math.max(0, (newReady + buffer - coverage) * demand);
+  const lastDateBuffer = newReady + buffer - leadTime;
+  const strandingCost = (additionalBuffer - additionalBase) * unitCost;
+  const shortfallUnits = buffer * demand;
+
+  document.getElementById('cov-out-coverage').innerText = isFinite(coverage) ? coverage.toFixed(1) + ' Months' : '∞ (no demand)';
+  document.getElementById('cov-out-additional-base').innerText = Math.round(additionalBase).toLocaleString() + ' Units';
+  document.getElementById('cov-out-additional-buffer').innerText = Math.round(additionalBuffer).toLocaleString() + ' Units';
+  document.getElementById('cov-out-strand-cost').innerText = '$' + Math.round(strandingCost).toLocaleString();
+  document.getElementById('cov-out-shortfall-units').innerText = Math.round(shortfallUnits).toLocaleString() + ' Units';
+
+  const lastDateBaseEl = document.getElementById('cov-out-lastdate-base');
+  lastDateBaseEl.innerText = additionalBase > 0 ? lastDateBase.toFixed(1) + ' Months' : 'Not needed — on-hand bridges the gap';
+  lastDateBaseEl.style.color = (additionalBase > 0 && lastDateBase <= 0) ? 'var(--red)' : 'var(--amber)';
+
+  const lastDateBufferEl = document.getElementById('cov-out-lastdate-buffer');
+  lastDateBufferEl.innerText = additionalBuffer > 0 ? lastDateBuffer.toFixed(1) + ' Months' : 'Not needed — on-hand bridges the gap';
+  lastDateBufferEl.style.color = (additionalBuffer > 0 && lastDateBuffer <= 0) ? 'var(--red)' : 'var(--amber)';
+
+  const flags = [];
+  if (additionalBase > 0 && lastDateBase <= 0) {
+    flags.push(`<strong>Base-Case Order Window Has Already Closed:</strong> To bridge to the planned ${newReady}-month ramp date, a final legacy order needed to go in ${Math.abs(lastDateBase).toFixed(1)} months ago given the ${leadTime}-month lead time. Expedite or accept a coverage gap.`);
+  } else if (additionalBuffer > 0 && lastDateBuffer <= 0 && lastDateBase > 0) {
+    flags.push(`<strong>Buffered Order Window Has Closed, Base Case Hasn't:</strong> You can still order enough to hit the planned ramp date, but not enough to also cover a ${buffer}-month slip — order now if you want any slip protection.`);
+  }
+  if (additionalBase === 0) {
+    flags.push(`<strong>Existing On-Hand Already Bridges to Ramp:</strong> At the current demand rate, on-hand inventory covers you through the planned new-hardware ready date with no further legacy order required.`);
+  }
+  if (strandingCost > 0 && shortfallUnits > 0) {
+    flags.push(`<strong>The Core Trade-off:</strong> Ordering the ${buffer}-month buffer costs $${Math.round(strandingCost).toLocaleString()} in stranded legacy stock if the new hardware ships on time. Not ordering it leaves you ${Math.round(shortfallUnits).toLocaleString()} units short if the ramp slips by ${buffer} months. Size the buffer to how confident you actually are in the ramp date.`);
+  }
+
+  const riskList = document.getElementById('cov-risk-list');
+  riskList.innerHTML = '';
+  if (flags.length === 0) {
+    riskList.innerHTML = '<li>No cut-over flags at current inputs.</li>';
+  } else {
+    flags.forEach(f => { const li = document.createElement('li'); li.innerHTML = f; riskList.appendChild(li); });
+  }
+}
+
 // --- EXPORT FUNCTIONALITY ---
 function exportCSV() {
   const rows = [
@@ -4445,7 +5186,19 @@ function exportCSV() {
     ["Duty Drawback", "Total Annual Duty Paid", document.getElementById('dd-out-total').innerText],
     ["Duty Drawback", "Net Duty Cost After Drawback", document.getElementById('dd-out-net').innerText],
     ["CapEx/OpEx Classifier", "Total CapEx", document.getElementById('co-out-capex').innerText],
-    ["CapEx/OpEx Classifier", "Total OpEx", document.getElementById('co-out-opex').innerText]
+    ["CapEx/OpEx Classifier", "Total OpEx", document.getElementById('co-out-opex').innerText],
+    ["Supplier Scorecard", "Spend Concentration (HHI)", document.getElementById('ss-out-hhi').innerText],
+    ["VE Pipeline", "Total Pipeline", document.getElementById('ve-out-total').innerText],
+    ["VE Pipeline", "Realized (Run-Rate)", document.getElementById('ve-out-realized').innerText],
+    ["Kraljic Segmentation", "Strategic Suppliers", document.getElementById('kr-out-strategic').innerText],
+    ["Kraljic Segmentation", "Bottleneck Suppliers", document.getElementById('kr-out-bottleneck').innerText],
+    ["Contract Renewals", "Contracts Needing Action", document.getElementById('ct-out-action-count').innerText],
+    ["Contract Renewals", "Spend at Risk of Auto-Renewal", document.getElementById('ct-out-atrisk-spend').innerText],
+    ["Build Readiness", "Overall Readiness Score", document.getElementById('br-out-score').innerText],
+    ["Build Readiness", "Gate Decision", document.getElementById('br-out-decision').innerText],
+    ["Inventory Record Accuracy", "IRA %", document.getElementById('cc-out-ira').innerText],
+    ["Inventory Record Accuracy", "$ Value of Discrepancies", document.getElementById('cc-out-dollarimpact').innerText],
+    ["Generation Cut-Over", "Last Safe Order Date (Base)", document.getElementById('cov-out-lastdate-base').innerText]
   ];
 
   let csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
@@ -4491,10 +5244,10 @@ window.onload = function() {
   calculateEOL();
   calculateLTB();
 
-  addSupplierRow({ name: 'Acme Precision Machining', otd: 96, ppm: 280, costvar: -2, resp: 5, spend: 1250000 });
-  addSupplierRow({ name: 'Global Bearing Co', otd: 88, ppm: 1200, costvar: 5, resp: 3, spend: 640000 });
-  addSupplierRow({ name: 'Rapid Molded Plastics', otd: 74, ppm: 3400, costvar: 12, resp: 2, spend: 410000 });
-  addSupplierRow({ name: 'Northline Electronics', otd: 99, ppm: 90, costvar: -1, resp: 5, spend: 2100000 });
+  addSupplierRow({ name: 'Acme Precision Machining', otd: 96, ppm: 280, costvar: -2, resp: 5, esg: 82, spend: 1250000 });
+  addSupplierRow({ name: 'Global Bearing Co', otd: 88, ppm: 1200, costvar: 5, resp: 3, esg: 65, spend: 640000 });
+  addSupplierRow({ name: 'Rapid Molded Plastics', otd: 74, ppm: 3400, costvar: 12, resp: 2, esg: 48, spend: 410000 });
+  addSupplierRow({ name: 'Northline Electronics', otd: 99, ppm: 90, costvar: -1, resp: 5, esg: 91, spend: 2100000 });
 
   addRiskRow({ desc: 'Single-source magnetic bearing supplier at capacity', cat: 'Supplier', prob: 40, impact: 600000, owner: 'J. Alvarez', status: 'Open' });
   addRiskRow({ desc: 'PVT tooling qualification slipping 3 weeks', cat: 'Schedule', prob: 60, impact: 150000, owner: 'M. Chen', status: 'Mitigating' });
@@ -4520,6 +5273,28 @@ window.onload = function() {
 
   initMultiQuoteUpload();
   initTheme();
+
+  addVeRow({ desc: 'Resin resourcing to regional supplier', cat: 'Material', stage: 'Realized', savings: 84000, cost: 12000, owner: 'Category Mgr - Lopez' });
+  addVeRow({ desc: 'Snap-fit redesign eliminates 2 fasteners', cat: 'Design', stage: 'Implementing', savings: 46000, cost: 28000, owner: 'Mech Eng - Patel' });
+  addVeRow({ desc: 'Consolidate freight forwarders (Asia lanes)', cat: 'Logistics', stage: 'Validated', savings: 61000, cost: 0, owner: 'Logistics - Chen' });
+  addVeRow({ desc: 'Second-source connector qualification', cat: 'Material', stage: 'Identified', savings: 38000, cost: 15000, owner: 'SQE - Kim' });
+
+  addKraljicRow({ name: 'Magnetic Bearing Supplier', risk: 9, impact: 8 });
+  addKraljicRow({ name: 'Injection Molded Enclosures', risk: 4, impact: 7 });
+  addKraljicRow({ name: 'Custom Test Fixture Vendor', risk: 8, impact: 3 });
+  addKraljicRow({ name: 'Office Supplies / MRO', risk: 2, impact: 2 });
+
+  addContractRow({ name: 'Northline Electronics — Master Supply Agreement', cat: 'Electronics', spend: 2100000, months: 1.5, auto: 'Yes', notice: 60 });
+  addContractRow({ name: 'Freight Forwarder — Asia Lanes', cat: 'Logistics', spend: 480000, months: 8, auto: 'Yes', notice: 90 });
+  addContractRow({ name: 'Test Fixture Maintenance', cat: 'Services', spend: 65000, months: 3, auto: 'No', notice: 30 });
+
+  calculateBuildReadiness();
+  calculateCutOver();
+
+  addCycleCountRow({ sku: 'PN-1001 Enclosure', loc: 'Austin-A12', sys: 1200, phys: 1180, cost: 4.20 });
+  addCycleCountRow({ sku: 'PN-2044 Connector', loc: 'Reno-B03', sys: 8500, phys: 8460, cost: 0.85 });
+  addCycleCountRow({ sku: 'PN-3390 Bearing', loc: 'Austin-A07', sys: 640, phys: 520, cost: 22.00 });
+  addCycleCountRow({ sku: 'PN-4410 Fastener Kit', loc: 'Reno-B11', sys: 15000, phys: 14980, cost: 0.12 });
 };
 </script>
   <button class="feedback-fab" onclick="openFeedback()">💬 Feedback</button>
