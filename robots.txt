@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://commercial-hardware-operations-procurement.metrickettster.workers.dev/sitemap.xml

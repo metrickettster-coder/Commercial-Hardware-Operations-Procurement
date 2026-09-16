@@ -12,6 +12,14 @@
 <meta name="twitter:title" content="Hardware Operations Analytics Suite">
 <meta name="twitter:description" content="Free, single-file hardware operations analytics suite: 40+ calculators for NPI, sourcing, ops, quality, supplier risk, and EOL — runs entirely in your browser.">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230b131e'/%3E%3Ctext x='16' y='23' font-family='monospace' font-size='19' font-weight='700' fill='%23e0a52c' text-anchor='middle'%3EH%3C/text%3E%3C/svg%3E">
+<link rel="canonical" id="canonical-link" href="https://commercial-hardware-operations-procurement.metrickettster.workers.dev/concept/tamsam">
+<!--
+  Cloudflare Web Analytics (privacy-respecting, no cookies) -- currently OFF.
+  To turn it on: Cloudflare dashboard -> Analytics & Logs -> Web Analytics -> Add site
+  (pick this Workers domain), copy the token it gives you, and paste it below in place
+  of YOUR_TOKEN_HERE. That step needs your own Cloudflare account, so it isn't done here.
+  <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "YOUR_TOKEN_HERE"}'></script>
+-->
 <script>
   (function() {
     try {
@@ -98,6 +106,8 @@
   .pillar-btn:hover{ border-color:var(--text-dim); }
   .pillar-btn.active{ background:var(--panel-2); border-color:var(--amber); color:var(--amber); font-weight:700; }
   .pillar-btn .title{ font-size:12px; font-weight:700; display:block; }
+
+  .pillar-guide{ font-size:12.5px; color:var(--text-dim); margin:0 0 16px; max-width:900px; line-height:1.55; }
 
   /* Sub-Tool Nav Bar */
   .subnav-bar{ background:var(--panel); border:1px solid var(--grid-line); padding:8px; border-radius:var(--radius); margin-bottom:20px; display:flex; gap:6px; flex-wrap:wrap; }
@@ -258,6 +268,7 @@
       <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('concept', 'dtc', this)">Target Costing (DTC)</button>
       <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('concept', 'techrisk', this)">Technical Risk Score</button>
     </div>
+    <p class="pillar-guide">Concept &amp; Feasibility: decide whether a hardware product is worth building before committing NPI budget — total addressable market sizing, NPV/IRR financial modeling, design-to-cost allocation, and technical risk scoring.</p>
 
     <!-- TAM / SAM -->
     <div id="tool-tamsam" class="tool-view active">
@@ -356,6 +367,7 @@
       <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('npi', 'standards', this)">Standards &amp; Compliance</button>
       <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('npi', 'dfmea', this)">DFMEA</button>
     </div>
+    <p class="pillar-guide">NPI &amp; Stage-Gate Launch: track a hardware product from design through production ramp — stage-gate exit criteria, EVT/DVT/PVT build yields, ECO impact triage, FAT/SAT qualification, standards &amp; compliance tracking, and Design FMEA (DFMEA) for design-level failure modes (see also Process FMEA under Quality &amp; Reliability).</p>
 
     <!-- Gate Exit Verification -->
     <div id="tool-stagegate" class="tool-view active">
@@ -942,6 +954,7 @@
       <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('sourcing', 'multiquote', this)">Multi-Quote Comparison</button>
       <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('sourcing', 'vepipeline', this)">Cost Reduction / VE Pipeline</button>
     </div>
+    <p class="pillar-guide">Sourcing &amp; Costing: evaluate supplier quotes and total cost of ownership — landed cost, freight mode comparison, bottom-up should-cost modeling, multi-quote comparison, make-vs-buy analysis, and duty drawback/tariff impact.</p>
 
     <!-- Total Landed Cost Engine -->
     <div id="tool-landedcost" class="tool-view active">
@@ -1420,6 +1433,7 @@
       <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('ops', 'poe', this)">PO Ack &amp; Expediting</button>
       <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('ops', 'twm', this)">3-Way Match / Invoice Variance</button>
     </div>
+    <p class="pillar-guide">Ops &amp; Quality Execution: run day-to-day manufacturing and procurement operations — EVM, EOQ/reorder point, demand forecast accuracy, first pass yield, OEE/downtime tracking, PO acknowledgment &amp; expediting, and three-way match invoice variance detection.</p>
 
     <!-- EVM -->
     <div id="tool-evm" class="tool-view active">
@@ -1849,6 +1863,7 @@
       <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('sustaining', 'altpart', this)">Alternate Part Qualification</button>
       <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('sustaining', 'eol', this)">EOL &amp; LTB Planner</button>
     </div>
+    <p class="pillar-guide">Sustaining &amp; EOL Closeout: manage a hardware product after launch — RMA/warranty field-loss risk, alternate-part (form-fit-function) qualification, and end-of-life/last-time-buy planning.</p>
 
     <!-- RMA & Warranty -->
     <div id="tool-rma" class="tool-view active">
@@ -2092,6 +2107,7 @@
       <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('supplierrisk', 'contracts', this)">Contract Renewal Tracker</button>
       <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('supplierrisk', 'suppaudit', this)">Supplier Audit / Compliance</button>
     </div>
+    <p class="pillar-guide">Supplier &amp; Risk Management: track vendor performance and program risk — supplier qualification &amp; onboarding, performance scorecards, a program risk register, Kraljic segmentation, contract renewal tracking, and supplier audits.</p>
 
     <!-- Supplier Qualification / Onboarding -->
     <div id="tool-suppqual" class="tool-view active">
@@ -2376,6 +2392,7 @@
       <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('quality', 'factorydefect', this)">Factory Defect Pareto / RCA</button>
       <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('quality', 'reliability', this)">Reliability Prediction (MTBF)</button>
     </div>
+    <p class="pillar-guide">Quality &amp; Reliability Engineering: quantify manufacturing quality and product reliability — process capability (Cp/Cpk), FMEA/8D corrective action, factory defect Pareto/RCA, and MTBF/reliability prediction.</p>
 
     <!-- Process Capability -->
     <div id="tool-cpk" class="tool-view active">
@@ -2553,31 +2570,79 @@
 
 <script>
 // --- CORE NAVIGATION ---
-function switchPillar(pillarId, btn) {
+function switchPillar(pillarId, btn, skipRoute) {
   document.querySelectorAll('.tab-pillar').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.pillar-btn').forEach(el => { el.classList.remove('active'); el.setAttribute('aria-selected', 'false'); });
   document.getElementById('pillar-' + pillarId).classList.add('active');
   btn.classList.add('active');
   btn.setAttribute('aria-selected', 'true');
+  if (!skipRoute) {
+    const activeTool = document.querySelector('#pillar-' + pillarId + ' .tool-view.active');
+    if (activeTool) pushRoute(pillarId, activeTool.id.replace('tool-', ''));
+  }
 }
 
-function switchTool(pillarId, toolId, btn) {
+function switchTool(pillarId, toolId, btn, skipRoute) {
   const container = document.getElementById('pillar-' + pillarId);
   container.querySelectorAll('.tool-view').forEach(el => el.classList.remove('active'));
   container.querySelectorAll('.sub-btn').forEach(el => { el.classList.remove('active'); el.setAttribute('aria-selected', 'false'); });
   document.getElementById('tool-' + toolId).classList.add('active');
   btn.classList.add('active');
   btn.setAttribute('aria-selected', 'true');
+  if (!skipRoute) pushRoute(pillarId, toolId);
 }
 
 // Lets code (not just a user click) land on a specific tool -- e.g. after a
 // top-banner upload auto-fills a tool that isn't the one currently on screen.
 function goToTool(pillarId, toolId) {
   const pillarBtn = document.querySelector(`.pillar-btn[onclick*="'${pillarId}'"]`);
-  if (pillarBtn) switchPillar(pillarId, pillarBtn);
+  if (pillarBtn) switchPillar(pillarId, pillarBtn, true);
   const toolBtn = document.querySelector(`#pillar-${pillarId} .sub-btn[onclick*="'${toolId}'"]`);
-  if (toolBtn) switchTool(pillarId, toolId, toolBtn);
+  if (toolBtn) switchTool(pillarId, toolId, toolBtn, true);
+  pushRoute(pillarId, toolId);
 }
+
+// --- ROUTING: give every tool a real, bookmarkable /pillar/tool URL ---
+// This is a client-only SPA, so a search engine or a cold link still lands on the same
+// index.html either way -- pushRoute mainly buys deep-linking/sharing plus a per-tool
+// <title>/canonical, not full per-URL server rendering.
+function pushRoute(pillarId, toolId) {
+  const path = '/' + pillarId + '/' + toolId;
+  if (location.pathname !== path) {
+    history.pushState({ pillarId, toolId }, '', path);
+  }
+  updatePageMeta(pillarId, toolId);
+}
+
+function updatePageMeta(pillarId, toolId) {
+  const toolTitleEl = document.querySelector('#tool-' + toolId + ' .tool-title');
+  const toolTitle = toolTitleEl ? toolTitleEl.textContent.trim() : '';
+  document.title = (toolTitle ? toolTitle + ' — ' : '') + 'Hardware Operations Analytics Suite';
+  const canonical = document.getElementById('canonical-link');
+  if (canonical) canonical.href = location.origin + '/' + pillarId + '/' + toolId;
+}
+
+function parseRouteFromLocation() {
+  const parts = location.pathname.split('/').filter(Boolean);
+  if (parts.length >= 2) {
+    const [pillarId, toolId] = parts;
+    if (document.getElementById('pillar-' + pillarId) && document.getElementById('tool-' + toolId)) {
+      return { pillarId, toolId };
+    }
+  }
+  return null;
+}
+
+function applyRoute(route) {
+  if (!route) return;
+  const pillarBtn = document.querySelector(`.pillar-btn[onclick*="'${route.pillarId}'"]`);
+  const toolBtn = document.querySelector(`#pillar-${route.pillarId} .sub-btn[onclick*="'${route.toolId}'"]`);
+  if (pillarBtn) switchPillar(route.pillarId, pillarBtn, true);
+  if (toolBtn) switchTool(route.pillarId, route.toolId, toolBtn, true);
+  updatePageMeta(route.pillarId, route.toolId);
+}
+
+window.addEventListener('popstate', () => { applyRoute(parseRouteFromLocation()); });
 
 // --- CALCULATORS ---
 function calculateTAM() {
@@ -7684,9 +7749,42 @@ window.onload = function() {
 
   document.addEventListener('input', () => { dismissExampleBanner(); scheduleAutosave(); });
   document.addEventListener('change', () => { dismissExampleBanner(); scheduleAutosave(); });
+
+  // Deep-link support: /pillar/tool in the URL opens straight to that tool. A path that
+  // doesn't match anything (or a bare "/") just leaves the default view already active.
+  const initialRoute = parseRouteFromLocation();
+  if (initialRoute) applyRoute(initialRoute);
+  // Scoped to the active pillar: each pillar keeps its own last-active tool marked "active"
+  // even while hidden, so an unscoped ".tool-view.active" lookup can match a different
+  // pillar's leftover state instead of what's actually on screen.
+  const activePillarEl = document.querySelector('.tab-pillar.active');
+  const activeToolEl = activePillarEl ? activePillarEl.querySelector('.tool-view.active') : null;
+  const currentPillarId = activePillarEl ? activePillarEl.id.replace('pillar-', '') : 'concept';
+  const currentToolId = activeToolEl ? activeToolEl.id.replace('tool-', '') : 'tamsam';
+  history.replaceState({ pillarId: currentPillarId, toolId: currentToolId }, '', '/' + currentPillarId + '/' + currentToolId);
+  updatePageMeta(currentPillarId, currentToolId);
 };
 </script>
   <button class="feedback-fab" onclick="openFeedback()">💬 Feedback</button>
+  <button class="feedback-fab" id="whatsnew-fab" style="right:150px; background:var(--panel-2); color:var(--text-hi); border:1px solid var(--grid-line);" onclick="openWhatsNew()">🆕 What's New</button>
+
+  <div id="whatsnew-overlay" class="feedback-overlay hidden" onclick="if(event.target===this) closeWhatsNew()">
+    <div class="feedback-modal">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+        <h2>What's New</h2>
+        <button type="button" onclick="closeWhatsNew()" aria-label="Close" style="background:transparent; border:none; color:var(--text-dim); font-size:20px; line-height:1; cursor:pointer; padding:0 4px;">×</button>
+      </div>
+      <ul class="risk-list" style="margin-bottom:16px;">
+        <li><strong>Design FMEA (DFMEA)</strong> — the AIAG-style design-risk worksheet, under NPI &amp; Stage-Gate Launch.</li>
+        <li><strong>PO Acknowledgment &amp; Expediting Tracker</strong> and <strong>3-Way Match / Invoice Variance Tracker</strong> — under Ops &amp; Quality Execution.</li>
+        <li>Every tool now has its own shareable URL — use the address bar to link a colleague straight to one.</li>
+        <li>Accessibility pass: visible keyboard focus everywhere, proper tab semantics on tool navigation, contrast fixes.</li>
+        <li>Tablet fix: form fields no longer trigger iOS Safari's auto-zoom.</li>
+      </ul>
+      <hr class="divider">
+      <p style="font-size:12.5px; color:var(--text-mid); line-height:1.5;"><strong style="color:var(--text-hi);">About this suite:</strong> built by identifying real tooling gaps in hardware procurement, NPI, and manufacturing quality roles, then shipping a calculator to close each one. Free, runs entirely in your browser, nothing you enter is ever uploaded anywhere. <a href="https://github.com/metrickettster-coder/commercial-hardware-operations-procurement" target="_blank" rel="noopener">Source on GitHub</a>.</p>
+    </div>
+  </div>
 
   <div id="feedback-overlay" class="feedback-overlay hidden" onclick="if(event.target===this) closeFeedback()">
     <div class="feedback-modal">
@@ -7742,6 +7840,14 @@ window.onload = function() {
 
     function closeFeedback() {
       document.getElementById('feedback-overlay').classList.add('hidden');
+    }
+
+    function openWhatsNew() {
+      document.getElementById('whatsnew-overlay').classList.remove('hidden');
+    }
+
+    function closeWhatsNew() {
+      document.getElementById('whatsnew-overlay').classList.add('hidden');
     }
 
     document.getElementById('feedback-form').addEventListener('submit', function(e) {
