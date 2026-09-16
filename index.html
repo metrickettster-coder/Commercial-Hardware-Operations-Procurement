@@ -180,15 +180,20 @@
     </div>
     <div class="export-controls">
       <button class="btn-export" id="themeToggleBtn" onclick="toggleTheme()">☀️ Light Mode</button>
+      <button class="btn-export" onclick="saveScenarioToFile()">💾 Save Scenario</button>
+      <button class="btn-export" onclick="document.getElementById('scenarioFileInput').click()">📂 Load Scenario</button>
+      <input type="file" id="scenarioFileInput" accept=".json" style="display:none;" onchange="loadScenarioFromFile(event)">
+      <button class="btn-export" onclick="resetToExampleData()">↺ Reset to Example Data</button>
       <button class="btn-export" onclick="exportCSV()">📥 Export CSV Data</button>
       <button class="btn-export" onclick="exportPDF()">📄 Export PDF Report</button>
     </div>
+    <div id="autosave-status" style="font-size:11px; color:var(--text-dim); text-align:right; margin-top:4px;"></div>
   </header>
 
   <!-- Commercial Quote Document Intake -->
   <div class="upload-zone" id="dropzone">
     <strong style="color:var(--amber); font-family:'IBM Plex Mono', monospace;">📂 CLICK OR DRAG TO UPLOAD SUPPLIER QUOTE OR SPECIFICATION (.PDF, .DOCX, .TXT)</strong>
-    <p style="font-size:12px; color:var(--text-dim); margin:6px 0 0 0;">Zero-Trust Processing: Parsed 100% locally in browser memory.</p>
+    <p style="font-size:12px; color:var(--text-dim); margin:6px 0 0 0;">Processed locally, never uploaded — parsed 100% in your browser's memory. (Note: this page does load its fonts, PDF/DOCX libraries, and analytics from third-party CDNs, so it isn't a fully offline or air-gapped environment.)</p>
     <input type="file" id="fileInput" accept=".pdf,.docx,.txt" style="display:none;">
   </div>
   <p style="font-size:12px; color:var(--text-dim); margin:-12px 0 20px 0; text-align:center;">
@@ -6410,7 +6415,9 @@ function exportPDF() {
   html2pdf().set(opt).from(element).save().then(restore).catch(restore);
 }
 
-window.onload = function() {
+// All non-dynamic-row calculators -- called on first load and again after restoring a
+// saved scenario (dynamic-row tools recalculate themselves as each row is re-added).
+function recalculateFixedTools() {
   calculateTAM();
   calculateNPV();
   calculateDTC();
@@ -6430,7 +6437,15 @@ window.onload = function() {
   calculateFFF();
   calculateEOL();
   calculateLTB();
+  calculateCpk();
+  calculateReliability();
+  calculateMakeVsBuy();
+  calculateDutyDrawback();
+  calculateBuildReadiness();
+  calculateCutOver();
+}
 
+function seedExampleData() {
   addSuppQualRow({ name: 'Meridian Stamping Co', cert: 'ISO 9001', audit: 88, financial: 82, capacity: 75, fai: 'Pass', cost: 70 });
   addSuppQualRow({ name: 'Delta Precision Castings', cert: 'None', audit: 65, financial: 60, capacity: 80, fai: 'Conditional', cost: 85 });
   addSuppQualRow({ name: 'Harborline Connectors', cert: 'IATF 16949', audit: 72, financial: 78, capacity: 68, fai: 'Fail', cost: 60 });
@@ -6445,8 +6460,6 @@ window.onload = function() {
   addRiskRow({ desc: 'Forging alloy price volatility', cat: 'Cost', prob: 35, impact: 220000, owner: 'R. Singh', status: 'Open' });
   addRiskRow({ desc: 'Enclosure IP rating re-test after design change', cat: 'Technical', prob: 25, impact: 90000, owner: 'T. Brooks', status: 'Open' });
 
-  calculateCpk();
-  calculateReliability();
   addPfmeaRow({ desc: 'Connector pin misalignment during reflow', cat: 'Process', sev: 7, occ: 4, det: 5, owner: 'Line 2 Eng', status: 'Open' });
   addPfmeaRow({ desc: 'Incoming resistor tolerance out of spec', cat: 'Supplier', sev: 6, occ: 3, det: 8, owner: 'SQE - Kim', status: '8D In Progress' });
   addPfmeaRow({ desc: 'Enclosure snap-fit cracks under drop test', cat: 'Design', sev: 8, occ: 3, det: 6, owner: 'Mech Eng - Patel', status: 'Open' });
@@ -6459,17 +6472,11 @@ window.onload = function() {
   addFactoryDefectRow({ desc: 'Enclosure snap-fit cracks under drop test', station: 'FFT', rootcause: 'Design Flaw', units: 210, status: 'Verification' });
   addFactoryDefectRow({ desc: 'ICT test lead cold solder joint', station: 'ICT', rootcause: 'Fixture/Test Error', units: 55, status: 'Closed' });
 
-  calculateMakeVsBuy();
-  calculateDutyDrawback();
-
   addCapexOpexRow({ desc: 'Injection mold tooling', amount: 320000, cls: 'CapEx', type: 'Direct' });
   addCapexOpexRow({ desc: 'Test fixture equipment', amount: 65000, cls: 'CapEx', type: 'Indirect' });
   addCapexOpexRow({ desc: 'Contract manufacturer per-unit labor', amount: 210000, cls: 'OpEx', type: 'Direct' });
   addCapexOpexRow({ desc: 'Facilities & IT overhead allocation', amount: 48000, cls: 'OpEx', type: 'Indirect' });
   addCapexOpexRow({ desc: 'Raw material / BOM spend', amount: 540000, cls: 'OpEx', type: 'Direct' });
-
-  initMultiQuoteUpload();
-  initTheme();
 
   addVeRow({ desc: 'Resin resourcing to regional supplier', cat: 'Material', stage: 'Realized', savings: 84000, cost: 12000, owner: 'Category Mgr - Lopez' });
   addVeRow({ desc: 'Snap-fit redesign eliminates 2 fasteners', cat: 'Design', stage: 'Implementing', savings: 46000, cost: 28000, owner: 'Mech Eng - Patel' });
@@ -6500,13 +6507,192 @@ window.onload = function() {
   addOeeRow({ label: 'Line 1 / Day Shift', planned: 480, downtime: 35, cycle: 28, total: 820, good: 795 });
   addOeeRow({ label: 'Line 2 / Night Shift', planned: 480, downtime: 95, cycle: 28, total: 650, good: 590 });
 
-  calculateBuildReadiness();
-  calculateCutOver();
-
   addCycleCountRow({ sku: 'PN-1001 Enclosure', loc: 'Austin-A12', sys: 1200, phys: 1180, cost: 4.20 });
   addCycleCountRow({ sku: 'PN-2044 Connector', loc: 'Reno-B03', sys: 8500, phys: 8460, cost: 0.85 });
   addCycleCountRow({ sku: 'PN-3390 Bearing', loc: 'Austin-A07', sys: 640, phys: 520, cost: 22.00 });
   addCycleCountRow({ sku: 'PN-4410 Fastener Kit', loc: 'Reno-B11', sys: 15000, phys: 14980, cost: 0.12 });
+}
+
+// --- SAVE / LOAD / AUTOSAVE ---
+const AUTOSAVE_KEY = 'hoas-scenario-v1';
+const DYNAMIC_TABLES = [
+  { tbody: 'ss-tbody', prefix: 'ss', addRow: 'addSupplierRow' },
+  { tbody: 'rr-tbody', prefix: 'rr', addRow: 'addRiskRow' },
+  { tbody: 'pf-tbody', prefix: 'pf', addRow: 'addPfmeaRow' },
+  { tbody: 'co-tbody', prefix: 'co', addRow: 'addCapexOpexRow' },
+  { tbody: 've-tbody', prefix: 've', addRow: 'addVeRow' },
+  { tbody: 'kr-tbody', prefix: 'kr', addRow: 'addKraljicRow' },
+  { tbody: 'ct-tbody', prefix: 'ct', addRow: 'addContractRow' },
+  { tbody: 'cc-tbody', prefix: 'cc', addRow: 'addCycleCountRow' },
+  { tbody: 'sq-tbody', prefix: 'sq', addRow: 'addSuppQualRow' },
+  { tbody: 'sa-tbody', prefix: 'sa', addRow: 'addSuppAuditRow' },
+  { tbody: 'fm-tbody', prefix: 'fm', addRow: 'addFreightModeRow' },
+  { tbody: 'df-tbody', prefix: 'df', addRow: 'addForecastAccRow' },
+  { tbody: 'oee-tbody', prefix: 'oee', addRow: 'addOeeRow' },
+  { tbody: 'fd-tbody', prefix: 'fd', addRow: 'addFactoryDefectRow' }
+];
+const SCENARIO_EXCLUDE_IDS = new Set(['fb-type', 'fb-message', 'fb-email', 'fileInput', 'mq-fileinput', 'scenarioFileInput']);
+
+function getFixedFieldIds() {
+  const dynamicTbodyIds = new Set(DYNAMIC_TABLES.map(t => t.tbody));
+  const ids = [];
+  document.querySelectorAll('input, select, textarea').forEach(el => {
+    if (!el.id || SCENARIO_EXCLUDE_IDS.has(el.id) || el.type === 'file') return;
+    const tbody = el.closest('tbody');
+    if (tbody && dynamicTbodyIds.has(tbody.id)) return;
+    ids.push(el.id);
+  });
+  return ids;
+}
+
+// Cell ids follow a consistent "prefix-fieldname-rowid" convention throughout the app, and
+// every addXRow(vals) function's expected keys match "fieldname" exactly -- so row data can
+// be captured and replayed generically instead of hand-writing a serializer per tool.
+function serializeRow(tr, prefix) {
+  const obj = {};
+  const re = new RegExp('^' + prefix + '-(.+)-\\d+$');
+  tr.querySelectorAll('input, select').forEach(el => {
+    const m = el.id.match(re);
+    if (m) obj[m[1]] = el.value;
+  });
+  return obj;
+}
+
+function buildScenario() {
+  const data = { fixed: {}, dynamic: {} };
+  getFixedFieldIds().forEach(id => {
+    const el = document.getElementById(id);
+    data.fixed[id] = (el.type === 'checkbox' || el.type === 'radio') ? el.checked : el.value;
+  });
+  DYNAMIC_TABLES.forEach(t => {
+    const tbody = document.getElementById(t.tbody);
+    if (!tbody) return;
+    data.dynamic[t.tbody] = Array.from(tbody.querySelectorAll('tr')).map(tr => serializeRow(tr, t.prefix));
+  });
+  return data;
+}
+
+function applyScenario(data) {
+  if (!data) return;
+  if (data.fixed) {
+    Object.keys(data.fixed).forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (el.type === 'checkbox' || el.type === 'radio') el.checked = data.fixed[id];
+      else el.value = data.fixed[id];
+    });
+  }
+  if (data.dynamic) {
+    DYNAMIC_TABLES.forEach(t => {
+      if (!(t.tbody in data.dynamic)) return;
+      const tbody = document.getElementById(t.tbody);
+      if (tbody) tbody.innerHTML = '';
+      const addFn = window[t.addRow];
+      if (typeof addFn === 'function') {
+        data.dynamic[t.tbody].forEach(rowVals => addFn(rowVals));
+      }
+    });
+  }
+  recalculateFixedTools();
+}
+
+let autosaveTimer = null;
+function setAutosaveStatus(text) {
+  const el = document.getElementById('autosave-status');
+  if (el) el.innerText = text;
+}
+function scheduleAutosave() {
+  clearTimeout(autosaveTimer);
+  autosaveTimer = setTimeout(() => {
+    try {
+      localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(buildScenario()));
+      setAutosaveStatus('Autosaved to this browser at ' + new Date().toLocaleTimeString());
+    } catch (e) {
+      setAutosaveStatus('Autosave unavailable (browser storage blocked or full) — use "Save Scenario" to keep a file instead.');
+    }
+  }, 600);
+}
+
+function saveScenarioToFile() {
+  const blob = new Blob([JSON.stringify(buildScenario(), null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'hardware_ops_scenario.json';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+function loadScenarioFromFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      applyScenario(JSON.parse(reader.result));
+      setAutosaveStatus('Loaded scenario from ' + file.name);
+    } catch (e) {
+      alert('Could not read that file as a saved scenario: ' + e.message);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function resetToExampleData() {
+  if (!confirm('Reset every tool back to the example data? This clears anything you\'ve entered (including the autosaved copy in this browser).')) return;
+  try { localStorage.removeItem(AUTOSAVE_KEY); } catch (e) { /* storage blocked -- nothing to clear */ }
+  // Dynamic rows get wiped and re-seeded below, but fixed-form fields need to be put back
+  // to their original HTML value/selected state explicitly -- reading the DOM's defaultValue
+  // / defaultSelected (the value baked into the markup at page-load, unaffected by JS .value
+  // assignments since) is what makes this a real reset rather than a reload-only one.
+  getFixedFieldIds().forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (el.tagName === 'SELECT') {
+      const defaultOpt = Array.from(el.options).find(o => o.defaultSelected);
+      el.value = defaultOpt ? defaultOpt.value : (el.options[0] ? el.options[0].value : '');
+    } else if (el.type === 'checkbox' || el.type === 'radio') {
+      el.checked = el.defaultChecked;
+    } else {
+      el.value = el.defaultValue;
+    }
+  });
+  DYNAMIC_TABLES.forEach(t => {
+    const tbody = document.getElementById(t.tbody);
+    if (tbody) tbody.innerHTML = '';
+  });
+  recalculateFixedTools();
+  seedExampleData();
+  setAutosaveStatus('Reset to example data.');
+}
+
+window.onload = function() {
+  initMultiQuoteUpload();
+  initTheme();
+
+  let restored = false;
+  try {
+    const raw = localStorage.getItem(AUTOSAVE_KEY);
+    if (raw) {
+      applyScenario(JSON.parse(raw));
+      setAutosaveStatus('Restored your autosaved work from this browser.');
+      restored = true;
+    }
+  } catch (e) {
+    // Storage blocked (private window, disabled cookies/storage) or corrupted save --
+    // fall through to the example data rather than leaving the page blank.
+  }
+
+  if (!restored) {
+    recalculateFixedTools();
+    seedExampleData();
+  }
+
+  document.addEventListener('input', scheduleAutosave);
+  document.addEventListener('change', scheduleAutosave);
 };
 </script>
   <button class="feedback-fab" onclick="openFeedback()">💬 Feedback</button>
