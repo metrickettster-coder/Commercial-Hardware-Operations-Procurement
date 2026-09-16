@@ -127,8 +127,17 @@ document.addEventListener('DOMContentLoaded', () => {
       parseAndPopulateQuoteData(extractedText);
 
     } catch (error) {
-      alert("Error reading document: " + error.message);
       console.error(error);
+      if (resultsCard) resultsCard.classList.remove('hidden');
+      if (autofillBanner) autofillBanner.classList.add('hidden');
+      if (flagsContainer) {
+        flagsContainer.innerHTML = '';
+        const msg = document.createElement('span');
+        msg.style.color = 'var(--red)';
+        msg.textContent = "Couldn't read that file: " + error.message + ". Try a different file, or paste the text into the blank template instead.";
+        flagsContainer.appendChild(msg);
+      }
+      if (redactedOutput) redactedOutput.textContent = '';
     }
   }
 
@@ -205,6 +214,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (typeof calculateCustomPartBreakdown === 'function') {
       calculateCustomPartBreakdown();
+    }
+
+    // The filled fields live in Sourcing & Costing -> Custom Part & NPI Quote
+    // Breakdown, which usually isn't the tab open when someone uploads from the
+    // top banner -- jump there so "auto-filled" isn't pointing at an empty screen.
+    if (filledFieldIds.length > 0 && typeof goToTool === 'function') {
+      goToTool('sourcing', 'custom-part-breakdown');
     }
   }
 

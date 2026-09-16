@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Commercial Hardware Lifecycle &amp; Procurement Suite</title>
+<meta name="description" content="Free, single-file hardware operations analytics suite: 40+ calculators for NPI, sourcing, ops, quality, supplier risk, and EOL — runs entirely in your browser.">
+<meta property="og:title" content="Hardware Operations Analytics Suite">
+<meta property="og:description" content="Free, single-file hardware operations analytics suite: 40+ calculators for NPI, sourcing, ops, quality, supplier risk, and EOL — runs entirely in your browser.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Hardware Operations Analytics Suite">
+<meta name="twitter:description" content="Free, single-file hardware operations analytics suite: 40+ calculators for NPI, sourcing, ops, quality, supplier risk, and EOL — runs entirely in your browser.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230b131e'/%3E%3Ctext x='16' y='23' font-family='monospace' font-size='19' font-weight='700' fill='%23e0a52c' text-anchor='middle'%3EH%3C/text%3E%3C/svg%3E">
 <script>
   (function() {
     try {
@@ -33,7 +41,7 @@
     --grid-line:  #253e61;
     --text-hi:    #eef2f7;
     --text-mid:   #a9b8cc;
-    --text-dim:   #6f829c;
+    --text-dim:   #7e91a8;
     --amber:      #e0a52c;
     --green:      #3fb27f;
     --red:        #d9584f;
@@ -48,7 +56,7 @@
     --grid-line:  #d7dee8;
     --text-hi:    #16202e;
     --text-mid:   #45566b;
-    --text-dim:   #7c8ba1;
+    --text-dim:   #64738a;
     --amber:      #9c6a0f;
     --green:      #1f7a52;
     --red:        #c1443b;
@@ -85,7 +93,8 @@
   @media(max-width: 600px){ nav.pillar-nav{ grid-template-columns: repeat(2, 1fr); } }
 
   .pillar-btn{ background:var(--panel); border:1px solid var(--grid-line); color:var(--text-mid); padding:12px 8px; text-align:center; border-radius:var(--radius); cursor:pointer; transition:all 0.15s ease; font-family:inherit; font-size:inherit; }
-  .pillar-btn:focus-visible{ outline:2px solid var(--amber); outline-offset:2px; }
+  .pillar-btn:focus-visible{ outline-width:2px; outline-style:solid; outline-color:var(--amber); outline-offset:2px; }
+  .btn-export:focus-visible, .sub-btn:focus-visible, .btn-action:focus-visible, .btn-row-add:focus-visible, .btn-row-remove:focus-visible, .feedback-fab:focus-visible, .info-tip:focus-visible{ outline-width:2px; outline-style:solid; outline-color:var(--amber); outline-offset:2px; }
   .pillar-btn:hover{ border-color:var(--text-dim); }
   .pillar-btn.active{ background:var(--panel-2); border-color:var(--amber); color:var(--amber); font-weight:700; }
   .pillar-btn .title{ font-size:12px; font-weight:700; display:block; }
@@ -192,6 +201,11 @@
     <div id="autosave-status" style="font-size:11px; color:var(--text-dim); text-align:right; margin-top:4px;"></div>
   </header>
 
+  <div id="example-data-banner" class="hidden" style="background:rgba(224,165,44,0.14); border:1px solid var(--amber); color:var(--amber); padding:10px 14px; border-radius:var(--radius); font-size:13px; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+    <span>📋 <strong>You're looking at example data</strong> — every number here is a placeholder, not a real analysis. Start typing in any field to replace it with your own.</span>
+    <button type="button" class="btn-export" style="flex-shrink:0;" onclick="dismissExampleBanner()">Dismiss</button>
+  </div>
+
   <!-- Commercial Quote Document Intake -->
   <div class="upload-zone" id="dropzone">
     <strong style="color:var(--amber); font-family:'IBM Plex Mono', monospace;">📂 CLICK OR DRAG TO UPLOAD SUPPLIER QUOTE OR SPECIFICATION (.PDF, .DOCX, .TXT)</strong>
@@ -206,7 +220,7 @@
 
   <div id="resultsCard" class="panel hidden" style="margin-bottom:20px;">
     <h2>Quote Parsing &amp; Commercial Terms Extraction</h2>
-    <div id="autofillBanner" class="hidden" style="background:rgba(224,165,44,0.12); border:1px solid var(--amber); color:var(--amber); padding:8px 12px; border-radius:6px; font-size:12px; margin-bottom:12px;">⚠️ The fields below were auto-filled from your upload. Verify each value before trusting the analysis — extraction can misread a number or grab the wrong one from a multi-tier quote.</div>
+    <div id="autofillBanner" class="hidden" style="background:rgba(224,165,44,0.12); border:1px solid var(--amber); color:var(--amber); padding:8px 12px; border-radius:6px; font-size:12px; margin-bottom:12px;">⚠️ Auto-filled into the <strong>Custom Part &amp; NPI Quote Breakdown</strong> tool below (Sourcing &amp; Costing pillar). Verify each value before trusting the analysis — extraction can misread a number or grab the wrong one from a multi-tier quote.</div>
     <div id="flagsContainer"></div>
     <pre id="redactedOutput" style="background:var(--ink); border:1px solid var(--grid-line); padding:12px; border-radius:6px; margin-top:12px; font-family:'IBM Plex Mono', monospace; font-size:12px; max-height:250px; overflow-y:auto; white-space:pre-wrap;"></pre>
   </div>
@@ -238,11 +252,11 @@
 
   <!-- PILLAR 1: CONCEPT & FEASIBILITY -->
   <div id="pillar-concept" class="tab-pillar active">
-    <div class="subnav-bar">
-      <button class="sub-btn active" onclick="switchTool('concept', 'tamsam', this)">TAM/SAM Analysis</button>
-      <button class="sub-btn" onclick="switchTool('concept', 'npvirr', this)">NPV/IRR Engine</button>
-      <button class="sub-btn" onclick="switchTool('concept', 'dtc', this)">Target Costing (DTC)</button>
-      <button class="sub-btn" onclick="switchTool('concept', 'techrisk', this)">Technical Risk Score</button>
+    <div class="subnav-bar" role="tablist">
+      <button class="sub-btn active" role="tab" aria-selected="true" onclick="switchTool('concept', 'tamsam', this)">TAM/SAM Analysis</button>
+      <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('concept', 'npvirr', this)">NPV/IRR Engine</button>
+      <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('concept', 'dtc', this)">Target Costing (DTC)</button>
+      <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('concept', 'techrisk', this)">Technical Risk Score</button>
     </div>
 
     <!-- TAM / SAM -->
@@ -333,13 +347,14 @@
 
   <!-- PILLAR 2: NPI & STAGE-GATE LAUNCH -->
   <div id="pillar-npi" class="tab-pillar">
-    <div class="subnav-bar">
-      <button class="sub-btn active" onclick="switchTool('npi', 'stagegate', this)">Gate Exit Verification</button>
-      <button class="sub-btn" onclick="switchTool('npi', 'buildyields', this)">EVT/DVT/PVT Build Yields</button>
-      <button class="sub-btn" onclick="switchTool('npi', 'eco', this)">ECO Impact Analysis</button>
-      <button class="sub-btn" onclick="switchTool('npi', 'buildready', this)">Build Readiness Scorecard</button>
-      <button class="sub-btn" onclick="switchTool('npi', 'fatsat', this)">FAT/SAT Qualification</button>
-      <button class="sub-btn" onclick="switchTool('npi', 'standards', this)">Standards &amp; Compliance</button>
+    <div class="subnav-bar" role="tablist">
+      <button class="sub-btn active" role="tab" aria-selected="true" onclick="switchTool('npi', 'stagegate', this)">Gate Exit Verification</button>
+      <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('npi', 'buildyields', this)">EVT/DVT/PVT Build Yields</button>
+      <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('npi', 'eco', this)">ECO Impact Analysis</button>
+      <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('npi', 'buildready', this)">Build Readiness Scorecard</button>
+      <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('npi', 'fatsat', this)">FAT/SAT Qualification</button>
+      <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('npi', 'standards', this)">Standards &amp; Compliance</button>
+      <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('npi', 'dfmea', this)">DFMEA</button>
     </div>
 
     <!-- Gate Exit Verification -->
@@ -864,20 +879,68 @@
         </div>
       </div>
     </div>
+
+    <!-- Design FMEA (DFMEA) -->
+    <div id="tool-dfmea" class="tool-view">
+      <h2 class="tool-title">Design FMEA (DFMEA)</h2>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Score how the <em>design itself</em> could fail to meet its intent — independent of how it's built or assembled. That's the line that separates this from a Process FMEA: a DFMEA failure mode still exists on a perfectly-built unit if the design was wrong. Use the general FMEA/8D tracker (Quality &amp; Reliability pillar) once an item needs corrective-action workflow instead of a design-risk score.</p>
+
+      <div class="panel" style="margin-bottom:20px;">
+        <h2>Design Failure Mode Worksheet</h2>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead><tr>
+              <th style="min-width:170px;">Item / Function</th>
+              <th style="min-width:170px;">Potential Failure Mode</th>
+              <th style="min-width:170px;">Potential Effect(s)</th>
+              <th>Severity (1-10)</th>
+              <th style="min-width:170px;">Potential Cause(s)</th>
+              <th>Occurrence (1-10)</th>
+              <th style="min-width:170px;">Current Design Controls</th>
+              <th>Detection (1-10)</th>
+              <th>RPN</th>
+              <th style="min-width:170px;">Recommended Action</th>
+              <th>Owner</th>
+              <th>Status</th>
+              <th></th>
+            </tr></thead>
+            <tbody id="dfm-tbody"></tbody>
+          </table>
+        </div>
+        <button type="button" class="btn-row-add" onclick="addDfmeaRow()">+ Add Failure Mode</button>
+      </div>
+
+      <div class="grid">
+        <div class="panel">
+          <h2>RPN Summary</h2>
+          <div class="readout"><div class="rlabel">Open Item Count</div><div class="rvalue" id="dfm-out-open-count">0</div></div>
+          <div class="readout"><div class="rlabel">High-Priority Items (RPN &gt; 100)</div><div class="rvalue" id="dfm-out-high-count" style="color:var(--red);">0</div></div>
+          <div class="readout"><div class="rlabel">Severity ≥9 — Special Review</div><div class="rvalue" id="dfm-out-sevreview-count" style="color:var(--red);">0</div></div>
+          <div class="readout"><div class="rlabel">Highest RPN</div><div class="rvalue" id="dfm-out-highest" style="font-size:14px;">—</div></div>
+          <hr class="divider">
+          <h2 style="margin-top:15px;">Top Items by RPN</h2>
+          <ul id="dfm-top-list" class="risk-list"></ul>
+        </div>
+        <div class="panel">
+          <h2 style="color: var(--amber);">⚠️ DFMEA Flags</h2>
+          <ul id="dfm-risk-list" class="risk-list"></ul>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- PILLAR 3: SOURCING & COSTING -->
   <div id="pillar-sourcing" class="tab-pillar">
-    <div class="subnav-bar">
-      <button class="sub-btn active" onclick="switchTool('sourcing', 'landedcost', this)">Total Landed Cost Engine</button>
-      <button class="sub-btn" onclick="switchTool('sourcing', 'freightmode', this)">Freight Mode Comparator</button>
-      <button class="sub-btn" onclick="switchTool('sourcing', 'custom-part-breakdown', this)">Custom Part Risk Review</button>
-      <button class="sub-btn" onclick="switchTool('sourcing', 'shouldcost', this)">Bottom-Up Should-Cost</button>
-      <button class="sub-btn" onclick="switchTool('sourcing', 'leadtime', this)">Procurement Lead Time</button>
-      <button class="sub-btn" onclick="switchTool('sourcing', 'makevsbuy', this)">Make-vs-Buy Analysis</button>
-      <button class="sub-btn" onclick="switchTool('sourcing', 'dutydrawback', this)">Duty Drawback / Tariff Impact</button>
-      <button class="sub-btn" onclick="switchTool('sourcing', 'multiquote', this)">Multi-Quote Comparison</button>
-      <button class="sub-btn" onclick="switchTool('sourcing', 'vepipeline', this)">Cost Reduction / VE Pipeline</button>
+    <div class="subnav-bar" role="tablist">
+      <button class="sub-btn active" role="tab" aria-selected="true" onclick="switchTool('sourcing', 'landedcost', this)">Total Landed Cost Engine</button>
+      <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('sourcing', 'freightmode', this)">Freight Mode Comparator</button>
+      <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('sourcing', 'custom-part-breakdown', this)">Custom Part Risk Review</button>
+      <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('sourcing', 'shouldcost', this)">Bottom-Up Should-Cost</button>
+      <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('sourcing', 'leadtime', this)">Procurement Lead Time</button>
+      <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('sourcing', 'makevsbuy', this)">Make-vs-Buy Analysis</button>
+      <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('sourcing', 'dutydrawback', this)">Duty Drawback / Tariff Impact</button>
+      <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('sourcing', 'multiquote', this)">Multi-Quote Comparison</button>
+      <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('sourcing', 'vepipeline', this)">Cost Reduction / VE Pipeline</button>
     </div>
 
     <!-- Total Landed Cost Engine -->
@@ -1344,18 +1407,18 @@
 
   <!-- PILLAR 4: OPS & QUALITY EXECUTION -->
   <div id="pillar-ops" class="tab-pillar">
-    <div class="subnav-bar">
-      <button class="sub-btn active" onclick="switchTool('ops', 'evm', this)">Earned Value Management (EVM)</button>
-      <button class="sub-btn" onclick="switchTool('ops', 'eoq', this)">EOQ &amp; Reorder Point</button>
-      <button class="sub-btn" onclick="switchTool('ops', 'forecastacc', this)">Demand Forecast Accuracy</button>
-      <button class="sub-btn" onclick="switchTool('ops', 'fpy', this)">First Pass Yield (FPY) / PPM</button>
-      <button class="sub-btn" onclick="switchTool('ops', 'oee', this)">OEE / Downtime Tracker</button>
-      <button class="sub-btn" onclick="switchTool('ops', 'budgetkpi', this)">Budget KPI Dashboard</button>
-      <button class="sub-btn" onclick="switchTool('ops', 'datacut', this)">Data Cut / Report Builder</button>
-      <button class="sub-btn" onclick="switchTool('ops', 'capexopex', this)">CapEx/OpEx Classifier</button>
-      <button class="sub-btn" onclick="switchTool('ops', 'cyclecount', this)">Inventory Record Accuracy</button>
-      <button class="sub-btn" onclick="switchTool('ops', 'poe', this)">PO Ack &amp; Expediting</button>
-      <button class="sub-btn" onclick="switchTool('ops', 'twm', this)">3-Way Match / Invoice Variance</button>
+    <div class="subnav-bar" role="tablist">
+      <button class="sub-btn active" role="tab" aria-selected="true" onclick="switchTool('ops', 'evm', this)">Earned Value Management (EVM)</button>
+      <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('ops', 'eoq', this)">EOQ &amp; Reorder Point</button>
+      <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('ops', 'forecastacc', this)">Demand Forecast Accuracy</button>
+      <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('ops', 'fpy', this)">First Pass Yield (FPY) / PPM</button>
+      <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('ops', 'oee', this)">OEE / Downtime Tracker</button>
+      <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('ops', 'budgetkpi', this)">Budget KPI Dashboard</button>
+      <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('ops', 'datacut', this)">Data Cut / Report Builder</button>
+      <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('ops', 'capexopex', this)">CapEx/OpEx Classifier</button>
+      <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('ops', 'cyclecount', this)">Inventory Record Accuracy</button>
+      <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('ops', 'poe', this)">PO Ack &amp; Expediting</button>
+      <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('ops', 'twm', this)">3-Way Match / Invoice Variance</button>
     </div>
 
     <!-- EVM -->
@@ -1781,10 +1844,10 @@
 
   <!-- PILLAR 5: SUSTAINING & EOL CLOSEOUT -->
   <div id="pillar-sustaining" class="tab-pillar">
-    <div class="subnav-bar">
-      <button class="sub-btn active" onclick="switchTool('sustaining', 'rma', this)">RMA &amp; Warranty Field Loss</button>
-      <button class="sub-btn" onclick="switchTool('sustaining', 'altpart', this)">Alternate Part Qualification</button>
-      <button class="sub-btn" onclick="switchTool('sustaining', 'eol', this)">EOL &amp; LTB Planner</button>
+    <div class="subnav-bar" role="tablist">
+      <button class="sub-btn active" role="tab" aria-selected="true" onclick="switchTool('sustaining', 'rma', this)">RMA &amp; Warranty Field Loss</button>
+      <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('sustaining', 'altpart', this)">Alternate Part Qualification</button>
+      <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('sustaining', 'eol', this)">EOL &amp; LTB Planner</button>
     </div>
 
     <!-- RMA & Warranty -->
@@ -2021,13 +2084,13 @@
 
   <!-- PILLAR 6: SUPPLIER & RISK MANAGEMENT -->
   <div id="pillar-supplierrisk" class="tab-pillar">
-    <div class="subnav-bar">
-      <button class="sub-btn active" onclick="switchTool('supplierrisk', 'suppqual', this)">Supplier Qualification (New)</button>
-      <button class="sub-btn" onclick="switchTool('supplierrisk', 'suppscore', this)">Supplier Performance Scorecard</button>
-      <button class="sub-btn" onclick="switchTool('supplierrisk', 'riskreg', this)">Program Risk Register</button>
-      <button class="sub-btn" onclick="switchTool('supplierrisk', 'kraljic', this)">Supplier Segmentation (Kraljic)</button>
-      <button class="sub-btn" onclick="switchTool('supplierrisk', 'contracts', this)">Contract Renewal Tracker</button>
-      <button class="sub-btn" onclick="switchTool('supplierrisk', 'suppaudit', this)">Supplier Audit / Compliance</button>
+    <div class="subnav-bar" role="tablist">
+      <button class="sub-btn active" role="tab" aria-selected="true" onclick="switchTool('supplierrisk', 'suppqual', this)">Supplier Qualification (New)</button>
+      <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('supplierrisk', 'suppscore', this)">Supplier Performance Scorecard</button>
+      <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('supplierrisk', 'riskreg', this)">Program Risk Register</button>
+      <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('supplierrisk', 'kraljic', this)">Supplier Segmentation (Kraljic)</button>
+      <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('supplierrisk', 'contracts', this)">Contract Renewal Tracker</button>
+      <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('supplierrisk', 'suppaudit', this)">Supplier Audit / Compliance</button>
     </div>
 
     <!-- Supplier Qualification / Onboarding -->
@@ -2307,11 +2370,11 @@
 
   <!-- PILLAR 7: QUALITY & RELIABILITY ENGINEERING -->
   <div id="pillar-quality" class="tab-pillar">
-    <div class="subnav-bar">
-      <button class="sub-btn active" onclick="switchTool('quality', 'cpk', this)">Process Capability (Cp/Cpk)</button>
-      <button class="sub-btn" onclick="switchTool('quality', 'pfmea', this)">FMEA / 8D Tracker</button>
-      <button class="sub-btn" onclick="switchTool('quality', 'factorydefect', this)">Factory Defect Pareto / RCA</button>
-      <button class="sub-btn" onclick="switchTool('quality', 'reliability', this)">Reliability Prediction (MTBF)</button>
+    <div class="subnav-bar" role="tablist">
+      <button class="sub-btn active" role="tab" aria-selected="true" onclick="switchTool('quality', 'cpk', this)">Process Capability (Cp/Cpk)</button>
+      <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('quality', 'pfmea', this)">FMEA / 8D Tracker</button>
+      <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('quality', 'factorydefect', this)">Factory Defect Pareto / RCA</button>
+      <button class="sub-btn" role="tab" aria-selected="false" onclick="switchTool('quality', 'reliability', this)">Reliability Prediction (MTBF)</button>
     </div>
 
     <!-- Process Capability -->
@@ -2501,9 +2564,19 @@ function switchPillar(pillarId, btn) {
 function switchTool(pillarId, toolId, btn) {
   const container = document.getElementById('pillar-' + pillarId);
   container.querySelectorAll('.tool-view').forEach(el => el.classList.remove('active'));
-  container.querySelectorAll('.sub-btn').forEach(el => el.classList.remove('active'));
+  container.querySelectorAll('.sub-btn').forEach(el => { el.classList.remove('active'); el.setAttribute('aria-selected', 'false'); });
   document.getElementById('tool-' + toolId).classList.add('active');
   btn.classList.add('active');
+  btn.setAttribute('aria-selected', 'true');
+}
+
+// Lets code (not just a user click) land on a specific tool -- e.g. after a
+// top-banner upload auto-fills a tool that isn't the one currently on screen.
+function goToTool(pillarId, toolId) {
+  const pillarBtn = document.querySelector(`.pillar-btn[onclick*="'${pillarId}'"]`);
+  if (pillarBtn) switchPillar(pillarId, pillarBtn);
+  const toolBtn = document.querySelector(`#pillar-${pillarId} .sub-btn[onclick*="'${toolId}'"]`);
+  if (toolBtn) switchTool(pillarId, toolId, toolBtn);
 }
 
 // --- CALCULATORS ---
@@ -4864,6 +4937,126 @@ function calculatePfmea() {
   }
 }
 
+// --- DESIGN FMEA (DFMEA) ---
+let dfmRowCount = 0;
+function addDfmeaRow(vals) {
+  vals = vals || {};
+  dfmRowCount++;
+  const id = dfmRowCount;
+  const tbody = document.getElementById('dfm-tbody');
+  const tr = document.createElement('tr');
+  tr.id = 'dfm-row-' + id;
+  tr.innerHTML = `
+    <td><input type="text" id="dfm-item-${id}" value="${vals.item || ''}" placeholder="Item / function" oninput="calculateDfmea()"></td>
+    <td><input type="text" id="dfm-mode-${id}" value="${vals.mode || ''}" placeholder="Potential failure mode" oninput="calculateDfmea()"></td>
+    <td><input type="text" id="dfm-effect-${id}" value="${vals.effect || ''}" placeholder="Potential effect(s)" oninput="calculateDfmea()"></td>
+    <td><input type="number" id="dfm-sev-${id}" value="${vals.sev !== undefined ? vals.sev : ''}" min="1" max="10" oninput="calculateDfmea()"></td>
+    <td><input type="text" id="dfm-cause-${id}" value="${vals.cause || ''}" placeholder="Potential cause(s)" oninput="calculateDfmea()"></td>
+    <td><input type="number" id="dfm-occ-${id}" value="${vals.occ !== undefined ? vals.occ : ''}" min="1" max="10" oninput="calculateDfmea()"></td>
+    <td><input type="text" id="dfm-control-${id}" value="${vals.control || ''}" placeholder="Design verification / control" oninput="calculateDfmea()"></td>
+    <td><input type="number" id="dfm-det-${id}" value="${vals.det !== undefined ? vals.det : ''}" min="1" max="10" oninput="calculateDfmea()"></td>
+    <td class="score-cell" id="dfm-rpn-${id}">—</td>
+    <td><input type="text" id="dfm-action-${id}" value="${vals.action || ''}" placeholder="Recommended action" oninput="calculateDfmea()"></td>
+    <td><input type="text" id="dfm-owner-${id}" value="${vals.owner || ''}" placeholder="Owner" oninput="calculateDfmea()"></td>
+    <td><select id="dfm-status-${id}" onchange="calculateDfmea()">
+      <option value="Open" ${vals.status === 'Open' || !vals.status ? 'selected' : ''}>Open</option>
+      <option value="Action Planned" ${vals.status === 'Action Planned' ? 'selected' : ''}>Action Planned</option>
+      <option value="Action Complete" ${vals.status === 'Action Complete' ? 'selected' : ''}>Action Complete</option>
+      <option value="Accepted Risk" ${vals.status === 'Accepted Risk' ? 'selected' : ''}>Accepted Risk</option>
+    </select></td>
+    <td><button type="button" class="btn-row-remove" onclick="removeDfmeaRow(${id})">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+  calculateDfmea();
+}
+
+function removeDfmeaRow(id) {
+  const row = document.getElementById('dfm-row-' + id);
+  if (row) row.remove();
+  calculateDfmea();
+}
+
+function calculateDfmea() {
+  const tbody = document.getElementById('dfm-tbody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  let openCount = 0, highCount = 0, sevReviewCount = 0, noActionCount = 0;
+  let highestItem = null, highestRpn = -1;
+  const items = [];
+  const resolvedStatuses = ['Action Complete', 'Accepted Risk'];
+
+  rows.forEach(tr => {
+    const id = tr.id.replace('dfm-row-', '');
+    const item = document.getElementById('dfm-item-' + id).value.trim();
+    const mode = document.getElementById('dfm-mode-' + id).value.trim();
+    const action = document.getElementById('dfm-action-' + id).value.trim();
+    // Sev/Occ/Det are a defined 1-10 scale -- clamp so a stray 15 or 0 can't distort RPN math.
+    const sev = Math.min(10, Math.max(1, parseFloat(document.getElementById('dfm-sev-' + id).value) || 0));
+    const occ = Math.min(10, Math.max(1, parseFloat(document.getElementById('dfm-occ-' + id).value) || 0));
+    const det = Math.min(10, Math.max(1, parseFloat(document.getElementById('dfm-det-' + id).value) || 0));
+    const status = document.getElementById('dfm-status-' + id).value;
+
+    const rpn = sev * occ * det;
+    const rpnEl = document.getElementById('dfm-rpn-' + id);
+    rpnEl.innerText = rpn;
+    rpnEl.style.color = rpn > 100 ? 'var(--red)' : (rpn > 50 ? 'var(--amber)' : 'var(--green)');
+
+    // A blank row (no item/failure mode typed yet) still shows its live RPN, but doesn't
+    // count toward the summary totals -- its default scores aren't real data yet.
+    if (!item && !mode) return;
+
+    const label = mode || item;
+    if (!resolvedStatuses.includes(status)) {
+      openCount++;
+      // AIAG-VDA discourages a fixed RPN>100 threshold and weighs severity first: a Severity
+      // 9-10 failure mode is always high priority regardless of what Occurrence/Detection
+      // happen to be, so it can't get buried by RPN math alone.
+      if (rpn > 100 || sev >= 9) highCount++;
+      if (sev >= 9) sevReviewCount++;
+      if (rpn > 100 && !action) noActionCount++;
+      items.push({ label, rpn, sev, status });
+      if (rpn > highestRpn) { highestRpn = rpn; highestItem = label; }
+    }
+  });
+
+  document.getElementById('dfm-out-open-count').innerText = openCount;
+  document.getElementById('dfm-out-high-count').innerText = highCount;
+  document.getElementById('dfm-out-sevreview-count').innerText = sevReviewCount;
+  document.getElementById('dfm-out-highest').innerText = highestItem ? `${highestItem} (RPN ${highestRpn})` : '—';
+
+  // Severity first, RPN as tie-break -- an S=8 item shouldn't get buried behind an S=6 item
+  // that only ties on RPN, per AIAG-VDA's severity-weighted Action Priority approach.
+  items.sort((a, b) => (b.sev - a.sev) || (b.rpn - a.rpn));
+  const topList = document.getElementById('dfm-top-list');
+  topList.innerHTML = '';
+  if (items.length === 0) {
+    topList.innerHTML = '<li>No open design failure modes logged.</li>';
+  } else {
+    items.slice(0, 5).forEach(it => {
+      const li = document.createElement('li');
+      li.innerHTML = `<strong>${it.label}:</strong> RPN ${it.rpn} (Sev ${it.sev}) — ${it.status}`;
+      topList.appendChild(li);
+    });
+  }
+
+  const flags = [];
+  if (sevReviewCount > 0) {
+    flags.push(`<strong>${sevReviewCount} Failure Mode${sevReviewCount > 1 ? 's' : ''} at Severity ≥ 9:</strong> AIAG-VDA treats these as mandatory special-review items regardless of RPN — a low Occurrence or Detection score shouldn't be read as "this one's fine."`);
+  }
+  if (noActionCount > 0) {
+    flags.push(`<strong>${noActionCount} High-RPN Item${noActionCount > 1 ? 's' : ''} With No Recommended Action:</strong> RPN is over 100 but the action column is blank — either a mitigation hasn't been decided yet, or it was decided and never written down. Either way, this is where the worksheet stops being a paper trail.`);
+  }
+
+  const riskList = document.getElementById('dfm-risk-list');
+  riskList.innerHTML = '';
+  if (rows.length === 0) {
+    riskList.innerHTML = '<li>Add a design failure mode to see flags.</li>';
+  } else if (flags.length === 0) {
+    riskList.innerHTML = '<li>No DFMEA flags at current inputs.</li>';
+  } else {
+    flags.forEach(f => { const li = document.createElement('li'); li.innerHTML = f; riskList.appendChild(li); });
+  }
+}
+
 // --- RELIABILITY PREDICTION (MTBF / FIT) ---
 function calculateReliability() {
   const hours = parseFloat(document.getElementById('rel-hours').value) || 0;
@@ -7111,7 +7304,10 @@ function exportCSV() {
     ["PO Ack & Expediting", "POs Past Ack SLA", document.getElementById('poe-out-ackoverdue').innerText],
     ["PO Ack & Expediting", "POs Past Due Delivery", document.getElementById('poe-out-pastdue').innerText],
     ["3-Way Match / Invoice Variance", "Flagged Invoice Lines", document.getElementById('twm-out-flagged').innerText],
-    ["3-Way Match / Invoice Variance", "$ Variance Unresolved", document.getElementById('twm-out-unresolved').innerText]
+    ["3-Way Match / Invoice Variance", "$ Variance Unresolved", document.getElementById('twm-out-unresolved').innerText],
+    ["DFMEA", "Open Item Count", document.getElementById('dfm-out-open-count').innerText],
+    ["DFMEA", "High-Priority Items (RPN>100 or Sev>=9)", document.getElementById('dfm-out-high-count').innerText],
+    ["DFMEA", "Severity >=9 Special Review", document.getElementById('dfm-out-sevreview-count').innerText]
   ];
 
   rows.push(...scrapeTableForExport('mq-output-table', 'Multi-Quote Comparison'));
@@ -7285,6 +7481,11 @@ function seedExampleData() {
   addTwmRow({ name: 'PO-77015 — Rapid Molded Plastics', poqty: 2000, poprice: 8.50, grqty: 2000, invqty: 2000, invprice: 9.10, tolerance: 2, resolution: 'Open' });
   addTwmRow({ name: 'PO-77022 — Global Bearing Co', poqty: 3000, poprice: 1.85, grqty: 2850, invqty: 3000, invprice: 1.85, tolerance: 2, resolution: 'Investigating' });
   addTwmRow({ name: 'PO-77030 — Northline Electronics', poqty: 1000, poprice: 12.00, grqty: 950, invqty: 1000, invprice: 12.75, tolerance: 2, resolution: 'Credit Requested' });
+
+  addDfmeaRow({ item: 'Battery enclosure seal', mode: 'Seal fails to maintain IP67 rating', effect: 'Water ingress causes cell short / thermal event', sev: 9, cause: 'Compression set at seal under thermal cycling not validated', occ: 3, control: 'IP67 dunk test at DVT', det: 4, action: '', owner: 'Mech Eng - Patel', status: 'Open' });
+  addDfmeaRow({ item: 'PCB solder mask', mode: 'Mask cracks at flex point', effect: 'Trace exposure, potential short', sev: 6, cause: 'Mask too rigid for flex-to-install fold radius', occ: 6, control: 'Flex-to-install fixture test', det: 5, action: 'Add stress-relief cutout in mask artwork', owner: 'PCB Eng - Ortiz', status: 'Action Complete' });
+  addDfmeaRow({ item: 'Connector housing', mode: 'Housing warps during reflow', effect: 'Pin misalignment at mating connector', sev: 5, cause: 'Wall thickness too thin near gate', occ: 3, control: 'Warpage measurement at first article', det: 4, action: 'Increase wall thickness 0.3mm', owner: 'Mech Eng - Patel', status: 'Action Planned' });
+  addDfmeaRow({ item: 'Label adhesive', mode: 'Label delaminates in humidity', effect: 'Loss of regulatory marking legibility', sev: 3, cause: 'Adhesive not rated above 85% RH', occ: 4, control: '85/85 humidity soak test', det: 2, action: 'Switch to polyester label, acrylic adhesive rated to 95% RH', owner: 'Compliance - Nguyen', status: 'Open' });
 }
 
 // --- SAVE / LOAD / AUTOSAVE ---
@@ -7307,7 +7508,8 @@ const DYNAMIC_TABLES = [
   { tbody: 'fs-tbody', prefix: 'fs', addRow: 'addFatSatRow' },
   { tbody: 'std-tbody', prefix: 'std', addRow: 'addStandardRow' },
   { tbody: 'poe-tbody', prefix: 'poe', addRow: 'addPoeRow' },
-  { tbody: 'twm-tbody', prefix: 'twm', addRow: 'addTwmRow' }
+  { tbody: 'twm-tbody', prefix: 'twm', addRow: 'addTwmRow' },
+  { tbody: 'dfm-tbody', prefix: 'dfm', addRow: 'addDfmeaRow' }
 ];
 const SCENARIO_EXCLUDE_IDS = new Set(['fb-type', 'fb-message', 'fb-email', 'fileInput', 'mq-fileinput', 'scenarioFileInput']);
 
@@ -7445,6 +7647,16 @@ function resetToExampleData() {
   recalculateFixedTools();
   seedExampleData();
   setAutosaveStatus('Reset to example data.');
+  showExampleBanner();
+}
+
+function showExampleBanner() {
+  const el = document.getElementById('example-data-banner');
+  if (el) el.classList.remove('hidden');
+}
+function dismissExampleBanner() {
+  const el = document.getElementById('example-data-banner');
+  if (el) el.classList.add('hidden');
 }
 
 window.onload = function() {
@@ -7467,10 +7679,11 @@ window.onload = function() {
   if (!restored) {
     recalculateFixedTools();
     seedExampleData();
+    showExampleBanner();
   }
 
-  document.addEventListener('input', scheduleAutosave);
-  document.addEventListener('change', scheduleAutosave);
+  document.addEventListener('input', () => { dismissExampleBanner(); scheduleAutosave(); });
+  document.addEventListener('change', () => { dismissExampleBanner(); scheduleAutosave(); });
 };
 </script>
   <button class="feedback-fab" onclick="openFeedback()">💬 Feedback</button>
