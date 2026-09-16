@@ -120,7 +120,7 @@
   .field{ margin-bottom:14px; }
   .field label{ display:block; font-size:12.5px; font-weight:600; margin-bottom:4px; }
   .field .hint{ font-size:11px; color:var(--text-dim); margin-bottom:4px; }
-  .field input, .field select, textarea{ width:100%; background:var(--ink); border:1px solid var(--grid-line); color:var(--text-hi); font-family:'IBM Plex Mono', monospace; font-size:13px; padding:8px 10px; border-radius:6px; outline:none; }
+  .field input, .field select, textarea{ width:100%; background:var(--ink); border:1px solid var(--grid-line); color:var(--text-hi); font-family:'IBM Plex Mono', monospace; font-size:16px; padding:8px 10px; border-radius:6px; outline:none; }
   .field input:focus, textarea:focus, select:focus{ border-color: var(--focus); }
   .prefix-wrap{ position:relative; }
   .prefix-wrap span{ position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--text-dim); font-family:'IBM Plex Mono', monospace; }
@@ -1354,6 +1354,8 @@
       <button class="sub-btn" onclick="switchTool('ops', 'datacut', this)">Data Cut / Report Builder</button>
       <button class="sub-btn" onclick="switchTool('ops', 'capexopex', this)">CapEx/OpEx Classifier</button>
       <button class="sub-btn" onclick="switchTool('ops', 'cyclecount', this)">Inventory Record Accuracy</button>
+      <button class="sub-btn" onclick="switchTool('ops', 'poe', this)">PO Ack &amp; Expediting</button>
+      <button class="sub-btn" onclick="switchTool('ops', 'twm', this)">3-Way Match / Invoice Variance</button>
     </div>
 
     <!-- EVM -->
@@ -1687,6 +1689,91 @@
         <div class="panel">
           <h2 style="color: var(--amber);">⚠️ Accuracy Flags</h2>
           <ul id="cc-risk-list" class="risk-list"></ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- PO Acknowledgment & Expediting Tracker -->
+    <div id="tool-poe" class="tool-view">
+      <h2 class="tool-title">PO Acknowledgment & Expediting Tracker</h2>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Track whether suppliers acknowledged each PO within SLA, and flag open orders that need a proactive expediting check-in before they slip.</p>
+
+      <div class="panel" style="margin-bottom:20px;">
+        <h2>Open Purchase Orders</h2>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead><tr>
+              <th style="min-width:190px;">PO # / Supplier</th>
+              <th>Order Value ($)</th>
+              <th>Issue Date</th>
+              <th>Ack SLA (Hrs)</th>
+              <th>Ack Received Date</th>
+              <th>Critical / Long-Lead?</th>
+              <th>Last Expedite Check-In</th>
+              <th>Promised Delivery</th>
+              <th>Status</th>
+              <th></th>
+            </tr></thead>
+            <tbody id="poe-tbody"></tbody>
+          </table>
+        </div>
+        <button type="button" class="btn-row-add" onclick="addPoeRow()">+ Add PO</button>
+      </div>
+
+      <div class="grid">
+        <div class="panel">
+          <h2>Pipeline Summary</h2>
+          <div class="readout"><div class="rlabel">Total Open PO Value</div><div class="rvalue" id="poe-out-total">$0</div></div>
+          <div class="readout"><div class="rlabel">Past Ack SLA</div><div class="rvalue" id="poe-out-ackoverdue" style="color:var(--red);">0</div></div>
+          <div class="readout"><div class="rlabel">Past Due Delivery</div><div class="rvalue" id="poe-out-pastdue" style="color:var(--red);">0</div></div>
+          <div class="readout"><div class="rlabel">Critical POs Needing Check-In</div><div class="rvalue" id="poe-out-needscheckin" style="color:var(--amber);">0</div></div>
+        </div>
+        <div class="panel">
+          <h2 style="color: var(--amber);">⚠️ Expediting Flags</h2>
+          <ul id="poe-risk-list" class="risk-list"></ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Three-Way Match / Invoice Variance Tracker -->
+    <div id="tool-twm" class="tool-view">
+      <h2 class="tool-title">Three-Way Match / Invoice Variance Tracker</h2>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Check PO, goods receipt, and invoice against each other and flag anything outside tolerance before AP releases payment.</p>
+
+      <div class="panel" style="margin-bottom:20px;">
+        <h2>Invoice Lines</h2>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead><tr>
+              <th style="min-width:180px;">PO # / Supplier</th>
+              <th>PO Qty</th>
+              <th>PO Unit Price ($)</th>
+              <th>Qty Received (GR)</th>
+              <th>Invoice Qty</th>
+              <th>Invoice Unit Price ($)</th>
+              <th>Tolerance (%)</th>
+              <th>Match Status</th>
+              <th>Variance ($)</th>
+              <th>Resolution</th>
+              <th></th>
+            </tr></thead>
+            <tbody id="twm-tbody"></tbody>
+          </table>
+        </div>
+        <button type="button" class="btn-row-add" onclick="addTwmRow()">+ Add Invoice Line</button>
+      </div>
+
+      <div class="grid">
+        <div class="panel">
+          <h2>Match Summary</h2>
+          <div class="readout"><div class="rlabel">Total Invoice Value</div><div class="rvalue" id="twm-out-total">$0</div></div>
+          <div class="readout"><div class="rlabel">Matched Clean</div><div class="rvalue" id="twm-out-matched" style="color:var(--green);">0</div></div>
+          <div class="readout"><div class="rlabel">Flagged</div><div class="rvalue" id="twm-out-flagged" style="color:var(--red);">0</div></div>
+          <div class="readout"><div class="rlabel">$ Variance Unresolved</div><div class="rvalue" id="twm-out-unresolved" style="color:var(--red);">$0</div></div>
+        </div>
+        <div class="panel">
+          <h2 style="color: var(--amber);">⚠️ Variance Flags</h2>
+          <ul id="twm-risk-list" class="risk-list"></ul>
         </div>
       </div>
     </div>
@@ -5787,6 +5874,231 @@ function calculateCycleCount() {
   }
 }
 
+// --- PO ACKNOWLEDGMENT & EXPEDITING TRACKER ---
+let poeRowCount = 0;
+function addPoeRow(vals) {
+  vals = vals || {};
+  poeRowCount++;
+  const id = poeRowCount;
+  const tbody = document.getElementById('poe-tbody');
+  const tr = document.createElement('tr');
+  tr.id = 'poe-row-' + id;
+  tr.innerHTML = `
+    <td><input type="text" id="poe-name-${id}" value="${vals.name || ''}" placeholder="PO # / supplier" oninput="calculatePoe()"></td>
+    <td><input type="number" id="poe-value-${id}" value="${vals.value !== undefined ? vals.value : 0}" min="0" oninput="calculatePoe()"></td>
+    <td><input type="date" id="poe-issuedate-${id}" value="${vals.issuedate || ''}" oninput="calculatePoe()"></td>
+    <td><input type="number" id="poe-acksla-${id}" value="${vals.acksla !== undefined ? vals.acksla : 48}" min="0" oninput="calculatePoe()"></td>
+    <td><input type="date" id="poe-ackdate-${id}" value="${vals.ackdate || ''}" oninput="calculatePoe()"></td>
+    <td><select id="poe-critical-${id}" onchange="calculatePoe()">
+      <option value="No" ${vals.critical === 'No' || !vals.critical ? 'selected' : ''}>No</option>
+      <option value="Yes" ${vals.critical === 'Yes' ? 'selected' : ''}>Yes</option>
+    </select></td>
+    <td><input type="date" id="poe-checkin-${id}" value="${vals.checkin || ''}" oninput="calculatePoe()"></td>
+    <td><input type="date" id="poe-duedate-${id}" value="${vals.duedate || ''}" oninput="calculatePoe()"></td>
+    <td class="score-cell" id="poe-status-${id}">—</td>
+    <td><button type="button" class="btn-row-remove" onclick="removePoeRow(${id})">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+  calculatePoe();
+}
+
+function removePoeRow(id) {
+  const row = document.getElementById('poe-row-' + id);
+  if (row) row.remove();
+  calculatePoe();
+}
+
+function calculatePoe() {
+  const tbody = document.getElementById('poe-tbody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  let totalValue = 0, ackOverdueCount = 0, pastDueCount = 0, needsCheckinCount = 0;
+
+  rows.forEach(tr => {
+    const id = tr.id.replace('poe-row-', '');
+    const value = parseFloat(document.getElementById('poe-value-' + id).value) || 0;
+    const issueDateStr = document.getElementById('poe-issuedate-' + id).value;
+    const ackSla = parseFloat(document.getElementById('poe-acksla-' + id).value) || 0;
+    const ackDateStr = document.getElementById('poe-ackdate-' + id).value;
+    const critical = document.getElementById('poe-critical-' + id).value;
+    const checkinStr = document.getElementById('poe-checkin-' + id).value;
+    const dueDateStr = document.getElementById('poe-duedate-' + id).value;
+
+    totalValue += value;
+
+    let ackOverdue = false, ackPending = false;
+    if (issueDateStr) {
+      const issueDate = new Date(issueDateStr + 'T00:00:00');
+      if (ackDateStr) {
+        const ackDate = new Date(ackDateStr + 'T00:00:00');
+        const ackHours = (ackDate - issueDate) / 3600000;
+        ackOverdue = ackHours > ackSla;
+      } else {
+        ackPending = true;
+        const hoursSinceIssue = (today - issueDate) / 3600000;
+        ackOverdue = hoursSinceIssue > ackSla;
+      }
+    }
+
+    let daysToDelivery = null;
+    if (dueDateStr) {
+      const dueDate = new Date(dueDateStr + 'T00:00:00');
+      daysToDelivery = Math.round((dueDate - today) / 86400000);
+    }
+
+    let daysSinceCheckin = null;
+    if (checkinStr) {
+      const checkinDate = new Date(checkinStr + 'T00:00:00');
+      daysSinceCheckin = Math.round((today - checkinDate) / 86400000);
+    }
+
+    const needsCheckin = critical === 'Yes' && daysToDelivery !== null && daysToDelivery >= 0 && daysToDelivery <= 30
+      && (daysSinceCheckin === null || daysSinceCheckin > 14);
+
+    let status, color;
+    if (ackOverdue) { status = 'ACK OVERDUE'; color = 'var(--red)'; ackOverdueCount++; }
+    else if (daysToDelivery !== null && daysToDelivery < 0) { status = 'PAST DUE — ESCALATE'; color = 'var(--red)'; pastDueCount++; }
+    else if (needsCheckin) { status = 'NEEDS EXPEDITE CHECK-IN'; color = 'var(--amber)'; needsCheckinCount++; }
+    else if (ackPending) { status = 'AWAITING ACK'; color = 'var(--text-mid)'; }
+    else { status = 'ON TRACK'; color = 'var(--green)'; }
+
+    const statusEl = document.getElementById('poe-status-' + id);
+    statusEl.innerText = status;
+    statusEl.style.color = color;
+  });
+
+  document.getElementById('poe-out-total').innerText = '$' + Math.round(totalValue).toLocaleString();
+  document.getElementById('poe-out-ackoverdue').innerText = ackOverdueCount;
+  document.getElementById('poe-out-pastdue').innerText = pastDueCount;
+  document.getElementById('poe-out-needscheckin').innerText = needsCheckinCount;
+
+  const flags = [];
+  if (ackOverdueCount > 0) {
+    flags.push(`<strong>${ackOverdueCount} PO${ackOverdueCount > 1 ? 's' : ''} Past Ack SLA:</strong> No acknowledgment on file within the agreed window — confirm the supplier actually received and accepted the order before you count on that ship date.`);
+  }
+  if (pastDueCount > 0) {
+    flags.push(`<strong>${pastDueCount} PO${pastDueCount > 1 ? 's' : ''} Past Promised Delivery:</strong> These are already late — escalate internally for production/schedule impact and evaluate safety stock or alternate sourcing.`);
+  }
+  if (needsCheckinCount > 0) {
+    flags.push(`<strong>${needsCheckinCount} Critical/Long-Lead PO${needsCheckinCount > 1 ? 's' : ''} Overdue for a Check-In:</strong> Due inside 30 days with no expedite touchpoint in the last two weeks — don't wait for the supplier to call you if it slips.`);
+  }
+
+  const riskList = document.getElementById('poe-risk-list');
+  riskList.innerHTML = '';
+  if (rows.length === 0) {
+    riskList.innerHTML = '<li>Add a PO to see flags.</li>';
+  } else if (flags.length === 0) {
+    riskList.innerHTML = '<li>No expediting flags at current inputs.</li>';
+  } else {
+    flags.forEach(f => { const li = document.createElement('li'); li.innerHTML = f; riskList.appendChild(li); });
+  }
+}
+
+// --- THREE-WAY MATCH / INVOICE VARIANCE TRACKER ---
+let twmRowCount = 0;
+function addTwmRow(vals) {
+  vals = vals || {};
+  twmRowCount++;
+  const id = twmRowCount;
+  const tbody = document.getElementById('twm-tbody');
+  const tr = document.createElement('tr');
+  tr.id = 'twm-row-' + id;
+  tr.innerHTML = `
+    <td><input type="text" id="twm-name-${id}" value="${vals.name || ''}" placeholder="PO # / supplier" oninput="calculateTwm()"></td>
+    <td><input type="number" id="twm-poqty-${id}" value="${vals.poqty !== undefined ? vals.poqty : 0}" min="0" oninput="calculateTwm()"></td>
+    <td><input type="number" id="twm-poprice-${id}" value="${vals.poprice !== undefined ? vals.poprice : 0}" min="0" step="0.01" oninput="calculateTwm()"></td>
+    <td><input type="number" id="twm-grqty-${id}" value="${vals.grqty !== undefined ? vals.grqty : 0}" min="0" oninput="calculateTwm()"></td>
+    <td><input type="number" id="twm-invqty-${id}" value="${vals.invqty !== undefined ? vals.invqty : 0}" min="0" oninput="calculateTwm()"></td>
+    <td><input type="number" id="twm-invprice-${id}" value="${vals.invprice !== undefined ? vals.invprice : 0}" min="0" step="0.01" oninput="calculateTwm()"></td>
+    <td><input type="number" id="twm-tolerance-${id}" value="${vals.tolerance !== undefined ? vals.tolerance : 2}" min="0" step="0.1" oninput="calculateTwm()"></td>
+    <td class="score-cell" id="twm-status-${id}">—</td>
+    <td class="score-cell" id="twm-variance-${id}">—</td>
+    <td><select id="twm-resolution-${id}" onchange="calculateTwm()">
+      <option value="Open" ${vals.resolution === 'Open' || !vals.resolution ? 'selected' : ''}>Open</option>
+      <option value="Investigating" ${vals.resolution === 'Investigating' ? 'selected' : ''}>Investigating</option>
+      <option value="Credit Requested" ${vals.resolution === 'Credit Requested' ? 'selected' : ''}>Credit Requested</option>
+      <option value="Approved" ${vals.resolution === 'Approved' ? 'selected' : ''}>Approved</option>
+      <option value="Rejected" ${vals.resolution === 'Rejected' ? 'selected' : ''}>Rejected</option>
+    </select></td>
+    <td><button type="button" class="btn-row-remove" onclick="removeTwmRow(${id})">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+  calculateTwm();
+}
+
+function removeTwmRow(id) {
+  const row = document.getElementById('twm-row-' + id);
+  if (row) row.remove();
+  calculateTwm();
+}
+
+function calculateTwm() {
+  const tbody = document.getElementById('twm-tbody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  let totalInvoiceValue = 0, matchedCount = 0, flaggedCount = 0, unresolvedVariance = 0;
+
+  rows.forEach(tr => {
+    const id = tr.id.replace('twm-row-', '');
+    const poprice = parseFloat(document.getElementById('twm-poprice-' + id).value) || 0;
+    const grqty = parseFloat(document.getElementById('twm-grqty-' + id).value) || 0;
+    const invqty = parseFloat(document.getElementById('twm-invqty-' + id).value) || 0;
+    const invprice = parseFloat(document.getElementById('twm-invprice-' + id).value) || 0;
+    const tolerance = parseFloat(document.getElementById('twm-tolerance-' + id).value) || 0;
+    const resolution = document.getElementById('twm-resolution-' + id).value;
+
+    const grValue = grqty * poprice;
+    const invValue = invqty * invprice;
+    const variance = invValue - grValue;
+
+    const priceVariancePct = poprice > 0 ? Math.abs((invprice - poprice) / poprice) * 100 : (invprice > 0 ? 100 : 0);
+    const qtyVariancePct = grqty > 0 ? Math.abs((invqty - grqty) / grqty) * 100 : (invqty > 0 ? 100 : 0);
+    const priceOk = priceVariancePct <= tolerance;
+    const qtyOk = qtyVariancePct <= tolerance;
+
+    let status, color;
+    if (priceOk && qtyOk) { status = 'MATCHED'; color = 'var(--green)'; matchedCount++; }
+    else if (!priceOk && !qtyOk) { status = 'PRICE + QTY VARIANCE'; color = 'var(--red)'; flaggedCount++; }
+    else if (!priceOk) { status = 'PRICE VARIANCE'; color = 'var(--red)'; flaggedCount++; }
+    else { status = 'QTY VARIANCE'; color = 'var(--amber)'; flaggedCount++; }
+
+    const statusEl = document.getElementById('twm-status-' + id);
+    statusEl.innerText = status;
+    statusEl.style.color = color;
+
+    const varEl = document.getElementById('twm-variance-' + id);
+    varEl.innerText = (variance >= 0 ? '$' : '-$') + Math.abs(Math.round(variance)).toLocaleString();
+    varEl.style.color = Math.abs(variance) > 0.005 ? 'var(--red)' : 'var(--text-mid)';
+
+    totalInvoiceValue += invValue;
+    if (status !== 'MATCHED' && (resolution === 'Open' || resolution === 'Investigating')) {
+      unresolvedVariance += Math.abs(variance);
+    }
+  });
+
+  document.getElementById('twm-out-total').innerText = '$' + Math.round(totalInvoiceValue).toLocaleString();
+  document.getElementById('twm-out-matched').innerText = matchedCount;
+  document.getElementById('twm-out-flagged').innerText = flaggedCount;
+  document.getElementById('twm-out-unresolved').innerText = '$' + Math.round(unresolvedVariance).toLocaleString();
+
+  const flags = [];
+  if (flaggedCount > 0) {
+    flags.push(`<strong>${flaggedCount} Invoice Line${flaggedCount > 1 ? 's' : ''} Outside Match Tolerance:</strong> Price and/or quantity don't reconcile against the PO and goods receipt — AP should hold payment on these until resolved.`);
+  }
+  if (unresolvedVariance > 0) {
+    flags.push(`<strong>$${Math.round(unresolvedVariance).toLocaleString()} in Unresolved Variance:</strong> Still marked Open or Investigating — this is the dollar amount currently blocking payment release.`);
+  }
+
+  const riskList = document.getElementById('twm-risk-list');
+  riskList.innerHTML = '';
+  if (rows.length === 0) {
+    riskList.innerHTML = '<li>Add an invoice line to see flags.</li>';
+  } else if (flags.length === 0) {
+    riskList.innerHTML = '<li>No variance flags at current inputs.</li>';
+  } else {
+    flags.forEach(f => { const li = document.createElement('li'); li.innerHTML = f; riskList.appendChild(li); });
+  }
+}
+
 // --- GENERATION CUT-OVER PLANNING ---
 function calculateCutOver() {
   const onHand = parseFloat(document.getElementById('cov-legacy-onhand').value) || 0;
@@ -6794,7 +7106,12 @@ function exportCSV() {
     ["FAT/SAT Qualification", "Open Punch-List Items", document.getElementById('fs-out-punch').innerText],
     ["Standards & Compliance", "Required Standards", document.getElementById('std-out-required').innerText],
     ["Standards & Compliance", "Certified", document.getElementById('std-out-certified').innerText],
-    ["Standards & Compliance", "% Required Certified", document.getElementById('std-out-pct').innerText]
+    ["Standards & Compliance", "% Required Certified", document.getElementById('std-out-pct').innerText],
+    ["PO Ack & Expediting", "Total Open PO Value", document.getElementById('poe-out-total').innerText],
+    ["PO Ack & Expediting", "POs Past Ack SLA", document.getElementById('poe-out-ackoverdue').innerText],
+    ["PO Ack & Expediting", "POs Past Due Delivery", document.getElementById('poe-out-pastdue').innerText],
+    ["3-Way Match / Invoice Variance", "Flagged Invoice Lines", document.getElementById('twm-out-flagged').innerText],
+    ["3-Way Match / Invoice Variance", "$ Variance Unresolved", document.getElementById('twm-out-unresolved').innerText]
   ];
 
   rows.push(...scrapeTableForExport('mq-output-table', 'Multi-Quote Comparison'));
@@ -6957,6 +7274,17 @@ function seedExampleData() {
   addCycleCountRow({ sku: 'PN-2044 Connector', loc: 'Reno-B03', sys: 8500, phys: 8460, cost: 0.85 });
   addCycleCountRow({ sku: 'PN-3390 Bearing', loc: 'Austin-A07', sys: 640, phys: 520, cost: 22.00 });
   addCycleCountRow({ sku: 'PN-4410 Fastener Kit', loc: 'Reno-B11', sys: 15000, phys: 14980, cost: 0.12 });
+
+  addPoeRow({ name: 'PO-88231 — Meridian Stamping', value: 184000, issuedate: '2026-08-20', acksla: 48, ackdate: '2026-08-21', critical: 'Yes', checkin: '2026-09-10', duedate: '2026-09-25' });
+  addPoeRow({ name: 'PO-88240 — Delta Precision Castings', value: 96000, issuedate: '2026-09-15', acksla: 48, ackdate: '', critical: 'No', checkin: '', duedate: '2026-10-20' });
+  addPoeRow({ name: 'PO-88255 — Harborline Connectors', value: 42000, issuedate: '2026-09-05', acksla: 24, ackdate: '', critical: 'No', checkin: '', duedate: '2026-10-01' });
+  addPoeRow({ name: 'PO-88190 — Global Bearing Co', value: 128000, issuedate: '2026-08-01', acksla: 72, ackdate: '2026-08-03', critical: 'No', checkin: '', duedate: '2026-09-10' });
+  addPoeRow({ name: 'PO-88266 — Northline Electronics', value: 210000, issuedate: '2026-08-25', acksla: 48, ackdate: '2026-08-26', critical: 'Yes', checkin: '', duedate: '2026-09-30' });
+
+  addTwmRow({ name: 'PO-77001 — Acme Precision Machining', poqty: 5000, poprice: 4.20, grqty: 5000, invqty: 5000, invprice: 4.20, tolerance: 2, resolution: 'Approved' });
+  addTwmRow({ name: 'PO-77015 — Rapid Molded Plastics', poqty: 2000, poprice: 8.50, grqty: 2000, invqty: 2000, invprice: 9.10, tolerance: 2, resolution: 'Open' });
+  addTwmRow({ name: 'PO-77022 — Global Bearing Co', poqty: 3000, poprice: 1.85, grqty: 2850, invqty: 3000, invprice: 1.85, tolerance: 2, resolution: 'Investigating' });
+  addTwmRow({ name: 'PO-77030 — Northline Electronics', poqty: 1000, poprice: 12.00, grqty: 950, invqty: 1000, invprice: 12.75, tolerance: 2, resolution: 'Credit Requested' });
 }
 
 // --- SAVE / LOAD / AUTOSAVE ---
@@ -6977,7 +7305,9 @@ const DYNAMIC_TABLES = [
   { tbody: 'oee-tbody', prefix: 'oee', addRow: 'addOeeRow' },
   { tbody: 'fd-tbody', prefix: 'fd', addRow: 'addFactoryDefectRow' },
   { tbody: 'fs-tbody', prefix: 'fs', addRow: 'addFatSatRow' },
-  { tbody: 'std-tbody', prefix: 'std', addRow: 'addStandardRow' }
+  { tbody: 'std-tbody', prefix: 'std', addRow: 'addStandardRow' },
+  { tbody: 'poe-tbody', prefix: 'poe', addRow: 'addPoeRow' },
+  { tbody: 'twm-tbody', prefix: 'twm', addRow: 'addTwmRow' }
 ];
 const SCENARIO_EXCLUDE_IDS = new Set(['fb-type', 'fb-message', 'fb-email', 'fileInput', 'mq-fileinput', 'scenarioFileInput']);
 
