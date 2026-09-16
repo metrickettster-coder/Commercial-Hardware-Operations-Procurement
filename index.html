@@ -2035,7 +2035,8 @@
               <th style="min-width:180px;">Contract / Supplier</th>
               <th>Category</th>
               <th>Annual Spend ($)</th>
-              <th>Months Until Renewal</th>
+              <th>Renewal Date</th>
+              <th>Months Until</th>
               <th>Auto-Renews?</th>
               <th>Notice Period (Days)</th>
               <th>Status</th>
@@ -5365,7 +5366,8 @@ function addContractRow(vals) {
     <td><input type="text" id="ct-name-${id}" value="${vals.name || ''}" placeholder="Contract / supplier" oninput="calculateContracts()"></td>
     <td><input type="text" id="ct-cat-${id}" value="${vals.cat || ''}" placeholder="e.g. Logistics" oninput="calculateContracts()"></td>
     <td><input type="number" id="ct-spend-${id}" value="${vals.spend !== undefined ? vals.spend : 0}" min="0" oninput="calculateContracts()"></td>
-    <td><input type="number" id="ct-months-${id}" value="${vals.months !== undefined ? vals.months : 6}" min="0" step="0.5" oninput="calculateContracts()"></td>
+    <td><input type="date" id="ct-renewaldate-${id}" value="${vals.renewaldate || ''}" oninput="calculateContracts()"></td>
+    <td class="score-cell" id="ct-months-${id}">—</td>
     <td><select id="ct-auto-${id}" onchange="calculateContracts()">
       <option value="Yes" ${vals.auto === 'Yes' || !vals.auto ? 'selected' : ''}>Yes</option>
       <option value="No" ${vals.auto === 'No' ? 'selected' : ''}>No</option>
@@ -5395,13 +5397,27 @@ function calculateContracts() {
     const name = document.getElementById('ct-name-' + id).value || 'Unnamed Contract';
     const cat = document.getElementById('ct-cat-' + id).value;
     const spend = parseFloat(document.getElementById('ct-spend-' + id).value) || 0;
-    const months = parseFloat(document.getElementById('ct-months-' + id).value) || 0;
+    const renewalDateStr = document.getElementById('ct-renewaldate-' + id).value;
     const auto = document.getElementById('ct-auto-' + id).value;
     const notice = parseFloat(document.getElementById('ct-notice-' + id).value) || 0;
 
-    const daysUntilRenewal = months * 30;
+    // Computed from an actual calendar date against today, not a static "months until" number
+    // typed once -- so this stays correct as real time passes instead of aging out of date.
+    const monthsEl = document.getElementById('ct-months-' + id);
+    let daysUntilRenewal = null, months = 0;
+    if (renewalDateStr) {
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const renewalDate = new Date(renewalDateStr + 'T00:00:00');
+      daysUntilRenewal = Math.round((renewalDate - today) / 86400000);
+      months = daysUntilRenewal / 30.44;
+      monthsEl.innerText = months.toFixed(1);
+    } else {
+      monthsEl.innerText = '—';
+    }
+
     let status, color;
-    if (daysUntilRenewal <= notice) { status = 'ACTION REQUIRED'; color = 'var(--red)'; actionCount++; }
+    if (!renewalDateStr) { status = 'NO DATE SET'; color = 'var(--text-mid)'; }
+    else if (daysUntilRenewal <= notice) { status = 'ACTION REQUIRED'; color = 'var(--red)'; actionCount++; }
     else if (months <= 3) { status = 'REVIEW SOON'; color = 'var(--amber)'; }
     else { status = 'ON TRACK'; color = 'var(--green)'; }
 
@@ -5411,7 +5427,7 @@ function calculateContracts() {
 
     totalSpend += spend;
     if (auto === 'Yes' && status !== 'ON TRACK') atRiskSpend += spend;
-    items.push({ name, cat, months, status, spend, auto });
+    items.push({ name, cat, months: renewalDateStr ? months : Infinity, status, spend, auto });
   });
 
   document.getElementById('ct-out-total').innerText = '$' + Math.round(totalSpend).toLocaleString();
@@ -5426,7 +5442,8 @@ function calculateContracts() {
   } else {
     items.slice(0, 3).forEach(it => {
       const li = document.createElement('li');
-      li.innerHTML = `<strong>${it.name}:</strong> ${it.months} months out — ${it.status}${it.auto === 'Yes' ? ' (auto-renews)' : ''}`;
+      const monthsLabel = it.months === Infinity ? 'no renewal date set' : `${it.months.toFixed(1)} months out`;
+      li.innerHTML = `<strong>${it.name}:</strong> ${monthsLabel} — ${it.status}${it.auto === 'Yes' ? ' (auto-renews)' : ''}`;
       topList.appendChild(li);
     });
   }
@@ -6559,9 +6576,9 @@ function seedExampleData() {
   addKraljicRow({ name: 'Custom Test Fixture Vendor', risk: 8, impact: 3 });
   addKraljicRow({ name: 'Office Supplies / MRO', risk: 2, impact: 2 });
 
-  addContractRow({ name: 'Northline Electronics — Master Supply Agreement', cat: 'Electronics', spend: 2100000, months: 1.5, auto: 'Yes', notice: 60 });
-  addContractRow({ name: 'Freight Forwarder — Asia Lanes', cat: 'Logistics', spend: 480000, months: 8, auto: 'Yes', notice: 90 });
-  addContractRow({ name: 'Test Fixture Maintenance', cat: 'Services', spend: 65000, months: 3, auto: 'No', notice: 30 });
+  addContractRow({ name: 'Northline Electronics — Master Supply Agreement', cat: 'Electronics', spend: 2100000, renewaldate: '2026-11-01', auto: 'Yes', notice: 60 });
+  addContractRow({ name: 'Freight Forwarder — Asia Lanes', cat: 'Logistics', spend: 480000, renewaldate: '2027-05-16', auto: 'Yes', notice: 90 });
+  addContractRow({ name: 'Test Fixture Maintenance', cat: 'Services', spend: 65000, renewaldate: '2026-12-16', auto: 'No', notice: 30 });
 
   addSuppAuditRow({ name: 'Northline Electronics', date: '2026-06-12', quality: 92, labor: 88, bc: 85, esg: 80, findings: 0 });
   addSuppAuditRow({ name: 'Rapid Molded Plastics', date: '2026-07-03', quality: 68, labor: 72, bc: 60, esg: 55, findings: 2 });
