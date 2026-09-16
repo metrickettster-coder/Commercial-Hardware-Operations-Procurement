@@ -2223,7 +2223,7 @@
           <div class="readout"><div class="rlabel">Total Open Yield Loss</div><div class="rvalue" id="fd-out-total-yieldloss" style="color:var(--amber);">0%</div></div>
           <div class="readout"><div class="rlabel">Closure Rate</div><div class="rvalue" id="fd-out-closure-rate">0%</div></div>
           <hr class="divider">
-          <h2 style="margin-top:15px;">Vital Few (Pareto Top, ~80% of Yield Loss)</h2>
+          <h2 style="margin-top:15px;">Vital Few (Pareto Top, ~80% of All Logged Yield Loss — Open + Closed)</h2>
           <ul id="fd-pareto-list" class="risk-list"></ul>
         </div>
         <div class="panel">
@@ -2662,8 +2662,24 @@ function calculateECO() {
   const riskList = document.getElementById('eco-risk-list');
   const questionList = document.getElementById('eco-question-list');
 
-  // Class II: administrative change, no board-level scrutiny needed
+  // Class II: administrative change, no board-level scrutiny needed -- but the class here is
+  // self-declared, so challenge it against the downstream answers rather than trusting it
+  // blindly: a tooling change or required requalification is Class I by definition, whatever
+  // box got checked above.
   if (class1 !== 'yes') {
+    const toolingFlagCheck = (document.getElementById('eco-tooling-flag') || {}).value || 'no';
+    const requalCheck = (document.getElementById('eco-requal') || {}).value || 'no';
+    if (toolingFlagCheck === 'yes' || requalCheck === 'yes') {
+      if (detailSection) detailSection.classList.remove('hidden');
+      outClass.innerText = 'Marked Class II, but Likely Class I';
+      outClass.style.color = 'var(--red)';
+      outSeverity.innerText = 'CHALLENGE THIS CLASSIFICATION';
+      outSeverity.style.color = 'var(--red)';
+      outCost.innerText = '—';
+      riskList.innerHTML = `<li><strong>You marked this Class II, but flagged${toolingFlagCheck === 'yes' ? ' a tooling change' : ''}${toolingFlagCheck === 'yes' && requalCheck === 'yes' ? ' and' : ''}${requalCheck === 'yes' ? ' requalification required' : ''}:</strong> That combination normally qualifies as Class I — a tooling change or required requal is exactly the kind of change Class II "administrative" approval isn't meant to cover. Re-confirm the classification before routing this for internal-only sign-off.</li>`;
+      if (questionList) questionList.innerHTML = '<li>Get an explicit sign-off from whoever owns the classification policy that this really doesn\'t need Class I review, given the tooling/requal answers.</li>';
+      return;
+    }
     if (detailSection) detailSection.classList.add('hidden');
     outClass.innerText = 'Class II — Administrative';
     outClass.style.color = 'var(--green)';
@@ -3613,15 +3629,29 @@ function calculateFFF() {
   const total = f1 + f2 + f3;
   const statusEl = document.getElementById('fff-out-status');
   const burdenEl = document.getElementById('fff-out-burden');
+  const brokerSource = subSource === 'independent-broker' || subSource === 'recycled' || subSource === 'unknown';
 
-  if (total === 3) {
+  if (!origPN || !subPN) {
+    // Gate the verdict on having both part numbers -- otherwise this is qualifying a part
+    // that can't actually be traced in BOM/ECO records, which isn't a real qualification.
+    statusEl.innerText = "ENTER BOTH PART NUMBERS TO QUALIFY";
+    statusEl.style.color = "var(--text-mid)";
+    burdenEl.innerText = "—";
+  } else if (f3 === 0) {
+    // A function mismatch (software/protocol behavior differs) isn't a redesign-and-reuse
+    // candidate the way a form or fit mismatch can be -- it's not doing the same job, so
+    // it isn't a valid alternate at all until that's resolved.
+    statusEl.innerText = "NOT A VALID ALTERNATE — FUNCTION MISMATCH";
+    statusEl.style.color = "var(--red)";
+    burdenEl.innerText = "HIGH (Functionally Different Part — Full Requalification)";
+  } else if (total === 3) {
     statusEl.innerText = "DROP-IN REPLACEMENT";
     statusEl.style.color = "var(--green)";
-    burdenEl.innerText = "LOW (Minor Testing)";
+    burdenEl.innerText = brokerSource ? "MEDIUM (Counterfeit Screening Required Despite FFF Match)" : "LOW (Minor Testing)";
   } else if (total === 2) {
     statusEl.innerText = "MINOR REDESIGN REQ";
     statusEl.style.color = "var(--amber)";
-    burdenEl.innerText = "MEDIUM (ECO & Re-spin)";
+    burdenEl.innerText = brokerSource ? "HIGH (ECO & Re-spin + Counterfeit Screening)" : "MEDIUM (ECO & Re-spin)";
   } else {
     statusEl.innerText = "INCOMPATIBLE";
     statusEl.style.color = "var(--red)";
@@ -3633,7 +3663,7 @@ function calculateFFF() {
     'oem':                { label: 'LOW (Traceable Supply Chain)', color: 'var(--green)' },
     'franchised-broker':  { label: 'MODERATE (Verify Certs of Conformance)', color: 'var(--amber)' },
     'independent-broker': { label: 'ELEVATED (Counterfeit Risk — Require Lot Traceability)', color: 'var(--amber)' },
-    'recycled':           { label: 'HIGH (Counterfeit/Reliability Risk — Incoming Inspection Required)', color: 'var(--red)' },
+    'recycled':           { label: 'HIGH (Counterfeit/Reliability Risk — AS6081 Screening Required)', color: 'var(--red)' },
     'unknown':            { label: 'HIGH (Source Not Verified)', color: 'var(--red)' }
   };
   const sourcingRiskEl = document.getElementById('fff-out-sourcing-risk');
@@ -3643,12 +3673,15 @@ function calculateFFF() {
 
   const flags = [];
   if (!origPN || !subPN) {
-    flags.push(`<strong>Part Numbers Not Captured:</strong> Record both the original/obsolete part number and the proposed substitute part number so this qualification is traceable in BOM and ECO records.`);
+    flags.push(`<strong>Part Numbers Not Captured:</strong> Record both the original/obsolete part number and the proposed substitute part number — this qualification isn't traceable in BOM and ECO records without both, so no verdict is shown until they're entered.`);
   }
-  if (subSource === 'independent-broker' || subSource === 'recycled' || subSource === 'unknown') {
-    flags.push(`<strong>Elevated Sourcing Risk:</strong> This substitute source carries meaningful counterfeit or traceability risk. Require certificate of conformance, date/lot code verification, and incoming inspection (or third-party lab testing for critical parts) before release to production.`);
+  if (f3 === 0) {
+    flags.push(`<strong>Function Mismatch:</strong> A part that doesn't match on software/protocol behavior isn't a "redesign and reuse" case — treat this as sourcing a different part, not qualifying an alternate, until the function gap is closed or explicitly waived by engineering.`);
   }
-  if (total < 3 && (subSource === 'independent-broker' || subSource === 'recycled' || subSource === 'unknown')) {
+  if (brokerSource) {
+    flags.push(`<strong>Elevated Sourcing Risk${subSource === 'recycled' ? ' (Recycled/Salvage)' : ''}:</strong> This substitute source carries meaningful counterfeit or traceability risk. Require certificate of conformance, date/lot code verification, and incoming inspection${subSource === 'recycled' ? ' with AS6081-style counterfeit screening' : ' (or third-party lab testing for critical parts)'} before release to production — this raises the requalification burden even on an otherwise clean FFF match.`);
+  }
+  if (total < 3 && brokerSource) {
     flags.push(`<strong>Compounding Risk:</strong> This part both fails full FFF match and carries elevated sourcing risk — treat as a full requalification, not a drop-in swap.`);
   }
 
@@ -4359,8 +4392,13 @@ function calculateCpk() {
   const usl = parseFloat(document.getElementById('cpk-usl').value) || 0;
   const lsl = parseFloat(document.getElementById('cpk-lsl').value) || 0;
   const mean = parseFloat(document.getElementById('cpk-mean').value) || 0;
-  const sigmaST = parseFloat(document.getElementById('cpk-sigma-st').value) || 0.0001;
-  const sigmaLT = parseFloat(document.getElementById('cpk-sigma-lt').value) || 0.0001;
+  const sigmaSTRaw = parseFloat(document.getElementById('cpk-sigma-st').value) || 0;
+  const sigmaLTRaw = parseFloat(document.getElementById('cpk-sigma-lt').value) || 0;
+  // A std dev of 0 isn't real measurement data (zero real-world variation doesn't happen) --
+  // rather than let it silently fall back to a near-zero floor and produce a meaningless
+  // "1,666.67 Six Sigma Capable" result, flag it explicitly below.
+  const sigmaST = sigmaSTRaw > 0 ? sigmaSTRaw : 0.0001;
+  const sigmaLT = sigmaLTRaw > 0 ? sigmaLTRaw : 0.0001;
 
   const cp = (usl - lsl) / (6 * sigmaST);
   const cpu = (usl - mean) / (3 * sigmaST);
@@ -4388,20 +4426,33 @@ function calculateCpk() {
   ratingEl.style.color = ratingColor;
   cpkEl.style.color = ratingColor;
 
-  const ppmST = (normalCDF((lsl - mean) / sigmaST) + (1 - normalCDF((usl - mean) / sigmaST))) * 1e6;
-  const ppmLT = (normalCDF((lsl - mean) / sigmaLT) + (1 - normalCDF((usl - mean) / sigmaLT))) * 1e6;
+  // PPM (defects per million opportunities) can't exceed 1,000,000 by definition -- USL < LSL
+  // (an inverted spec window) can otherwise push the tail-probability sum past 100%.
+  const ppmST = Math.min(1e6, (normalCDF((lsl - mean) / sigmaST) + (1 - normalCDF((usl - mean) / sigmaST))) * 1e6);
+  const ppmLT = Math.min(1e6, (normalCDF((lsl - mean) / sigmaLT) + (1 - normalCDF((usl - mean) / sigmaLT))) * 1e6);
   document.getElementById('cpk-out-ppm-st').innerText = Math.round(ppmST).toLocaleString() + ' PPM';
   document.getElementById('cpk-out-ppm-lt').innerText = Math.round(ppmLT).toLocaleString() + ' PPM';
 
   const flags = [];
-  if (cpk < 1.0) {
+  if (usl <= lsl) {
+    flags.push(`<strong>USL (${usl}) is not above LSL (${lsl}):</strong> An inverted or zero-width spec window makes Cp/Cpk/Pp/Ppk meaningless — check for a swapped or mistyped limit before trusting any number above.`);
+  }
+  if (sigmaSTRaw <= 0) {
+    flags.push(`<strong>Short-Term Std Dev is 0:</strong> Zero real-world variation doesn't happen — this is almost always a placeholder or data-entry gap, not an actual measurement. Results here (including "Six Sigma Capable") aren't meaningful until a real σ is entered.`);
+  }
+  if (sigmaLTRaw <= 0) {
+    flags.push(`<strong>Long-Term Std Dev is 0:</strong> Same issue as short-term σ — zero variation isn't a real measurement. Enter the actual observed long-term standard deviation.`);
+  }
+  if (cpk < 1.0 && usl > lsl && sigmaSTRaw > 0) {
     flags.push(`<strong>Not Capable (Cpk ${cpk.toFixed(2)}):</strong> The process is producing meaningful out-of-spec output at current mean and spread. Reduce variation, shift the mean toward center, or widen the spec if it's overly tight.`);
   }
-  if ((cp - cpk) > 0.2) {
+  if ((cp - cpk) > 0.2 && usl > lsl) {
     flags.push(`<strong>Process Off-Center:</strong> Cp (${cp.toFixed(2)}) is meaningfully higher than Cpk (${cpk.toFixed(2)}) — the process has enough potential capability, but isn't centered in the spec window. Centering the mean would improve Cpk without touching variation.`);
   }
   if (sigmaLT > sigmaST * 1.15) {
     flags.push(`<strong>Long-Term Variation Exceeds Short-Term:</strong> Overall (long-term) std dev is notably higher than within-subgroup (short-term) std dev — look for shift-to-shift, lot-to-lot, or time-based special-cause variation between subgroups.`);
+  } else if (sigmaLT < sigmaST * 0.85 && sigmaSTRaw > 0 && sigmaLTRaw > 0) {
+    flags.push(`<strong>Long-Term Variation is Lower Than Short-Term:</strong> That's backwards from what normally happens (long-term overall spread is usually >= short-term within-subgroup spread) — worth double-checking the two σ values weren't swapped or pulled from mismatched data sets.`);
   }
 
   const riskList = document.getElementById('cpk-risk-list');
@@ -4547,12 +4598,40 @@ function calculateReliability() {
   const flags = [];
 
   if (failures <= 0) {
-    mtbfEl.innerText = 'No failures yet';
+    // Zero observed failures doesn't mean 100% reliability -- it means the true MTBF is
+    // unknown but bounded below. For a chi-square distribution with 2 degrees of freedom
+    // (the zero-failure case), the CDF has a closed form (1 - e^(-x/2)), so the standard
+    // one-sided lower confidence bound reduces to MTBF_lower = -T / ln(1 - confidence).
+    if (hours > 0) {
+      const confidence = 0.60;
+      const mtbfLower = -hours / Math.log(1 - confidence);
+      const reliabilityLower = Math.exp(-missionTime / mtbfLower) * 100;
+      mtbfEl.innerText = '≥ ' + Math.round(mtbfLower).toLocaleString() + ' Hrs (60% conf., 0 failures)';
+      lambdaEl.innerText = '—';
+      fitEl.innerText = '—';
+      reliabilityEl.innerText = '≥ ' + reliabilityLower.toFixed(1) + '%';
+      reliabilityEl.style.color = 'var(--amber)';
+      fleetFailEl.innerText = '—';
+      document.getElementById('rel-risk-list').innerHTML =
+        `<li><strong>Zero Failures Observed:</strong> That's good news, not proof of 100% reliability — with no failures yet, the honest statement is a one-sided lower-bound MTBF at a stated confidence level (shown above at 60%, a common demonstrated-reliability convention), not a point estimate. Keep accumulating hours; the bound tightens as test/field time grows.</li>`;
+    } else {
+      mtbfEl.innerText = '—';
+      lambdaEl.innerText = '—';
+      fitEl.innerText = '—';
+      reliabilityEl.innerText = '—';
+      fleetFailEl.innerText = '—';
+      document.getElementById('rel-risk-list').innerHTML = '<li>Enter accumulated test/field hours and failure count to see a reliability estimate.</li>';
+    }
+    return;
+  }
+
+  if (hours <= 0) {
+    mtbfEl.innerText = '—';
     lambdaEl.innerText = '—';
     fitEl.innerText = '—';
-    reliabilityEl.innerText = '100.0%';
-    fleetFailEl.innerText = '0';
-    document.getElementById('rel-risk-list').innerHTML = '<li>No failures observed yet — MTBF isn\'t calculable until at least one failure is logged.</li>';
+    reliabilityEl.innerText = '—';
+    fleetFailEl.innerText = '—';
+    document.getElementById('rel-risk-list').innerHTML = '<li><strong>Failures Logged with 0 Accumulated Hours:</strong> That combination isn\'t possible for a real fleet — check the hours input before trusting any output here.</li>';
     return;
   }
 
@@ -4814,14 +4893,31 @@ async function mqExtractText(file) {
 }
 
 function mqParseFields(text) {
-  const unitPriceMatch = text.match(/(?:unit\s*price|piece\s*price|ea\.?|price\/unit)[\:\$\s]*([\d\.,]+)/i);
-  const setupMatch = text.match(/(?:setup|set-up|fixture\s*setup)[\:\$\s]*([\d\.,]+)/i);
-  const toolingMatch = text.match(/(?:tooling|nre|non-recurring|fixture\s*cost)[\:\$\s]*([\d\.,]+)/i);
-  const moqMatch = text.match(/(?:MOQ|minimum order quantity|min order)[\:\s]*([\d\.,]+)/i);
+  // Separators allow a few words between the label and the number (e.g. "Set-up charge: $750",
+  // "Price: $39.00 each") rather than requiring the number immediately after the label.
+  const sep = '[^\\d\\r\\n]{0,20}';
+  const unitPriceMatch = text.match(new RegExp('(?:unit\\s*price|piece\\s*price|ea\\.?|price\\/unit|price)' + sep + '([\\d.,]+)', 'i'));
+  const setupMatch = text.match(new RegExp('(?:setup|set-up|fixture\\s*setup)' + sep + '([\\d.,]+)', 'i'));
+  const toolingMatch = text.match(new RegExp('(?:tooling|nre|non-recurring|fixture\\s*cost)' + sep + '([\\d.,]+)', 'i'));
+  const moqMatch = text.match(new RegExp('(?:MOQ|minimum order quantity|min order|quantity|qty)' + sep + '([\\d.,]+)', 'i'));
   const paymentMatch = text.match(/net\s*(15|30|45|60|90)/i) || text.match(/(prepayment|due upon receipt)/i);
   const incotermMatch = text.match(/\b(EXW|FOB|DDP|CIF|FCA|DAP)\b/i);
-  const leadTimeMatch = text.match(/(\d+)\s*(?:-\s*\d+\s*)?weeks?\b/i);
-  const warrantyMatch = text.match(/(\d+)\s*(month|year)s?\s*warranty/i);
+  // Value-first ("30 days", "6 weeks ARO") or label-first ("Lead time: 30 days") order, in
+  // either days or weeks -- days get converted to weeks so downstream comparisons stay in
+  // one unit.
+  const leadTimeValueFirst = text.match(/(\d+)\s*(?:-\s*\d+\s*)?(weeks?|days?)\b/i);
+  const leadTimeLabelFirst = text.match(/lead\s*time[^\d\r\n]{0,20}(\d+)\s*(?:-\s*\d+\s*)?(weeks?|days?)/i);
+  const leadTimeMatch = leadTimeLabelFirst || leadTimeValueFirst;
+  let leadTimeWeeks = null;
+  if (leadTimeMatch) {
+    const n = mqNum(leadTimeMatch[1]);
+    leadTimeWeeks = leadTimeMatch[2].toLowerCase().startsWith('day') ? Math.round((n / 7) * 10) / 10 : n;
+  }
+  // Same value-first / label-first flexibility for warranty ("12 months warranty" vs.
+  // "WARRANTY: 12 months", which is the app's own downloadable template's format).
+  const warrantyValueFirst = text.match(/(\d+)\s*(month|year)s?\s*warranty/i);
+  const warrantyLabelFirst = text.match(/warranty[^\d\r\n]{0,20}(\d+)\s*(month|year)/i);
+  const warrantyMatch = warrantyValueFirst || warrantyLabelFirst;
 
   let warrantyMonths = null;
   if (warrantyMatch) {
@@ -4836,7 +4932,7 @@ function mqParseFields(text) {
     moq: moqMatch ? mqNum(moqMatch[1]) : null,
     paymentTerms: paymentMatch ? paymentMatch[0] : null,
     incoterm: incotermMatch ? incotermMatch[1].toUpperCase() : null,
-    leadTimeWeeks: leadTimeMatch ? mqNum(leadTimeMatch[1]) : null,
+    leadTimeWeeks: leadTimeWeeks,
     warrantyMonths: warrantyMonths
   };
 }
@@ -5589,9 +5685,12 @@ function calculateSuppQual() {
 
     // Per IATF 16949 supplier-qualification practice: full approval requires >=80 composite
     // AND >=70 on every individual dimension — a high average can't paper over one weak one.
+    // A supplier with no quality system certification at all is capped at CONDITIONAL --
+    // most commercial hardware programs require at least a documented waiver before full
+    // approval, whatever the scores say.
     let decision, color;
     if (fai === 'Fail') { decision = 'REJECTED'; color = 'var(--red)'; }
-    else if (composite >= 80 && weakestDim >= 70) { decision = 'APPROVED'; color = 'var(--green)'; }
+    else if (composite >= 80 && weakestDim >= 70 && cert !== 'None') { decision = 'APPROVED'; color = 'var(--green)'; }
     else if (composite >= 60) { decision = 'CONDITIONAL'; color = 'var(--amber)'; }
     else { decision = 'REJECTED'; color = 'var(--red)'; }
     decisionEl.style.color = color;
@@ -5616,8 +5715,10 @@ function calculateSuppQual() {
       flags.push(`<strong>${name} — First Article FAILED:</strong> Automatic reject regardless of composite score (${composite.toFixed(1)}) until a new FAI passes.`);
     } else if (composite >= 80 && weakestDim < 70) {
       flags.push(`<strong>${name} — Composite Passes but One Dimension Doesn't (weakest: ${weakestDim.toFixed(0)}):</strong> A ${composite.toFixed(1)} average clears the 80 bar, but a dimension below 70 holds this at CONDITIONAL rather than full approval — that weak dimension is what will actually bite later.`);
+    } else if (cert === 'None' && composite >= 80 && weakestDim >= 70) {
+      flags.push(`<strong>${name} Would Score APPROVED, but Has No Quality System Certification:</strong> Capped at CONDITIONAL instead — most commercial hardware programs require at least a documented waiver before full approval of an uncertified supplier, whatever the scores say.`);
     } else if (cert === 'None') {
-      flags.push(`<strong>${name} has No Quality System Certification:</strong> Even at a ${composite.toFixed(1)} composite, weigh whether an uncertified supplier fits your quality risk tolerance for this category.`);
+      flags.push(`<strong>${name} has No Quality System Certification:</strong> Weigh whether an uncertified supplier fits your quality risk tolerance for this category.`);
     }
   });
 
@@ -6134,6 +6235,9 @@ function calculateFactoryDefects() {
   }
   if (items.length > 0 && closureRate < 50 && items.length >= 3) {
     flags.push(`<strong>Closure Rate is ${closureRate.toFixed(0)}%:</strong> Less than half of logged defects have made it to Closed — worth checking whether ECOs are backing up in approval or verification batches aren't getting run.`);
+  }
+  if (totalOpenYieldLoss > 100) {
+    flags.push(`<strong>Total Open Yield Loss Sums to ${totalOpenYieldLoss.toFixed(1)}%, Over 100%:</strong> Each defect's % is Units Affected ÷ Total Units Built, so this total can legitimately exceed 100% when the same unit carries more than one defect type (the same unit gets counted once per defect). If that's not what's happening here, double-check Units Affected against Total Units Built.`);
   }
 
   const riskList = document.getElementById('fd-risk-list');
