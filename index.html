@@ -783,14 +783,23 @@
     <!-- Total Landed Cost Engine -->
     <div id="tool-landedcost" class="tool-view active">
       <h2 class="tool-title">Total Landed Cost Engine</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Aggregate EXW price, freight, tariffs, customs duties, and handling into unit landed cost.</p>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Aggregate factory price, freight, tariffs, customs duties, and handling into unit landed cost.</p>
       <div class="grid">
         <div class="panel">
           <h2>Cost Components (Per Unit)</h2>
-          <div class="field"><label for="tlc-unit">Factory Unit Price (EXW / FOB)</label><div class="prefix-wrap"><span>$</span><input type="number" id="tlc-unit" value="85.00" oninput="calculateLandedCost()"></div></div>
+          <div class="field"><label for="tlc-incoterm">Quoted Incoterm</label><select id="tlc-incoterm" oninput="calculateLandedCost()">
+            <option value="EXW">EXW (Ex Works)</option>
+            <option value="FOB" selected>FOB (Free On Board)</option>
+            <option value="FCA">FCA (Free Carrier)</option>
+            <option value="CIF">CIF (Cost, Insurance &amp; Freight)</option>
+            <option value="DDP">DDP (Delivered Duty Paid)</option>
+          </select></div>
+          <div class="field"><label for="tlc-unit">Factory Unit Price (at the quoted Incoterm)</label><div class="prefix-wrap"><span>$</span><input type="number" id="tlc-unit" value="85.00" oninput="calculateLandedCost()"></div></div>
           <div class="field"><label for="tlc-freight">Freight &amp; Logistics Costs per Unit</label><div class="prefix-wrap"><span>$</span><input type="number" id="tlc-freight" value="6.50" oninput="calculateLandedCost()"></div></div>
           <div class="field"><label for="tlc-tariff">Customs Duty / Import Tariff Rate (%)</label><input type="number" id="tlc-tariff" value="7.5" oninput="calculateLandedCost()"></div>
           <div class="field"><label for="tlc-handling">Local Warehousing &amp; Port Handling per Unit</label><div class="prefix-wrap"><span>$</span><input type="number" id="tlc-handling" value="2.25" oninput="calculateLandedCost()"></div></div>
+          <div class="field"><label for="tlc-fees">Brokerage, Insurance &amp; Customs Fees (MPF/HMF, etc.) per Unit</label><div class="prefix-wrap"><span>$</span><input type="number" id="tlc-fees" value="0" min="0" oninput="calculateLandedCost()"></div></div>
+          <p id="tlc-incoterm-note" style="color:var(--text-dim); font-size:0.8em; margin-top:6px;"></p>
         </div>
         <div class="panel">
           <h2>Landed Cost Summary</h2>
@@ -1428,8 +1437,8 @@
       <div class="grid" style="margin-top:20px;">
         <div class="panel">
           <h2>Scoped vs. Actual — Budget KPIs</h2>
-          <div class="readout"><div class="rlabel">Budget Variance ($)</div><div class="rvalue" id="bk-out-variance-dollar" style="color:var(--green);">+$80,000</div></div>
-          <div class="readout"><div class="rlabel">Budget Variance (%)</div><div class="rvalue" id="bk-out-variance-pct" style="color:var(--green);">+16.0%</div></div>
+          <div class="readout"><div class="rlabel">Unspent to Date ($) — Scoped Minus Actual So Far</div><div class="rvalue" id="bk-out-variance-dollar" style="color:var(--green);">+$80,000</div></div>
+          <div class="readout"><div class="rlabel">Unspent to Date (%)</div><div class="rvalue" id="bk-out-variance-pct" style="color:var(--green);">+16.0%</div></div>
           <div class="readout"><div class="rlabel">Remaining Budget (Scoped − Actual)</div><div class="rvalue" id="bk-out-remaining">$80,000</div></div>
           <div class="readout"><div class="rlabel">Burn Rate ($ / Month)</div><div class="rvalue" id="bk-out-burn-rate">$60,000</div></div>
           <div class="readout"><div class="rlabel">Projected Total Spend at Current Burn Rate</div><div class="rvalue" id="bk-out-projected-total">$720,000</div></div>
@@ -3223,18 +3232,33 @@ function calculateECO() {
 }
 
 function calculateLandedCost() {
+  const incoterm = document.getElementById('tlc-incoterm').value;
   const unit = parseFloat(document.getElementById('tlc-unit').value) || 0;
   const freight = parseFloat(document.getElementById('tlc-freight').value) || 0;
   const tariffRate = (parseFloat(document.getElementById('tlc-tariff').value) || 0) / 100;
   const handling = parseFloat(document.getElementById('tlc-handling').value) || 0;
+  const fees = Math.max(0, parseFloat(document.getElementById('tlc-fees').value) || 0);
 
   const tariffDuty = unit * tariffRate;
-  const totalLanded = unit + freight + tariffDuty + handling;
+  const totalLanded = unit + freight + tariffDuty + handling + fees;
   const burden = unit > 0 ? ((totalLanded - unit) / unit) * 100 : 0;
 
   document.getElementById('tlc-out-tariff').innerText = '$' + tariffDuty.toFixed(2);
   document.getElementById('tlc-out-total').innerText = '$' + totalLanded.toFixed(2);
   document.getElementById('tlc-out-burden').innerText = burden.toFixed(1) + '%';
+
+  // EXW and FOB are not interchangeable -- EXW excludes export clearance and origin loading
+  // (the buyer's freight cost below needs to start from the seller's dock), FOB already
+  // includes those (freight should start from the origin port). Mislabeling this is a common,
+  // expensive misread of a quote.
+  const incotermNotes = {
+    EXW: 'EXW: this price excludes export clearance and loading at origin — make sure "Freight & Logistics" below includes pickup from the seller\'s dock, not just the ocean/air leg.',
+    FOB: 'FOB: this price already includes export clearance and loading onto the vessel at the origin port — "Freight & Logistics" below should start from the origin port, not the factory floor.',
+    FCA: 'FCA: this price includes delivery to the named carrier (which may or may not include export loading, depending on the named place) — confirm which with the supplier before setting Freight & Logistics below.',
+    CIF: 'CIF: this price already includes freight and insurance to the destination port — check "Freight & Logistics" and any insurance in "Brokerage/Fees" below aren\'t double-counting what\'s already in this price.',
+    DDP: 'DDP: this price already includes duty and delivery to your door — Freight, Customs Duty, and Handling below should likely all be $0 for this quote, or you are double-counting.'
+  };
+  document.getElementById('tlc-incoterm-note').innerText = incotermNotes[incoterm] || '';
 }
 
 function calculateCustomPartBreakdown() {
@@ -6390,8 +6414,8 @@ function exportCSV() {
     ["EVM", "VAC", document.getElementById('evm-vac').innerText],
     ["EVM", "TCPI", document.getElementById('evm-tcpi').innerText],
     ["EOQ", "Reorder Point (ROP)", document.getElementById('eoq-out-rop').innerText],
-    ["Budget KPI", "Budget Variance ($)", document.getElementById('bk-out-variance-dollar').innerText],
-    ["Budget KPI", "Budget Variance (%)", document.getElementById('bk-out-variance-pct').innerText],
+    ["Budget KPI", "Unspent to Date ($)", document.getElementById('bk-out-variance-dollar').innerText],
+    ["Budget KPI", "Unspent to Date (%)", document.getElementById('bk-out-variance-pct').innerText],
     ["Budget KPI", "Remaining Budget", document.getElementById('bk-out-remaining').innerText],
     ["Budget KPI", "Burn Rate ($/Month)", document.getElementById('bk-out-burn-rate').innerText],
     ["Budget KPI", "Cost Variance — Opex", document.getElementById('bk-out-cost-variance').innerText],
