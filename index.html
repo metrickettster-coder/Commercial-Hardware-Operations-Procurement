@@ -338,6 +338,8 @@
       <button class="sub-btn" onclick="switchTool('npi', 'buildyields', this)">EVT/DVT/PVT Build Yields</button>
       <button class="sub-btn" onclick="switchTool('npi', 'eco', this)">ECO Impact Analysis</button>
       <button class="sub-btn" onclick="switchTool('npi', 'buildready', this)">Build Readiness Scorecard</button>
+      <button class="sub-btn" onclick="switchTool('npi', 'fatsat', this)">FAT/SAT Qualification</button>
+      <button class="sub-btn" onclick="switchTool('npi', 'standards', this)">Standards &amp; Compliance</button>
     </div>
 
     <!-- Gate Exit Verification -->
@@ -761,6 +763,104 @@
         <div class="panel">
           <h2 style="color: var(--amber);">⚠️ Build Readiness Flags</h2>
           <ul id="br-risk-list" class="risk-list"></ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- FAT/SAT Qualification Tracker -->
+    <div id="tool-fatsat" class="tool-view">
+      <h2 class="tool-title">FAT/SAT Qualification Tracker</h2>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Factory Acceptance Testing and Site Acceptance Testing qualify a specific unit or system right before it's trusted with production load — a distinct gate from EVT/DVT/PVT, which qualify the design. A critical/safety failure blocks sign-off regardless of overall pass rate.</p>
+
+      <div class="panel" style="margin-bottom:20px;">
+        <h2>FAT / SAT Log</h2>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead><tr>
+              <th style="min-width:150px;">Equipment / Unit ID</th>
+              <th>Test Type</th>
+              <th>Test Date</th>
+              <th>Site / Location</th>
+              <th>Criteria Passed</th>
+              <th>Criteria Total</th>
+              <th>Critical/Safety Failures</th>
+              <th>Open Punch-List Items</th>
+              <th>Result</th>
+              <th>Sign-Off</th>
+              <th></th>
+            </tr></thead>
+            <tbody id="fs-tbody"></tbody>
+          </table>
+        </div>
+        <button type="button" class="btn-row-add" onclick="addFatSatRow()">+ Add FAT/SAT Event</button>
+      </div>
+
+      <div class="grid">
+        <div class="panel">
+          <h2>Qualification Summary</h2>
+          <div class="readout"><div class="rlabel">Events Logged</div><div class="rvalue" id="fs-out-count">0</div></div>
+          <div class="readout"><div class="rlabel">Pass</div><div class="rvalue" id="fs-out-pass" style="color:var(--green);">0</div></div>
+          <div class="readout"><div class="rlabel">Conditional (Open Punch List)</div><div class="rvalue" id="fs-out-conditional" style="color:var(--amber);">0</div></div>
+          <div class="readout"><div class="rlabel">Fail</div><div class="rvalue" id="fs-out-fail" style="color:var(--red);">0</div></div>
+          <div class="readout"><div class="rlabel">Total Open Punch-List Items</div><div class="rvalue" id="fs-out-punch">0</div></div>
+        </div>
+        <div class="panel">
+          <h2 style="color: var(--amber);">⚠️ Qualification Flags</h2>
+          <ul id="fs-risk-list" class="risk-list"></ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Standards & Compliance Qualification Checklist -->
+    <div id="tool-standards" class="tool-view">
+      <h2 class="tool-title">Standards &amp; Compliance Qualification Checklist</h2>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Track which codes and standards apply to this product and where each stands — for genuinely new-to-market or new-to-supplier equipment, this checklist is often as much of the qualification program as the test lab work.</p>
+
+      <div class="panel" style="margin-bottom:20px;">
+        <h2>Applicable Standards</h2>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead><tr>
+              <th style="min-width:150px;">Standard / Code</th>
+              <th>Applicability</th>
+              <th>Status</th>
+              <th>Certifying Body / Lab</th>
+              <th>Target Completion</th>
+              <th>Evidence / Cert #</th>
+              <th></th>
+            </tr></thead>
+            <tbody id="std-tbody"></tbody>
+          </table>
+        </div>
+        <button type="button" class="btn-row-add" onclick="addStandardRow()">+ Add Standard</button>
+        <datalist id="std-common-list">
+          <option value="UL 9540"></option>
+          <option value="UL 9540A"></option>
+          <option value="UL 1741"></option>
+          <option value="UL 1778"></option>
+          <option value="IEEE 1547"></option>
+          <option value="IEEE 2800"></option>
+          <option value="IEC 62477"></option>
+          <option value="IEC 62909"></option>
+          <option value="IEEE C37 Series"></option>
+          <option value="IEEE C57 Series"></option>
+          <option value="NFPA 70 (NEC)"></option>
+          <option value="NFPA 855"></option>
+        </datalist>
+      </div>
+
+      <div class="grid">
+        <div class="panel">
+          <h2>Compliance Summary</h2>
+          <div class="readout"><div class="rlabel">Required Standards</div><div class="rvalue" id="std-out-required">0</div></div>
+          <div class="readout"><div class="rlabel">Certified</div><div class="rvalue" id="std-out-certified" style="color:var(--green);">0</div></div>
+          <div class="readout"><div class="rlabel">Overdue (Past Target, Not Certified)</div><div class="rvalue" id="std-out-overdue" style="color:var(--red);">0</div></div>
+          <div class="readout"><div class="rlabel">Failed</div><div class="rvalue" id="std-out-failed" style="color:var(--red);">0</div></div>
+          <div class="readout"><div class="rlabel">% Required Standards Certified</div><div class="rvalue" id="std-out-pct">—</div></div>
+        </div>
+        <div class="panel">
+          <h2 style="color: var(--amber);">⚠️ Compliance Flags</h2>
+          <ul id="std-risk-list" class="risk-list"></ul>
         </div>
       </div>
     </div>
@@ -2282,6 +2382,17 @@
         <div class="panel">
           <h2 style="color: var(--amber);">⚠️ Reliability Flags</h2>
           <ul id="rel-risk-list" class="risk-list"></ul>
+        </div>
+      </div>
+
+      <div class="grid" style="margin-top:20px;">
+        <div class="panel">
+          <h2>Qualification Test Planning — Sample Size for Zero-Failure Demonstration</h2>
+          <p style="color:var(--text-mid); font-size:0.85em; margin-bottom:10px;">Answers "how many units do we need to build and test, with zero failures, to demonstrate a target reliability at a given confidence?" — the standard success-testing formula, independent of the field-data model above.</p>
+          <div class="field"><label for="rel-target-reliability">Target Reliability (%)</label><input type="number" id="rel-target-reliability" value="95" min="1" max="99.99" step="0.1" oninput="calculateReliability()"></div>
+          <div class="field"><label for="rel-confidence">Confidence Level (%)</label><input type="number" id="rel-confidence" value="90" min="1" max="99.99" step="0.1" oninput="calculateReliability()"></div>
+          <div class="readout"><div class="rlabel">Required Sample Size (Zero Failures Allowed)</div><div class="rvalue" id="rel-out-samplesize" style="color:var(--amber);">—</div></div>
+          <p id="rel-samplesize-note" style="color:var(--text-dim); font-size:0.8em; margin-top:6px;"></p>
         </div>
       </div>
     </div>
@@ -4673,6 +4784,17 @@ function calculateReliability() {
   const missionTime = parseFloat(document.getElementById('rel-mission').value) || 0;
   const fleet = parseFloat(document.getElementById('rel-fleet').value) || 0;
 
+  // Standard zero-failure "success testing" sample size: n = ceil(ln(1-C) / ln(R)). Independent
+  // of the field-data model above -- this answers a planning question ("how many units to
+  // qualify?"), not an observed-reliability question.
+  const targetRel = Math.min(99.99, Math.max(1, parseFloat(document.getElementById('rel-target-reliability').value) || 0)) / 100;
+  const confidence = Math.min(99.99, Math.max(1, parseFloat(document.getElementById('rel-confidence').value) || 0)) / 100;
+  const sampleSizeEl = document.getElementById('rel-out-samplesize');
+  const sampleNoteEl = document.getElementById('rel-samplesize-note');
+  const n = Math.ceil(Math.log(1 - confidence) / Math.log(targetRel));
+  sampleSizeEl.innerText = n + ' Units';
+  sampleNoteEl.innerText = `${n} units must complete the qualification test with zero failures to demonstrate ${(targetRel * 100).toFixed(1)}% reliability at ${(confidence * 100).toFixed(1)}% confidence. A single failure anywhere in the sample invalidates the demonstration at this sample size.`;
+
   const mtbfEl = document.getElementById('rel-out-mtbf');
   const lambdaEl = document.getElementById('rel-out-lambda');
   const fitEl = document.getElementById('rel-out-fit');
@@ -6364,6 +6486,199 @@ function calculateFactoryDefects() {
   }
 }
 
+// --- FAT/SAT QUALIFICATION TRACKER ---
+let fsRowCount = 0;
+function addFatSatRow(vals) {
+  vals = vals || {};
+  fsRowCount++;
+  const id = fsRowCount;
+  const tbody = document.getElementById('fs-tbody');
+  const tr = document.createElement('tr');
+  tr.id = 'fs-row-' + id;
+  tr.innerHTML = `
+    <td><input type="text" id="fs-unit-${id}" value="${vals.unit || ''}" placeholder="e.g. BESS-Unit-07" oninput="calculateFatSat()"></td>
+    <td><select id="fs-type-${id}" onchange="calculateFatSat()">
+      <option value="FAT" ${(vals.type === 'FAT' || !vals.type) ? 'selected' : ''}>FAT</option>
+      <option value="SAT" ${vals.type === 'SAT' ? 'selected' : ''}>SAT</option>
+    </select></td>
+    <td><input type="date" id="fs-date-${id}" value="${vals.date || ''}" oninput="calculateFatSat()"></td>
+    <td><input type="text" id="fs-location-${id}" value="${vals.location || ''}" placeholder="Factory / Site" oninput="calculateFatSat()"></td>
+    <td><input type="number" id="fs-passed-${id}" value="${vals.passed !== undefined ? vals.passed : ''}" min="0" oninput="calculateFatSat()"></td>
+    <td><input type="number" id="fs-total-${id}" value="${vals.total !== undefined ? vals.total : ''}" min="0" oninput="calculateFatSat()"></td>
+    <td><input type="number" id="fs-critical-${id}" value="${vals.critical !== undefined ? vals.critical : 0}" min="0" oninput="calculateFatSat()"></td>
+    <td><input type="number" id="fs-punch-${id}" value="${vals.punch !== undefined ? vals.punch : 0}" min="0" oninput="calculateFatSat()"></td>
+    <td class="score-cell" id="fs-result-${id}">—</td>
+    <td><select id="fs-signoff-${id}" onchange="calculateFatSat()">
+      <option value="Not Signed" ${(vals.signoff === 'Not Signed' || !vals.signoff) ? 'selected' : ''}>Not Signed</option>
+      <option value="Signed - Conditional" ${vals.signoff === 'Signed - Conditional' ? 'selected' : ''}>Signed - Conditional</option>
+      <option value="Signed - Full" ${vals.signoff === 'Signed - Full' ? 'selected' : ''}>Signed - Full</option>
+    </select></td>
+    <td><button type="button" class="btn-row-remove" onclick="removeFatSatRow(${id})">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+  calculateFatSat();
+}
+
+function removeFatSatRow(id) {
+  const row = document.getElementById('fs-row-' + id);
+  if (row) row.remove();
+  calculateFatSat();
+}
+
+function calculateFatSat() {
+  const tbody = document.getElementById('fs-tbody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  let pass = 0, conditional = 0, fail = 0, totalPunch = 0, namedCount = 0;
+  const items = [];
+  const flags = [];
+
+  rows.forEach(tr => {
+    const id = tr.id.replace('fs-row-', '');
+    const unit = document.getElementById('fs-unit-' + id).value.trim();
+    const type = document.getElementById('fs-type-' + id).value;
+    const passed = parseFloat(document.getElementById('fs-passed-' + id).value) || 0;
+    const total = parseFloat(document.getElementById('fs-total-' + id).value) || 0;
+    const critical = parseFloat(document.getElementById('fs-critical-' + id).value) || 0;
+    const punch = parseFloat(document.getElementById('fs-punch-' + id).value) || 0;
+    const resultEl = document.getElementById('fs-result-' + id);
+
+    const passRate = total > 0 ? (passed / total) * 100 : 0;
+    let result, color;
+    if (critical > 0) { result = 'FAIL'; color = 'var(--red)'; }
+    else if (passRate >= 100 && punch === 0) { result = 'PASS'; color = 'var(--green)'; }
+    else if (passRate >= 90) { result = 'CONDITIONAL'; color = 'var(--amber)'; }
+    else { result = 'FAIL'; color = 'var(--red)'; }
+
+    if (!unit) {
+      resultEl.innerText = result + ' (unnamed — excluded from summary)';
+      resultEl.style.color = 'var(--text-dim)';
+      return;
+    }
+    resultEl.innerText = result;
+    resultEl.style.color = color;
+
+    namedCount++;
+    if (result === 'PASS') pass++;
+    else if (result === 'CONDITIONAL') conditional++;
+    else fail++;
+    totalPunch += punch;
+    items.push({ unit, type, critical, result, punch });
+
+    if (critical > 0) {
+      flags.push(`<strong>${unit} (${type}) — ${critical} Critical/Safety Failure(s):</strong> This blocks sign-off regardless of overall pass rate — do not energize or accept until root cause and corrective action close these out.`);
+    }
+  });
+
+  // A SAT logged with no prior FAT for the same unit is a real, specific risk in fast-scaling
+  // programs (skipping factory-level acceptance to hit a site schedule) -- worth catching.
+  items.filter(it => it.type === 'SAT').forEach(sat => {
+    const hasFat = items.some(it => it.type === 'FAT' && it.unit.toLowerCase() === sat.unit.toLowerCase());
+    if (!hasFat) {
+      flags.push(`<strong>${sat.unit} — SAT Logged with No FAT on Record:</strong> Confirm factory acceptance actually happened (and just isn't logged here) before treating site acceptance as sufficient on its own.`);
+    }
+  });
+
+  document.getElementById('fs-out-count').innerText = namedCount;
+  document.getElementById('fs-out-pass').innerText = pass;
+  document.getElementById('fs-out-conditional').innerText = conditional;
+  document.getElementById('fs-out-fail').innerText = fail;
+  document.getElementById('fs-out-punch').innerText = totalPunch;
+
+  const riskList = document.getElementById('fs-risk-list');
+  riskList.innerHTML = '';
+  if (rows.length === 0) {
+    riskList.innerHTML = '<li>Add a FAT/SAT event to see flags.</li>';
+  } else if (flags.length === 0) {
+    riskList.innerHTML = '<li>No qualification flags at current inputs.</li>';
+  } else {
+    flags.forEach(f => { const li = document.createElement('li'); li.innerHTML = f; riskList.appendChild(li); });
+  }
+}
+
+// --- STANDARDS & COMPLIANCE QUALIFICATION CHECKLIST ---
+let stdRowCount = 0;
+function addStandardRow(vals) {
+  vals = vals || {};
+  stdRowCount++;
+  const id = stdRowCount;
+  const tbody = document.getElementById('std-tbody');
+  const tr = document.createElement('tr');
+  tr.id = 'std-row-' + id;
+  tr.innerHTML = `
+    <td><input type="text" id="std-name-${id}" value="${vals.name || ''}" placeholder="e.g. UL 9540A" list="std-common-list" oninput="calculateStandards()"></td>
+    <td><select id="std-applic-${id}" onchange="calculateStandards()">
+      <option value="Required" ${(vals.applic === 'Required' || !vals.applic) ? 'selected' : ''}>Required</option>
+      <option value="Recommended" ${vals.applic === 'Recommended' ? 'selected' : ''}>Recommended</option>
+      <option value="Not Applicable" ${vals.applic === 'Not Applicable' ? 'selected' : ''}>Not Applicable</option>
+    </select></td>
+    <td><select id="std-status-${id}" onchange="calculateStandards()">
+      <option value="Not Started" ${(vals.status === 'Not Started' || !vals.status) ? 'selected' : ''}>Not Started</option>
+      <option value="Testing In Progress" ${vals.status === 'Testing In Progress' ? 'selected' : ''}>Testing In Progress</option>
+      <option value="Cert Pending" ${vals.status === 'Cert Pending' ? 'selected' : ''}>Cert Pending</option>
+      <option value="Certified" ${vals.status === 'Certified' ? 'selected' : ''}>Certified</option>
+      <option value="Failed" ${vals.status === 'Failed' ? 'selected' : ''}>Failed</option>
+    </select></td>
+    <td><input type="text" id="std-certbody-${id}" value="${vals.certbody || ''}" placeholder="e.g. UL, Intertek, TUV" oninput="calculateStandards()"></td>
+    <td><input type="date" id="std-target-${id}" value="${vals.target || ''}" oninput="calculateStandards()"></td>
+    <td><input type="text" id="std-evidence-${id}" value="${vals.evidence || ''}" placeholder="Cert / report #" oninput="calculateStandards()"></td>
+    <td><button type="button" class="btn-row-remove" onclick="removeStandardRow(${id})">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+  calculateStandards();
+}
+
+function removeStandardRow(id) {
+  const row = document.getElementById('std-row-' + id);
+  if (row) row.remove();
+  calculateStandards();
+}
+
+function calculateStandards() {
+  const tbody = document.getElementById('std-tbody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  let required = 0, certified = 0, overdue = 0, failed = 0;
+  const flags = [];
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+
+  rows.forEach(tr => {
+    const id = tr.id.replace('std-row-', '');
+    const name = document.getElementById('std-name-' + id).value.trim();
+    const applic = document.getElementById('std-applic-' + id).value;
+    const status = document.getElementById('std-status-' + id).value;
+    const targetStr = document.getElementById('std-target-' + id).value;
+
+    if (!name || applic !== 'Required') return;
+    required++;
+    if (status === 'Certified') certified++;
+    else if (status === 'Failed') {
+      failed++;
+      flags.push(`<strong>${name} — FAILED:</strong> This is a required standard for this product — a failed qualification here blocks launch until re-tested and passed, not just a punch-list item.`);
+    } else if (targetStr) {
+      const targetDate = new Date(targetStr + 'T00:00:00');
+      if (targetDate < today) {
+        overdue++;
+        flags.push(`<strong>${name} — Overdue:</strong> Target completion date has passed and this required standard still isn't certified — confirm the lab/cert-body timeline or escalate.`);
+      }
+    }
+  });
+
+  document.getElementById('std-out-required').innerText = required;
+  document.getElementById('std-out-certified').innerText = certified;
+  document.getElementById('std-out-overdue').innerText = overdue;
+  document.getElementById('std-out-failed').innerText = failed;
+  document.getElementById('std-out-pct').innerText = required > 0 ? ((certified / required) * 100).toFixed(0) + '%' : '—';
+
+  const riskList = document.getElementById('std-risk-list');
+  riskList.innerHTML = '';
+  if (rows.length === 0) {
+    riskList.innerHTML = '<li>Add a standard to see flags.</li>';
+  } else if (flags.length === 0) {
+    riskList.innerHTML = '<li>No compliance flags at current inputs.</li>';
+  } else {
+    flags.forEach(f => { const li = document.createElement('li'); li.innerHTML = f; riskList.appendChild(li); });
+  }
+}
+
 // --- EXPORT FUNCTIONALITY ---
 // Scrapes a rendered results table (head + body) into [tool, column, value] triples —
 // used for tools like Multi-Quote whose output is a variable-width comparison table
@@ -6442,6 +6757,7 @@ function exportCSV() {
     ["FMEA", "High-Priority Items (RPN>100)", document.getElementById('pf-out-high-count').innerText],
     ["Reliability", "MTBF (Hours)", document.getElementById('rel-out-mtbf').innerText],
     ["Reliability", "Reliability at Mission Time", document.getElementById('rel-out-reliability').innerText],
+    ["Reliability", "Required Sample Size (Zero-Failure Demo)", document.getElementById('rel-out-samplesize').innerText],
     ["Make-vs-Buy", "Breakeven Volume", document.getElementById('mvb-out-breakeven').innerText],
     ["Make-vs-Buy", "Recommendation", document.getElementById('mvb-out-rec').innerText],
     ["Duty Drawback", "Total Annual Duty Paid", document.getElementById('dd-out-total').innerText],
@@ -6472,7 +6788,13 @@ function exportCSV() {
     ["Factory Defect Pareto", "Open Defect Count", document.getElementById('fd-out-open-count').innerText],
     ["Factory Defect Pareto", "Critical Severity (Open)", document.getElementById('fd-out-critical-count').innerText],
     ["Factory Defect Pareto", "Total Open Yield Loss", document.getElementById('fd-out-total-yieldloss').innerText],
-    ["Factory Defect Pareto", "Closure Rate", document.getElementById('fd-out-closure-rate').innerText]
+    ["Factory Defect Pareto", "Closure Rate", document.getElementById('fd-out-closure-rate').innerText],
+    ["FAT/SAT Qualification", "Pass", document.getElementById('fs-out-pass').innerText],
+    ["FAT/SAT Qualification", "Fail", document.getElementById('fs-out-fail').innerText],
+    ["FAT/SAT Qualification", "Open Punch-List Items", document.getElementById('fs-out-punch').innerText],
+    ["Standards & Compliance", "Required Standards", document.getElementById('std-out-required').innerText],
+    ["Standards & Compliance", "Certified", document.getElementById('std-out-certified').innerText],
+    ["Standards & Compliance", "% Required Certified", document.getElementById('std-out-pct').innerText]
   ];
 
   rows.push(...scrapeTableForExport('mq-output-table', 'Multi-Quote Comparison'));
@@ -6558,6 +6880,18 @@ function recalculateFixedTools() {
 }
 
 function seedExampleData() {
+  addFatSatRow({ unit: 'BESS-Unit-07', type: 'FAT', date: '2026-08-10', location: 'Supplier Factory - Ohio', passed: 48, total: 50, critical: 0, punch: 2, signoff: 'Signed - Conditional' });
+  addFatSatRow({ unit: 'BESS-Unit-07', type: 'SAT', date: '2026-09-05', location: 'Campus A - Bay 3', passed: 50, total: 50, critical: 0, punch: 0, signoff: 'Signed - Full' });
+  addFatSatRow({ unit: 'Inverter-Skid-14', type: 'FAT', date: '2026-08-20', location: 'Supplier Factory - Germany', passed: 40, total: 45, critical: 1, punch: 3, signoff: 'Not Signed' });
+  addFatSatRow({ unit: 'SST-Unit-02', type: 'SAT', date: '2026-09-10', location: 'Campus B - Yard 2', passed: 30, total: 30, critical: 0, punch: 0, signoff: 'Signed - Full' });
+
+  addStandardRow({ name: 'UL 9540', applic: 'Required', status: 'Certified', certbody: 'UL', target: '2026-06-01', evidence: 'UL-9540-2026-0142' });
+  addStandardRow({ name: 'UL 9540A', applic: 'Required', status: 'Testing In Progress', certbody: 'UL', target: '2026-10-15', evidence: '' });
+  addStandardRow({ name: 'IEEE 1547', applic: 'Required', status: 'Cert Pending', certbody: 'Intertek', target: '2026-09-01', evidence: '' });
+  addStandardRow({ name: 'UL 1741', applic: 'Required', status: 'Failed', certbody: 'UL', target: '2026-07-01', evidence: '' });
+  addStandardRow({ name: 'IEC 62477', applic: 'Required', status: 'Not Started', certbody: '', target: '', evidence: '' });
+  addStandardRow({ name: 'NFPA 855', applic: 'Recommended', status: 'Not Started', certbody: '', target: '', evidence: '' });
+
   addSuppQualRow({ name: 'Meridian Stamping Co', cert: 'ISO 9001', audit: 88, financial: 82, capacity: 75, fai: 'Pass', cost: 70 });
   addSuppQualRow({ name: 'Delta Precision Castings', cert: 'None', audit: 65, financial: 60, capacity: 80, fai: 'Conditional', cost: 85 });
   addSuppQualRow({ name: 'Harborline Connectors', cert: 'IATF 16949', audit: 72, financial: 78, capacity: 68, fai: 'Fail', cost: 60 });
@@ -6641,7 +6975,9 @@ const DYNAMIC_TABLES = [
   { tbody: 'fm-tbody', prefix: 'fm', addRow: 'addFreightModeRow' },
   { tbody: 'df-tbody', prefix: 'df', addRow: 'addForecastAccRow' },
   { tbody: 'oee-tbody', prefix: 'oee', addRow: 'addOeeRow' },
-  { tbody: 'fd-tbody', prefix: 'fd', addRow: 'addFactoryDefectRow' }
+  { tbody: 'fd-tbody', prefix: 'fd', addRow: 'addFactoryDefectRow' },
+  { tbody: 'fs-tbody', prefix: 'fs', addRow: 'addFatSatRow' },
+  { tbody: 'std-tbody', prefix: 'std', addRow: 'addStandardRow' }
 ];
 const SCENARIO_EXCLUDE_IDS = new Set(['fb-type', 'fb-message', 'fb-email', 'fileInput', 'mq-fileinput', 'scenarioFileInput']);
 
