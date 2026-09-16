@@ -3,20 +3,31 @@
  */
 class DataRedactor {
   constructor() {
+    // No /g flag: these are only ever used with .test(), and a global flag there carries
+    // lastIndex state between calls, which silently skips matches on a second upload.
     this.patterns = [
-      { name: "Payment Terms (Net 30/60/90)", regex: /net\s*(15|30|45|60|90)|prepayment|due upon receipt/gi },
-      { name: "Incoterms / Freight Terms", regex: /(EXW|FOB|DDP|CIF|FCA|DAP)/gi },
-      { name: "Tooling / NRE Fee Specified", regex: /(tooling|NRE|non-recurring engineering|fixture fee|mold cost)/gi },
-      { name: "Minimum Order Quantity (MOQ)", regex: /(MOQ|minimum order quantity|min order)/gi },
-      { name: "Lead Time / Delivery Schedule", regex: /(lead time|delivery schedule|ARO|weeks ARO|turnaround time)/gi },
-      { name: "Warranty Term", regex: /(warranty|guarantee|\d+\s*(month|year)\s*warranty)/gi }
+      { name: "Payment Terms (Net 30/60/90)", regex: /\bnet\s*(15|30|45|60|90)\b|\bprepayment\b|\bdue upon receipt\b/i },
+      { name: "Incoterms / Freight Terms", regex: /\b(EXW|FOB|DDP|CIF|FCA|DAP)\b/ },
+      { name: "Tooling / NRE Fee Specified", regex: /\btooling\b|\bNRE\b|\bnon-recurring engineering\b|\bfixture fee\b|\bmold cost\b/i },
+      { name: "Minimum Order Quantity (MOQ)", regex: /\bMOQ\b|\bminimum order quantity\b|\bmin order\b/i },
+      { name: "Lead Time / Delivery Schedule", regex: /\blead time\b|\bdelivery schedule\b|\bARO\b|\bweeks ARO\b|\bturnaround time\b/i },
+      { name: "Warranty Term", regex: /\bwarranty\b|\bguarantee\b|\d+\s*(month|year)\s*warranty\b/i }
     ];
   }
 
   processText(text) {
+    // Flag-detection runs on a cleaned copy: strip "(e.g. ...)" instructional hints and
+    // any bare "LABEL:" line with no value after it, so an unfilled template (or a blank
+    // field in a real quote) doesn't get flagged as if it actually specified a term.
+    const flagText = text
+      .replace(/\(e\.g\.[^)]*\)/gi, '')
+      .split(/\r\n|\r|\n/)
+      .filter(line => !/^[A-Za-z0-9 /]+:\s*\$?\s*$/.test(line.trim()))
+      .join('\n');
+
     let flagsFound = [];
     this.patterns.forEach(p => {
-      if (p.regex.test(text)) {
+      if (p.regex.test(flagText)) {
         flagsFound.push(p.name);
       }
     });
@@ -147,7 +158,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const setupMatch = text.match(/(?:setup|set-up|fixture\s*setup)[\:\$\s]*([\d\.,]+)/i);
     const toolingMatch = text.match(/(?:tooling|nre|non-recurring|fixture\s*cost)[\:\$\s]*([\d\.,]+)/i);
     const qtyMatch = text.match(/(?:quantity|qty|moq|order\s*size)[\:\s]*([\d\.,]+)/i);
-    const materialMatch = text.match(/(?:material|alloy|substrate)[\:\s]*([a-zA-Z0-9\-\s]+)/i);
+    // Both the separator (colon/whitespace after the label) and the captured value are
+    // restricted to non-newline characters, so a blank "MATERIAL:" field can't skip past
+    // its own line break and capture whatever label comes next.
+    const materialMatch = text.match(/(?:material|alloy|substrate)[:\t ]*([^\r\n]*)/i);
 
     const filledFieldIds = [];
 
@@ -168,8 +182,11 @@ document.addEventListener('DOMContentLoaded', () => {
       filledFieldIds.push('cp-qty');
     }
     if (materialMatch && document.getElementById('cp-material')) {
-      document.getElementById('cp-material').value = materialMatch[1].trim();
-      filledFieldIds.push('cp-material');
+      const materialVal = materialMatch[1].replace(/\(e\.g\.[^)]*\)/gi, '').trim();
+      if (materialVal) {
+        document.getElementById('cp-material').value = materialVal;
+        filledFieldIds.push('cp-material');
+      }
     }
 
     // Clear any previous highlights, then mark exactly which fields this upload actually touched.
