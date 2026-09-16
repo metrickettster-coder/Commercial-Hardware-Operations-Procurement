@@ -245,16 +245,17 @@
       <div class="grid">
         <div class="panel">
           <h2>Market Sizing Inputs</h2>
-          <div class="field"><label>Total Potential Target Units (Global)</label><input type="number" id="ts-units" value="500000" oninput="calculateTAM()"></div>
-          <div class="field"><label>Average Selling Price (ASP)</label><div class="prefix-wrap"><span>$</span><input type="number" id="ts-asp" value="1200" oninput="calculateTAM()"></div></div>
-          <div class="field"><label>Serviceable Market Reach % (SAM Factor)</label><input type="number" id="ts-sam-pct" value="35" oninput="calculateTAM()"></div>
-          <div class="field"><label>Serviceable Obtainable Market % (SOM Target)</label><input type="number" id="ts-som-pct" value="10" oninput="calculateTAM()"></div>
+          <div class="field"><label>Total Potential Target Units (Global)</label><input type="number" id="ts-units" value="500000" min="0" oninput="calculateTAM()"></div>
+          <div class="field"><label>Average Selling Price (ASP)</label><div class="prefix-wrap"><span>$</span><input type="number" id="ts-asp" value="1200" min="0" oninput="calculateTAM()"></div></div>
+          <div class="field"><label>Serviceable Market Reach % (SAM Factor)</label><input type="number" id="ts-sam-pct" value="35" min="0" max="100" oninput="calculateTAM()"></div>
+          <div class="field"><label>Serviceable Obtainable Market % (SOM Target)</label><input type="number" id="ts-som-pct" value="10" min="0" max="100" oninput="calculateTAM()"></div>
         </div>
         <div class="panel">
           <h2>Market Sizing Outputs</h2>
           <div class="readout"><div class="rlabel">Total Addressable Market (TAM)</div><div class="rvalue" id="ts-out-tam" style="color:var(--amber);">$600,000,000</div></div>
           <div class="readout"><div class="rlabel">Serviceable Addressable Market (SAM)</div><div class="rvalue" id="ts-out-sam">$210,000,000</div></div>
           <div class="readout"><div class="rlabel">Serviceable Obtainable Market (SOM)</div><div class="rvalue" id="ts-out-som" style="color:var(--green);">$21,000,000</div></div>
+          <div id="ts-warn" style="color:var(--red); font-size:0.8em; margin-top:8px;"></div>
         </div>
       </div>
     </div>
@@ -277,6 +278,7 @@
           <div class="readout"><div class="rlabel">Net Present Value (NPV)</div><div class="rvalue" id="npv-out-val" style="color:var(--amber);">$699,850</div></div>
           <div class="readout"><div class="rlabel">Simple Payback Period</div><div class="rvalue" id="npv-out-payback">2.1 Years</div></div>
           <div class="readout"><div class="rlabel">Program Viability Status</div><div class="rvalue" id="npv-out-status" style="color:var(--green);">VIABLE</div></div>
+          <div id="npv-warn" style="color:var(--red); font-size:0.8em; margin-top:8px;"></div>
         </div>
       </div>
     </div>
@@ -289,13 +291,14 @@
         <div class="panel">
           <h2>Financial Boundary Inputs</h2>
           <div class="field"><label>Target Commercial Price / MSRP</label><div class="prefix-wrap"><span>$</span><input type="number" id="dtc-msrp" value="450" oninput="calculateDTC()"></div></div>
-          <div class="field"><label>Target Gross Margin (%)</label><input type="number" id="dtc-margin" value="40" oninput="calculateDTC()"></div>
+          <div class="field"><label>Target Gross Margin (%)</label><input type="number" id="dtc-margin" value="40" min="0" max="99" oninput="calculateDTC()"></div>
           <div class="field"><label>Estimated Logistics, Packaging &amp; Freight Allowance</label><div class="prefix-wrap"><span>$</span><input type="number" id="dtc-logistics" value="25" oninput="calculateDTC()"></div></div>
         </div>
         <div class="panel">
           <h2>Max Allowable Cost Breakdown</h2>
           <div class="readout"><div class="rlabel">Target COGS Limit</div><div class="rvalue" id="dtc-out-cogs">$270.00</div></div>
           <div class="readout"><div class="rlabel">Max Allowable Manufactured BOM Cost</div><div class="rvalue" id="dtc-out-bom" style="color:var(--amber);">$245.00</div></div>
+          <div id="dtc-warn" style="color:var(--red); font-size:0.8em; margin-top:8px;"></div>
         </div>
       </div>
     </div>
@@ -2283,10 +2286,15 @@ function switchTool(pillarId, toolId, btn) {
 
 // --- CALCULATORS ---
 function calculateTAM() {
-  const units = parseFloat(document.getElementById('ts-units').value) || 0;
-  const asp = parseFloat(document.getElementById('ts-asp').value) || 0;
-  const samPct = (parseFloat(document.getElementById('ts-sam-pct').value) || 0) / 100;
-  const somPct = (parseFloat(document.getElementById('ts-som-pct').value) || 0) / 100;
+  const unitsRaw = parseFloat(document.getElementById('ts-units').value) || 0;
+  const aspRaw = parseFloat(document.getElementById('ts-asp').value) || 0;
+  const samPctRaw = parseFloat(document.getElementById('ts-sam-pct').value) || 0;
+  const somPctRaw = parseFloat(document.getElementById('ts-som-pct').value) || 0;
+
+  const units = Math.max(0, unitsRaw);
+  const asp = Math.max(0, aspRaw);
+  const samPct = Math.min(100, Math.max(0, samPctRaw)) / 100;
+  const somPct = Math.min(100, Math.max(0, somPctRaw)) / 100;
 
   const tam = units * asp;
   const sam = tam * samPct;
@@ -2295,11 +2303,22 @@ function calculateTAM() {
   document.getElementById('ts-out-tam').innerText = '$' + tam.toLocaleString();
   document.getElementById('ts-out-sam').innerText = '$' + sam.toLocaleString();
   document.getElementById('ts-out-som').innerText = '$' + som.toLocaleString();
+
+  const warnings = [];
+  if (unitsRaw < 0) warnings.push('Target units can\'t be negative — treated as 0.');
+  if (aspRaw < 0) warnings.push('ASP can\'t be negative — treated as $0.');
+  if (samPctRaw > 100 || samPctRaw < 0) warnings.push(`SAM Factor of ${samPctRaw}% isn't a valid share of TAM — clamped to ${(samPct * 100).toFixed(0)}%.`);
+  if (somPctRaw > 100 || somPctRaw < 0) warnings.push(`SOM Target of ${somPctRaw}% isn't a valid share of SAM — clamped to ${(somPct * 100).toFixed(0)}%.`);
+  document.getElementById('ts-warn').innerText = warnings.join(' ');
 }
 
 function calculateNPV() {
   const capex = parseFloat(document.getElementById('npv-capex').value) || 0;
-  const r = (parseFloat(document.getElementById('npv-discount').value) || 0) / 100;
+  const discountRaw = parseFloat(document.getElementById('npv-discount').value) || 0;
+  // A discount rate at or below -100% makes (1+r) zero or negative, which breaks present-value
+  // math (division by ~0, or a base that flips sign every year) rather than modeling anything
+  // real -- floor it just above -100% so the formula stays meaningful, and flag the input.
+  const r = Math.max(discountRaw, -99) / 100;
   const y1 = parseFloat(document.getElementById('npv-y1').value) || 0;
   const y2 = parseFloat(document.getElementById('npv-y2').value) || 0;
   const y3 = parseFloat(document.getElementById('npv-y3').value) || 0;
@@ -2333,18 +2352,28 @@ function calculateNPV() {
     statusEl.innerText = "NON-VIABLE";
     statusEl.style.color = "var(--red)";
   }
+
+  document.getElementById('npv-warn').innerText = discountRaw <= -100
+    ? `A discount rate of ${discountRaw}% isn't economically meaningful — floored at -99% for this calculation. Enter a realistic cost of capital (most programs run 8-20%).`
+    : '';
 }
 
 function calculateDTC() {
-  const msrp = parseFloat(document.getElementById('dtc-msrp').value) || 0;
-  const marginPct = (parseFloat(document.getElementById('dtc-margin').value) || 0) / 100;
-  const logistics = parseFloat(document.getElementById('dtc-logistics').value) || 0;
+  const msrp = Math.max(0, parseFloat(document.getElementById('dtc-msrp').value) || 0);
+  const marginRaw = parseFloat(document.getElementById('dtc-margin').value) || 0;
+  // A margin at or above 100% of price implies negative or zero COGS, which isn't a real
+  // target -- clamp to a sane ceiling so the output can't go negative.
+  const marginPct = Math.min(99, Math.max(0, marginRaw)) / 100;
+  const logistics = Math.max(0, parseFloat(document.getElementById('dtc-logistics').value) || 0);
 
   const cogsLimit = msrp * (1 - marginPct);
   const maxBom = cogsLimit - logistics;
 
   document.getElementById('dtc-out-cogs').innerText = '$' + cogsLimit.toFixed(2);
   document.getElementById('dtc-out-bom').innerText = '$' + (maxBom > 0 ? maxBom.toFixed(2) : '0.00');
+  document.getElementById('dtc-warn').innerText = (marginRaw >= 100 || marginRaw < 0)
+    ? `A ${marginRaw}% margin isn't valid on a cost-plus basis — clamped to ${(marginPct * 100).toFixed(0)}%.`
+    : '';
 }
 
 function calculateTechRisk() {
@@ -2406,6 +2435,7 @@ function calculateStageGate() {
   let flags = [];
   let questions = [];
   let categoryHasIssue = [false, false, false, false]; // Schedule/Process, Manufacturing/Logistics, Factory/Process Structure, BOM/Component
+  let hardBlockers = []; // conditions that must block MP regardless of aggregate score
 
   const unknownNote = ' This wasn\'t verified — treat "Unknown" as a gap to close before relying on this gate, not as a pass.';
 
@@ -2416,13 +2446,19 @@ function calculateStageGate() {
       categoryHasIssue[0] = true;
       flags.push(`<strong>${milestoneNames[id]} Passed Under Pressure:</strong> Marked "Passed," but by your own note things were still in flux or the timeline was rushed — this milestone may not be as solid as a clean pass.`);
       questions.push(`Ask specifically what was still unresolved when ${milestoneNames[id]} was signed off, and whether that gap has since closed or just gone quiet.`);
+    } else if (val === 'open') {
+      categoryHasIssue[0] = true;
+      hardBlockers.push(`${milestoneNames[id]} still Open`);
+      flags.push(`<strong style="color:var(--red);">${milestoneNames[id]} Milestone Still Open:</strong> This gate hasn't been passed yet — MP can't be approved with an unresolved milestone still ahead of it, whatever the rest of the checklist looks like.`);
+      questions.push(`Get a firm date and current blocker list for closing ${milestoneNames[id]} before treating this gate as approvable.`);
     }
   });
 
   // --- Category 1: Schedule & Process Integrity ---
   if (stageIntegrity === 'skipped') {
     score += 4; categoryHasIssue[0] = true;
-    flags.push(`<strong>Stage Skipped Entirely:</strong> Going straight to a later phase (e.g. no golden unit, no low-rate run) removes the checkpoint designed to catch problems before volume — this is a different, more serious failure than a rushed stage.`);
+    hardBlockers.push('a validation stage was skipped entirely');
+    flags.push(`<strong style="color:var(--red);">Stage Skipped Entirely:</strong> Going straight to a later phase (e.g. no golden unit, no low-rate run) removes the checkpoint designed to catch problems before volume — this blocks MP approval on its own, independent of the aggregate score, until the skipped validation is either run or formally waived with documented justification.`);
     questions.push(`Confirm exactly which validation step was skipped and what evidence exists that the risk it was meant to catch has been covered another way.`);
   } else if (stageIntegrity === 'rushed') {
     score += 2; categoryHasIssue[0] = true;
@@ -2541,7 +2577,10 @@ function calculateStageGate() {
   }
 
   const statusEl = document.getElementById('sg-out-status');
-  if (milestoneScore === 4 && score === 0) {
+  if (hardBlockers.length > 0) {
+    statusEl.innerText = 'BLOCKED — do not proceed to MP';
+    statusEl.style.color = 'var(--red)';
+  } else if (milestoneScore === 4 && score === 0) {
     statusEl.innerText = 'APPROVED FOR MP';
     statusEl.style.color = 'var(--green)';
   } else if (compounding || milestoneScore < 3) {
@@ -2566,11 +2605,21 @@ function calculateStageGate() {
 function calculateBuildYields() {
   const phase = (document.getElementById('by-phase') || {}).value || 'EVT';
   const total = parseFloat(document.getElementById('by-total').value) || 0;
-  const failed = parseFloat(document.getElementById('by-failed').value) || 0;
+  const failedRaw = parseFloat(document.getElementById('by-failed').value) || 0;
 
-  if (total <= 0) return;
+  const yieldEl = document.getElementById('by-out-yield');
+  const statusElEarly = document.getElementById('by-out-status');
+  if (total <= 0) {
+    yieldEl.innerText = '—';
+    statusElEarly.innerText = 'Enter units built to see a yield.';
+    statusElEarly.style.color = 'var(--text-mid)';
+    return;
+  }
+  // More failures than units built isn't possible -- cap at the total so yield can't go
+  // negative, and flag it rather than silently showing a nonsense percentage.
+  const failed = Math.min(Math.max(0, failedRaw), total);
   const yieldPct = ((total - failed) / total) * 100;
-  document.getElementById('by-out-yield').innerText = yieldPct.toFixed(1) + '%';
+  yieldEl.innerText = yieldPct.toFixed(1) + '%' + (failedRaw > total ? ' ⚠️' : '');
 
   // Acceptable yield rises sharply by phase — an EVT build is still finding problems on purpose;
   // an MP build finding the same defect rate is a real, expensive line issue.
@@ -2584,7 +2633,10 @@ function calculateBuildYields() {
   const t = thresholds[phase] || thresholds.EVT;
 
   const statusEl = document.getElementById('by-out-status');
-  if (yieldPct >= t.excellent) {
+  if (failedRaw > total) {
+    statusEl.innerText = `${failedRaw} failures can't exceed ${total} units built — capped at ${total} (0% yield).`;
+    statusEl.style.color = "var(--red)";
+  } else if (yieldPct >= t.excellent) {
     statusEl.innerText = "EXCELLENT for " + phase;
     statusEl.style.color = "var(--green)";
   } else if (yieldPct >= t.acceptable) {
@@ -3152,19 +3204,17 @@ function calculateCustomPartBreakdown() {
   document.getElementById('out-setup-unit').innerText = '$' + setupPerUnit.toFixed(2) + ' / unit';
   document.getElementById('out-tooling-unit').innerText = '$' + toolingPerUnit.toFixed(2) + ' / unit';
 
+  // Always compute and write the real value, even at 0% tariff (where it equals the
+  // effective unit price) -- only visibility is conditional, so nothing ever reads a
+  // stale/zeroed placeholder.
   const tariffPerUnit = baseUnit * (tariffRate / 100);
   const landedUnit = effectiveUnit + tariffPerUnit;
+  document.getElementById('out-tariff-unit').innerText = '$' + tariffPerUnit.toFixed(2) + ' / unit';
+  document.getElementById('out-landed-unit').innerText = '$' + landedUnit.toFixed(2);
   const tariffRow = document.getElementById('out-tariff-row');
   const landedRow = document.getElementById('out-landed-row');
-  if (tariffRate > 0) {
-    if (tariffRow) tariffRow.style.display = '';
-    if (landedRow) landedRow.style.display = '';
-    document.getElementById('out-tariff-unit').innerText = '$' + tariffPerUnit.toFixed(2) + ' / unit';
-    document.getElementById('out-landed-unit').innerText = '$' + landedUnit.toFixed(2);
-  } else {
-    if (tariffRow) tariffRow.style.display = 'none';
-    if (landedRow) landedRow.style.display = 'none';
-  }
+  if (tariffRow) tariffRow.style.display = tariffRate > 0 ? '' : 'none';
+  if (landedRow) landedRow.style.display = tariffRate > 0 ? '' : 'none';
 
   const riskList = document.getElementById('risk-flags-list');
   const questionsList = document.getElementById('supplier-questions-list');
@@ -3890,9 +3940,9 @@ function addSupplierRow(vals) {
   tr.id = 'ss-row-' + id;
   tr.innerHTML = `
     <td><input type="text" id="ss-name-${id}" value="${vals.name || ''}" placeholder="Supplier name" oninput="calculateSupplierScorecard()"></td>
-    <td><input type="number" id="ss-otd-${id}" value="${vals.otd !== undefined ? vals.otd : 95}" min="0" max="100" oninput="calculateSupplierScorecard()"></td>
-    <td><input type="number" id="ss-ppm-${id}" value="${vals.ppm !== undefined ? vals.ppm : 500}" min="0" oninput="calculateSupplierScorecard()"></td>
-    <td><input type="number" id="ss-costvar-${id}" value="${vals.costvar !== undefined ? vals.costvar : 0}" oninput="calculateSupplierScorecard()"></td>
+    <td><input type="number" id="ss-otd-${id}" value="${vals.otd !== undefined ? vals.otd : ''}" min="0" max="100" oninput="calculateSupplierScorecard()"></td>
+    <td><input type="number" id="ss-ppm-${id}" value="${vals.ppm !== undefined ? vals.ppm : ''}" min="0" oninput="calculateSupplierScorecard()"></td>
+    <td><input type="number" id="ss-costvar-${id}" value="${vals.costvar !== undefined ? vals.costvar : ''}" oninput="calculateSupplierScorecard()"></td>
     <td><select id="ss-resp-${id}" onchange="calculateSupplierScorecard()">
       <option value="5" ${vals.resp == 5 ? 'selected' : ''}>5 - Excellent</option>
       <option value="4" ${vals.resp == 4 ? 'selected' : ''}>4 - Good</option>
@@ -3900,8 +3950,8 @@ function addSupplierRow(vals) {
       <option value="2" ${vals.resp == 2 ? 'selected' : ''}>2 - Poor</option>
       <option value="1" ${vals.resp == 1 ? 'selected' : ''}>1 - Very Poor</option>
     </select></td>
-    <td><input type="number" id="ss-esg-${id}" value="${vals.esg !== undefined ? vals.esg : 75}" min="0" max="100" oninput="calculateSupplierScorecard()"></td>
-    <td><input type="number" id="ss-spend-${id}" value="${vals.spend !== undefined ? vals.spend : 0}" min="0" oninput="calculateSupplierScorecard()"></td>
+    <td><input type="number" id="ss-esg-${id}" value="${vals.esg !== undefined ? vals.esg : ''}" min="0" max="100" oninput="calculateSupplierScorecard()"></td>
+    <td><input type="number" id="ss-spend-${id}" value="${vals.spend !== undefined ? vals.spend : ''}" min="0" oninput="calculateSupplierScorecard()"></td>
     <td class="score-cell" id="ss-score-${id}">—</td>
     <td class="score-cell" id="ss-status-${id}">—</td>
     <td><button type="button" class="btn-row-remove" onclick="removeSupplierRow(${id})">✕</button></td>
@@ -3930,14 +3980,14 @@ function calculateSupplierScorecard() {
 
   const tbody = document.getElementById('ss-tbody');
   const rows = Array.from(tbody.querySelectorAll('tr'));
-  let totalScore = 0, atRiskCount = 0, atRiskSpend = 0, totalSpend = 0;
+  let totalScore = 0, namedCount = 0, atRiskCount = 0, atRiskSpend = 0, totalSpend = 0;
   let topSupplier = null, topScore = -1;
   const flags = [];
   const spendValues = [];
 
   rows.forEach(tr => {
     const id = tr.id.replace('ss-row-', '');
-    const name = document.getElementById('ss-name-' + id).value || 'Unnamed Supplier';
+    const name = document.getElementById('ss-name-' + id).value.trim();
     const otd = parseFloat(document.getElementById('ss-otd-' + id).value) || 0;
     const ppm = parseFloat(document.getElementById('ss-ppm-' + id).value) || 0;
     const costVar = parseFloat(document.getElementById('ss-costvar-' + id).value) || 0;
@@ -3957,16 +4007,31 @@ function calculateSupplierScorecard() {
 
     const scoreEl = document.getElementById('ss-score-' + id);
     const statusEl = document.getElementById('ss-status-' + id);
-    scoreEl.innerText = composite.toFixed(1);
 
     let status, color;
     if (composite >= 85) { status = 'GREEN'; color = 'var(--green)'; }
     else if (composite >= 70) { status = 'AMBER'; color = 'var(--amber)'; }
-    else { status = 'RED'; color = 'var(--red)'; atRiskCount++; atRiskSpend += spend; }
+    else { status = 'RED'; color = 'var(--red)'; }
+
+    // A freshly added row with no name yet still shows a live per-row score/status as
+    // feedback while it's being filled in, but never counts toward the averages, HHI,
+    // at-risk totals, or "top performer" -- otherwise a blank row's defaults skew every
+    // summary number before the user has typed anything.
+    if (!name) {
+      scoreEl.innerText = composite.toFixed(1);
+      statusEl.innerText = status + ' (unnamed — excluded from summary)';
+      scoreEl.style.color = 'var(--text-dim)';
+      statusEl.style.color = 'var(--text-dim)';
+      return;
+    }
+
+    scoreEl.innerText = composite.toFixed(1);
     statusEl.innerText = status;
     statusEl.style.color = color;
     scoreEl.style.color = color;
 
+    if (status === 'RED') { atRiskCount++; atRiskSpend += spend; }
+    namedCount++;
     totalScore += composite;
     totalSpend += spend;
     spendValues.push(spend);
@@ -3977,7 +4042,7 @@ function calculateSupplierScorecard() {
     }
   });
 
-  document.getElementById('ss-out-avg').innerText = rows.length > 0 ? (totalScore / rows.length).toFixed(1) : '—';
+  document.getElementById('ss-out-avg').innerText = namedCount > 0 ? (totalScore / namedCount).toFixed(1) : '—';
   document.getElementById('ss-out-atrisk-count').innerText = atRiskCount;
   document.getElementById('ss-out-atrisk-spend').innerText = '$' + Math.round(atRiskSpend).toLocaleString();
   document.getElementById('ss-out-top').innerText = topSupplier ? `${topSupplier} (${topScore.toFixed(1)})` : '—';
@@ -4130,19 +4195,43 @@ let dcHeaders = [];
 let dcRows = [];
 let dcLastReport = null;
 
+// Quote-aware delimited-text parser: handles quoted fields with embedded commas/newlines
+// and "" as an escaped quote, so `"Acme, Inc.","$1,200.50"` splits into 2 fields, not 3.
+function parseDelimitedRows(raw, delimiter) {
+  const rows = [];
+  let row = [], field = '', inQuotes = false, i = 0;
+  while (i < raw.length) {
+    const ch = raw[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (raw[i + 1] === '"') { field += '"'; i += 2; continue; }
+        inQuotes = false; i++; continue;
+      }
+      field += ch; i++; continue;
+    }
+    if (ch === '"') { inQuotes = true; i++; continue; }
+    if (ch === delimiter) { row.push(field); field = ''; i++; continue; }
+    if (ch === '\r') { i++; continue; }
+    if (ch === '\n') { row.push(field); rows.push(row); row = []; field = ''; i++; continue; }
+    field += ch; i++;
+  }
+  if (field.length > 0 || row.length > 0) { row.push(field); rows.push(row); }
+  return rows.filter(r => !(r.length === 1 && r[0].trim() === ''));
+}
+
 function parseDataCut() {
   const raw = document.getElementById('dc-paste').value;
   const statusEl = document.getElementById('dc-parse-status');
-  const lines = raw.split(/\r\n|\r|\n/).filter(l => l.trim().length > 0);
-  if (lines.length < 2) {
+  const firstLine = raw.split(/\r\n|\r|\n/, 1)[0] || '';
+  const delimiter = firstLine.includes('\t') ? '\t' : ',';
+  const parsedRows = parseDelimitedRows(raw, delimiter);
+  if (parsedRows.length < 2) {
     statusEl.innerText = 'Paste a header row plus at least one data row.';
     statusEl.style.color = 'var(--red)';
     return;
   }
-  const delimiter = lines[0].includes('\t') ? '\t' : ',';
-  dcHeaders = lines[0].split(delimiter).map(h => h.trim());
-  dcRows = lines.slice(1).map(line => {
-    const cells = line.split(delimiter);
+  dcHeaders = parsedRows[0].map(h => h.trim());
+  dcRows = parsedRows.slice(1).map(cells => {
     const row = {};
     dcHeaders.forEach((h, i) => { row[h] = (cells[i] !== undefined ? cells[i].trim() : ''); });
     return row;
@@ -4160,10 +4249,15 @@ function parseDataCut() {
 }
 
 function dcParseNumeric(val) {
-  if (val === undefined || val === null) return 0;
-  const cleaned = String(val).replace(/[$,]/g, '').trim();
+  if (val === undefined || val === null) return { value: 0, ok: true };
+  const str = String(val).trim();
+  if (str === '') return { value: 0, ok: true };
+  let cleaned = str.replace(/[$,%]/g, '').trim();
+  let negative = false;
+  if (/^\(.*\)$/.test(cleaned)) { negative = true; cleaned = cleaned.slice(1, -1).trim(); }
   const n = parseFloat(cleaned);
-  return isNaN(n) ? 0 : n;
+  if (isNaN(n)) return { value: 0, ok: false };
+  return { value: negative ? -n : n, ok: true };
 }
 
 function calculateDataCut() {
@@ -4185,6 +4279,7 @@ function calculateDataCut() {
   }
 
   const groups = {};
+  let unparseableCount = 0;
   dcRows.forEach(row => {
     const key1 = row[group1] || '(blank)';
     const key2 = group2 ? (row[group2] || '(blank)') : null;
@@ -4192,7 +4287,9 @@ function calculateDataCut() {
     if (!groups[key]) {
       groups[key] = { key1, key2, count: 0, sum: 0, min: Infinity, max: -Infinity };
     }
-    const val = dcParseNumeric(row[valueCol]);
+    const parsed = dcParseNumeric(row[valueCol]);
+    if (!parsed.ok) unparseableCount++;
+    const val = parsed.value;
     groups[key].count++;
     groups[key].sum += val;
     groups[key].min = Math.min(groups[key].min, val);
@@ -4229,8 +4326,9 @@ function calculateDataCut() {
 
   document.getElementById('dc-output-table').style.display = '';
   document.getElementById('dc-export-btn').style.display = '';
-  statusEl.innerText = `${resultRows.length} groups from ${dcRows.length} source rows.`;
-  statusEl.style.color = 'var(--text-mid)';
+  statusEl.innerText = `${resultRows.length} groups from ${dcRows.length} source rows.` +
+    (unparseableCount > 0 ? ` ⚠️ ${unparseableCount} cell(s) in "${valueCol}" couldn't be read as a number and were treated as 0 — check for text in that column.` : '');
+  statusEl.style.color = unparseableCount > 0 ? 'var(--amber)' : 'var(--text-mid)';
 
   dcLastReport = {
     headers: group2 ? [group1, group2, '# Rows', `${agg} of ${valueCol}`] : [group1, '# Rows', `${agg} of ${valueCol}`],
@@ -4240,15 +4338,7 @@ function calculateDataCut() {
 
 function exportDataCutCSV() {
   if (!dcLastReport) return;
-  const rows = [dcLastReport.headers, ...dcLastReport.rows];
-  let csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
-  const encodedUri = encodeURI(csvContent);
-  const link = document.createElement("a");
-  link.setAttribute("href", encodedUri);
-  link.setAttribute("download", "data_cut_report.csv");
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  downloadCSV([dcLastReport.headers, ...dcLastReport.rows], "data_cut_report.csv");
 }
 
 // --- PROCESS CAPABILITY (Cp/Cpk, Pp/Ppk) ---
@@ -4341,9 +4431,9 @@ function addPfmeaRow(vals) {
       <option value="Supplier" ${vals.cat === 'Supplier' ? 'selected' : ''}>Supplier</option>
       <option value="Test" ${vals.cat === 'Test' ? 'selected' : ''}>Test</option>
     </select></td>
-    <td><input type="number" id="pf-sev-${id}" value="${vals.sev !== undefined ? vals.sev : 5}" min="1" max="10" oninput="calculatePfmea()"></td>
-    <td><input type="number" id="pf-occ-${id}" value="${vals.occ !== undefined ? vals.occ : 5}" min="1" max="10" oninput="calculatePfmea()"></td>
-    <td><input type="number" id="pf-det-${id}" value="${vals.det !== undefined ? vals.det : 5}" min="1" max="10" oninput="calculatePfmea()"></td>
+    <td><input type="number" id="pf-sev-${id}" value="${vals.sev !== undefined ? vals.sev : ''}" min="1" max="10" oninput="calculatePfmea()"></td>
+    <td><input type="number" id="pf-occ-${id}" value="${vals.occ !== undefined ? vals.occ : ''}" min="1" max="10" oninput="calculatePfmea()"></td>
+    <td><input type="number" id="pf-det-${id}" value="${vals.det !== undefined ? vals.det : ''}" min="1" max="10" oninput="calculatePfmea()"></td>
     <td class="score-cell" id="pf-rpn-${id}">—</td>
     <td><input type="text" id="pf-owner-${id}" value="${vals.owner || ''}" placeholder="Owner" oninput="calculatePfmea()"></td>
     <td><select id="pf-status-${id}" onchange="calculatePfmea()">
@@ -4370,13 +4460,17 @@ function calculatePfmea() {
   let openCount = 0, highCount = 0, undetectableCount = 0;
   let highestDesc = null, highestRpn = -1;
   const items = [];
+  // "Corrective Action Verified" means the fix is done and confirmed -- it's resolved,
+  // same as Closed, for counting purposes. Only Open / 8D In Progress are still "open."
+  const resolvedStatuses = ['Closed', 'Corrective Action Verified'];
 
   rows.forEach(tr => {
     const id = tr.id.replace('pf-row-', '');
-    const desc = document.getElementById('pf-desc-' + id).value || 'Unnamed Failure Mode';
-    const sev = parseFloat(document.getElementById('pf-sev-' + id).value) || 0;
-    const occ = parseFloat(document.getElementById('pf-occ-' + id).value) || 0;
-    const det = parseFloat(document.getElementById('pf-det-' + id).value) || 0;
+    const desc = document.getElementById('pf-desc-' + id).value.trim();
+    // Sev/Occ/Det are a defined 1-10 scale -- clamp so a stray 15 or 0 can't distort RPN math.
+    const sev = Math.min(10, Math.max(1, parseFloat(document.getElementById('pf-sev-' + id).value) || 0));
+    const occ = Math.min(10, Math.max(1, parseFloat(document.getElementById('pf-occ-' + id).value) || 0));
+    const det = Math.min(10, Math.max(1, parseFloat(document.getElementById('pf-det-' + id).value) || 0));
     const status = document.getElementById('pf-status-' + id).value;
 
     const rpn = sev * occ * det;
@@ -4384,11 +4478,18 @@ function calculatePfmea() {
     rpnEl.innerText = rpn;
     rpnEl.style.color = rpn > 100 ? 'var(--red)' : (rpn > 50 ? 'var(--amber)' : 'var(--green)');
 
-    if (status !== 'Closed') {
+    // A blank row (no description typed yet) still shows its live RPN, but doesn't count
+    // toward open/high-priority totals -- its 1/1/1 or default scores aren't real data yet.
+    if (!desc) return;
+
+    if (!resolvedStatuses.includes(status)) {
       openCount++;
-      if (rpn > 100) highCount++;
+      // AIAG-VDA discourages a fixed RPN>100 threshold and weighs severity first: a Severity
+      // 9-10 failure mode is always high priority regardless of what Occurrence/Detection
+      // happen to be, so it can't get buried by RPN math alone.
+      if (rpn > 100 || sev >= 9) highCount++;
       if (det >= 9) undetectableCount++;
-      items.push({ desc, rpn, status });
+      items.push({ desc, rpn, sev, status });
       if (rpn > highestRpn) { highestRpn = rpn; highestDesc = desc; }
     }
   });
@@ -4397,7 +4498,9 @@ function calculatePfmea() {
   document.getElementById('pf-out-high-count').innerText = highCount;
   document.getElementById('pf-out-highest').innerText = highestDesc ? `${highestDesc} (RPN ${highestRpn})` : '—';
 
-  items.sort((a, b) => b.rpn - a.rpn);
+  // Severity first, RPN as tie-break -- an S=8 item shouldn't get buried behind an S=6 item
+  // that only ties on RPN, per AIAG-VDA's severity-weighted Action Priority approach.
+  items.sort((a, b) => (b.sev - a.sev) || (b.rpn - a.rpn));
   const topList = document.getElementById('pf-top-list');
   topList.innerHTML = '';
   if (items.length === 0) {
@@ -4405,14 +4508,14 @@ function calculatePfmea() {
   } else {
     items.slice(0, 5).forEach(it => {
       const li = document.createElement('li');
-      li.innerHTML = `<strong>${it.desc}:</strong> RPN ${it.rpn} — ${it.status}`;
+      li.innerHTML = `<strong>${it.desc}:</strong> RPN ${it.rpn} (Sev ${it.sev}) — ${it.status}`;
       topList.appendChild(li);
     });
   }
 
   const flags = [];
   if (highCount > 0) {
-    flags.push(`<strong>${highCount} High-Priority Item${highCount > 1 ? 's' : ''} (RPN &gt; 100):</strong> Standard FMEA practice treats these as requiring corrective action regardless of overall backlog size.`);
+    flags.push(`<strong>${highCount} High-Priority Item${highCount > 1 ? 's' : ''} (RPN &gt; 100 or Severity ≥ 9):</strong> A fixed RPN>100 cutoff alone can bury a high-severity item behind Occurrence/Detection math — AIAG-VDA's Action Priority approach weighs severity first, and this list does too.`);
   }
   if (undetectableCount > 0) {
     flags.push(`<strong>${undetectableCount} Item${undetectableCount > 1 ? 's' : ''} With Detection ≥ 9:</strong> A high Detection score means this failure mode would likely reach the customer undetected — worth prioritizing even if Severity or Occurrence alone look moderate.`);
@@ -5206,8 +5309,11 @@ function calculateBuildReadiness() {
 
   let sum = 0;
   const gaps = [];
+  const outOfRange = [];
   dims.forEach(d => {
-    const val = Math.max(0, Math.min(100, parseFloat(document.getElementById(d.id).value) || 0));
+    const raw = parseFloat(document.getElementById(d.id).value) || 0;
+    if (raw > 100 || raw < 0) outOfRange.push(d.label);
+    const val = Math.max(0, Math.min(100, raw));
     sum += val;
     if (val < 80) {
       gaps.push({ label: d.label, val });
@@ -5218,9 +5324,18 @@ function calculateBuildReadiness() {
   const scoreEl = document.getElementById('br-out-score');
   scoreEl.innerText = score.toFixed(1) + '%';
 
+  // A weighted average can hide a showstopper: 0% material availability with everything
+  // else at 100% still averages to 83% -- but a build with no material simply can't start.
+  // Any dimension below this hard-gate floor forces NO-GO regardless of the average.
+  const hardGateFloor = 50;
+  const showstoppers = dims.filter(d => (parseFloat(document.getElementById(d.id).value) || 0) < hardGateFloor);
+
   const decisionEl = document.getElementById('br-out-decision');
   let decision, color;
-  if (score >= 90) { decision = 'GO'; color = 'var(--green)'; }
+  if (showstoppers.length > 0) {
+    decision = `NO-GO — ${showstoppers.map(d => d.label).join(', ')} below ${hardGateFloor}% (hard gate)`;
+    color = 'var(--red)';
+  } else if (score >= 90) { decision = 'GO'; color = 'var(--green)'; }
   else if (score >= 75) { decision = 'CONDITIONAL GO — close gaps before build start'; color = 'var(--amber)'; }
   else { decision = 'NO-GO — not ready to start'; color = 'var(--red)'; }
   decisionEl.innerText = decision;
@@ -5241,6 +5356,9 @@ function calculateBuildReadiness() {
   }
 
   const flags = [];
+  if (outOfRange.length > 0) {
+    flags.push(`<strong>${outOfRange.join(', ')} Outside 0-100%:</strong> Readiness is a percentage of complete — the out-of-range value(s) were clamped for this calculation.`);
+  }
   if (score < 75) {
     flags.push(`<strong>Overall Readiness Below 75%:</strong> Starting a build at this readiness level usually means the gaps get found live, on the line, at the worst possible time to find them.`);
   }
@@ -5423,15 +5541,16 @@ function addSuppQualRow(vals) {
       <option value="ISO 13485" ${vals.cert === 'ISO 13485' ? 'selected' : ''}>ISO 13485</option>
       <option value="None" ${vals.cert === 'None' ? 'selected' : ''}>None</option>
     </select></td>
-    <td><input type="number" id="sq-audit-${id}" value="${vals.audit !== undefined ? vals.audit : 80}" min="0" max="100" oninput="calculateSuppQual()"></td>
-    <td><input type="number" id="sq-financial-${id}" value="${vals.financial !== undefined ? vals.financial : 80}" min="0" max="100" oninput="calculateSuppQual()"></td>
-    <td><input type="number" id="sq-capacity-${id}" value="${vals.capacity !== undefined ? vals.capacity : 80}" min="0" max="100" oninput="calculateSuppQual()"></td>
+    <td><input type="number" id="sq-audit-${id}" value="${vals.audit !== undefined ? vals.audit : ''}" min="0" max="100" oninput="calculateSuppQual()"></td>
+    <td><input type="number" id="sq-financial-${id}" value="${vals.financial !== undefined ? vals.financial : ''}" min="0" max="100" oninput="calculateSuppQual()"></td>
+    <td><input type="number" id="sq-capacity-${id}" value="${vals.capacity !== undefined ? vals.capacity : ''}" min="0" max="100" oninput="calculateSuppQual()"></td>
     <td><select id="sq-fai-${id}" onchange="calculateSuppQual()">
-      <option value="Pass" ${(vals.fai === 'Pass' || !vals.fai) ? 'selected' : ''}>Pass</option>
+      <option value="" ${!vals.fai ? 'selected' : ''}>— Not Tested Yet —</option>
+      <option value="Pass" ${vals.fai === 'Pass' ? 'selected' : ''}>Pass</option>
       <option value="Conditional" ${vals.fai === 'Conditional' ? 'selected' : ''}>Conditional</option>
       <option value="Fail" ${vals.fai === 'Fail' ? 'selected' : ''}>Fail</option>
     </select></td>
-    <td><input type="number" id="sq-cost-${id}" value="${vals.cost !== undefined ? vals.cost : 75}" min="0" max="100" oninput="calculateSuppQual()"></td>
+    <td><input type="number" id="sq-cost-${id}" value="${vals.cost !== undefined ? vals.cost : ''}" min="0" max="100" oninput="calculateSuppQual()"></td>
     <td class="score-cell" id="sq-score-${id}">—</td>
     <td class="score-cell" id="sq-decision-${id}">—</td>
     <td><button type="button" class="btn-row-remove" onclick="removeSuppQualRow(${id})">✕</button></td>
@@ -5449,12 +5568,12 @@ function removeSuppQualRow(id) {
 function calculateSuppQual() {
   const tbody = document.getElementById('sq-tbody');
   const rows = Array.from(tbody.querySelectorAll('tr'));
-  let approved = 0, conditional = 0, rejected = 0, totalScore = 0;
+  let approved = 0, conditional = 0, rejected = 0, totalScore = 0, namedCount = 0;
   const flags = [];
 
   rows.forEach(tr => {
     const id = tr.id.replace('sq-row-', '');
-    const name = document.getElementById('sq-name-' + id).value || 'Unnamed Candidate';
+    const name = document.getElementById('sq-name-' + id).value.trim();
     const cert = document.getElementById('sq-cert-' + id).value;
     const audit = parseFloat(document.getElementById('sq-audit-' + id).value) || 0;
     const financial = parseFloat(document.getElementById('sq-financial-' + id).value) || 0;
@@ -5475,13 +5594,22 @@ function calculateSuppQual() {
     else if (composite >= 80 && weakestDim >= 70) { decision = 'APPROVED'; color = 'var(--green)'; }
     else if (composite >= 60) { decision = 'CONDITIONAL'; color = 'var(--amber)'; }
     else { decision = 'REJECTED'; color = 'var(--red)'; }
-    decisionEl.innerText = decision;
     decisionEl.style.color = color;
     scoreEl.style.color = color;
+
+    // A row with no candidate name yet (or FAI not yet tested) still shows a live
+    // score/decision as feedback, but doesn't count toward the summary tallies -- a blank
+    // row's zeros shouldn't inflate "Rejected" or drag the average down before it's real data.
+    if (!name || !fai) {
+      decisionEl.innerText = decision + ' (incomplete — excluded from summary)';
+      return;
+    }
+    decisionEl.innerText = decision;
 
     if (decision === 'APPROVED') approved++;
     else if (decision === 'CONDITIONAL') conditional++;
     else rejected++;
+    namedCount++;
     totalScore += composite;
 
     if (fai === 'Fail') {
@@ -5493,11 +5621,11 @@ function calculateSuppQual() {
     }
   });
 
-  document.getElementById('sq-out-count').innerText = rows.length;
+  document.getElementById('sq-out-count').innerText = namedCount;
   document.getElementById('sq-out-approved').innerText = approved;
   document.getElementById('sq-out-conditional').innerText = conditional;
   document.getElementById('sq-out-rejected').innerText = rejected;
-  document.getElementById('sq-out-avg').innerText = rows.length > 0 ? (totalScore / rows.length).toFixed(1) : '—';
+  document.getElementById('sq-out-avg').innerText = namedCount > 0 ? (totalScore / namedCount).toFixed(1) : '—';
 
   const riskList = document.getElementById('sq-risk-list');
   riskList.innerHTML = '';
@@ -5522,11 +5650,11 @@ function addSuppAuditRow(vals) {
   tr.innerHTML = `
     <td><input type="text" id="sa-name-${id}" value="${vals.name || ''}" placeholder="Supplier name" oninput="calculateSuppAudit()"></td>
     <td><input type="date" id="sa-date-${id}" value="${vals.date || ''}" oninput="calculateSuppAudit()"></td>
-    <td><input type="number" id="sa-quality-${id}" value="${vals.quality !== undefined ? vals.quality : 85}" min="0" max="100" oninput="calculateSuppAudit()"></td>
-    <td><input type="number" id="sa-labor-${id}" value="${vals.labor !== undefined ? vals.labor : 85}" min="0" max="100" oninput="calculateSuppAudit()"></td>
-    <td><input type="number" id="sa-bc-${id}" value="${vals.bc !== undefined ? vals.bc : 80}" min="0" max="100" oninput="calculateSuppAudit()"></td>
-    <td><input type="number" id="sa-esg-${id}" value="${vals.esg !== undefined ? vals.esg : 75}" min="0" max="100" oninput="calculateSuppAudit()"></td>
-    <td><input type="number" id="sa-findings-${id}" value="${vals.findings !== undefined ? vals.findings : 0}" min="0" oninput="calculateSuppAudit()"></td>
+    <td><input type="number" id="sa-quality-${id}" value="${vals.quality !== undefined ? vals.quality : ''}" min="0" max="100" oninput="calculateSuppAudit()"></td>
+    <td><input type="number" id="sa-labor-${id}" value="${vals.labor !== undefined ? vals.labor : ''}" min="0" max="100" oninput="calculateSuppAudit()"></td>
+    <td><input type="number" id="sa-bc-${id}" value="${vals.bc !== undefined ? vals.bc : ''}" min="0" max="100" oninput="calculateSuppAudit()"></td>
+    <td><input type="number" id="sa-esg-${id}" value="${vals.esg !== undefined ? vals.esg : ''}" min="0" max="100" oninput="calculateSuppAudit()"></td>
+    <td><input type="number" id="sa-findings-${id}" value="${vals.findings !== undefined ? vals.findings : ''}" min="0" oninput="calculateSuppAudit()"></td>
     <td class="score-cell" id="sa-score-${id}">—</td>
     <td class="score-cell" id="sa-result-${id}">—</td>
     <td><button type="button" class="btn-row-remove" onclick="removeSuppAuditRow(${id})">✕</button></td>
@@ -5544,12 +5672,12 @@ function removeSuppAuditRow(id) {
 function calculateSuppAudit() {
   const tbody = document.getElementById('sa-tbody');
   const rows = Array.from(tbody.querySelectorAll('tr'));
-  let pass = 0, conditional = 0, fail = 0, totalScore = 0;
+  let pass = 0, conditional = 0, fail = 0, totalScore = 0, namedCount = 0;
   const flags = [];
 
   rows.forEach(tr => {
     const id = tr.id.replace('sa-row-', '');
-    const name = document.getElementById('sa-name-' + id).value || 'Unnamed Supplier';
+    const name = document.getElementById('sa-name-' + id).value.trim();
     const date = document.getElementById('sa-date-' + id).value;
     const quality = parseFloat(document.getElementById('sa-quality-' + id).value) || 0;
     const labor = parseFloat(document.getElementById('sa-labor-' + id).value) || 0;
@@ -5566,13 +5694,19 @@ function calculateSuppAudit() {
     if (findings >= 3 || composite < 60) { result = 'FAIL'; color = 'var(--red)'; }
     else if (findings >= 1 || composite < 85) { result = 'CONDITIONAL'; color = 'var(--amber)'; }
     else { result = 'PASS'; color = 'var(--green)'; }
-    resultEl.innerText = result;
     resultEl.style.color = color;
     scoreEl.style.color = color;
+
+    if (!name) {
+      resultEl.innerText = result + ' (unnamed — excluded from summary)';
+      return;
+    }
+    resultEl.innerText = result;
 
     if (result === 'PASS') pass++;
     else if (result === 'CONDITIONAL') conditional++;
     else fail++;
+    namedCount++;
     totalScore += composite;
 
     if (result === 'FAIL') {
@@ -5580,11 +5714,11 @@ function calculateSuppAudit() {
     }
   });
 
-  document.getElementById('sa-out-count').innerText = rows.length;
+  document.getElementById('sa-out-count').innerText = namedCount;
   document.getElementById('sa-out-pass').innerText = pass;
   document.getElementById('sa-out-conditional').innerText = conditional;
   document.getElementById('sa-out-fail').innerText = fail;
-  document.getElementById('sa-out-avg').innerText = rows.length > 0 ? (totalScore / rows.length).toFixed(1) : '—';
+  document.getElementById('sa-out-avg').innerText = namedCount > 0 ? (totalScore / namedCount).toFixed(1) : '—';
 
   const riskList = document.getElementById('sa-risk-list');
   riskList.innerHTML = '';
@@ -5638,7 +5772,7 @@ function calculateFreightMode() {
 
   rows.forEach(tr => {
     const id = tr.id.replace('fm-row-', '');
-    const mode = document.getElementById('fm-mode-' + id).value || 'Unnamed Mode';
+    const mode = document.getElementById('fm-mode-' + id).value.trim();
     const cost = parseFloat(document.getElementById('fm-cost-' + id).value) || 0;
     const transit = parseFloat(document.getElementById('fm-transit-' + id).value) || 0;
     const reliability = parseFloat(document.getElementById('fm-reliability-' + id).value) || 0;
@@ -5649,6 +5783,9 @@ function calculateFreightMode() {
     document.getElementById('fm-capital-' + id).innerText = '$' + Math.round(capitalCost).toLocaleString();
     document.getElementById('fm-total-' + id).innerText = '$' + Math.round(totalEffective).toLocaleString();
 
+    // An unnamed row (freshly added, not yet filled in) shouldn't be able to win "cheapest"
+    // or "fastest" on its blank $0 / 0-day defaults -- only rank rows the user has named.
+    if (!mode) return;
     if (cost < cheapestFreightVal) { cheapestFreightVal = cost; cheapestFreight = mode; }
     if (totalEffective < cheapestTotalVal) { cheapestTotalVal = totalEffective; cheapestTotal = mode; cheapestTotalReliability = reliability; }
     if (transit < fastestVal) { fastestVal = transit; fastest = mode; }
@@ -5787,8 +5924,8 @@ function addOeeRow(vals) {
     <td><input type="number" id="oee-planned-${id}" value="${vals.planned !== undefined ? vals.planned : 480}" min="0" oninput="calculateOee()"></td>
     <td><input type="number" id="oee-downtime-${id}" value="${vals.downtime !== undefined ? vals.downtime : 0}" min="0" oninput="calculateOee()"></td>
     <td><input type="number" id="oee-cycle-${id}" value="${vals.cycle !== undefined ? vals.cycle : 30}" min="0" oninput="calculateOee()"></td>
-    <td><input type="number" id="oee-total-${id}" value="${vals.total !== undefined ? vals.total : 0}" min="0" oninput="calculateOee()"></td>
-    <td><input type="number" id="oee-good-${id}" value="${vals.good !== undefined ? vals.good : 0}" min="0" oninput="calculateOee()"></td>
+    <td><input type="number" id="oee-total-${id}" value="${vals.total !== undefined ? vals.total : ''}" min="0" oninput="calculateOee()"></td>
+    <td><input type="number" id="oee-good-${id}" value="${vals.good !== undefined ? vals.good : ''}" min="0" oninput="calculateOee()"></td>
     <td class="score-cell" id="oee-score-${id}">—</td>
     <td><button type="button" class="btn-row-remove" onclick="removeOeeRow(${id})">✕</button></td>
   `;
@@ -5810,7 +5947,7 @@ function calculateOee() {
 
   rows.forEach(tr => {
     const id = tr.id.replace('oee-row-', '');
-    const label = document.getElementById('oee-label-' + id).value || 'Unnamed Line/Shift';
+    const label = document.getElementById('oee-label-' + id).value.trim();
     const planned = parseFloat(document.getElementById('oee-planned-' + id).value) || 0;
     const downtime = parseFloat(document.getElementById('oee-downtime-' + id).value) || 0;
     const cycle = parseFloat(document.getElementById('oee-cycle-' + id).value) || 0;
@@ -5827,8 +5964,11 @@ function calculateOee() {
     scoreEl.innerText = oee.toFixed(1) + '%';
     scoreEl.style.color = oee >= 85 ? 'var(--green)' : (oee >= 60 ? 'var(--amber)' : 'var(--red)');
 
-    totalDowntime += downtime;
-    if (planned > 0) {
+    // Unlabeled rows (freshly added, no unit count entered yet) don't count toward the
+    // average or "worst performer" -- a blank row's 0% OEE would otherwise always win
+    // "worst" and drag the average down before any real data was entered.
+    if (label && total > 0) {
+      totalDowntime += downtime;
       oeeSum += oee;
       validRows++;
       if (oee < worstOee) { worstOee = oee; worstLabel = label; }
@@ -6008,9 +6148,40 @@ function calculateFactoryDefects() {
 }
 
 // --- EXPORT FUNCTIONALITY ---
+// Scrapes a rendered results table (head + body) into [tool, column, value] triples —
+// used for tools like Multi-Quote whose output is a variable-width comparison table
+// rather than a handful of fixed readouts.
+function scrapeTableForExport(tableId, toolLabel) {
+  const table = document.getElementById(tableId);
+  if (!table || table.style.display === 'none') return [];
+  const headCells = Array.from(table.querySelectorAll('thead th')).map(th => th.innerText.trim());
+  const bodyRows = Array.from(table.querySelectorAll('tbody tr'));
+  const out = [];
+  bodyRows.forEach(tr => {
+    const cells = Array.from(tr.querySelectorAll('td')).map(td => td.innerText.trim());
+    headCells.forEach((h, i) => {
+      if (cells[i] !== undefined && cells[i] !== '') out.push([toolLabel, h || `Column ${i + 1}`, cells[i]]);
+    });
+  });
+  return out;
+}
+
 function exportCSV() {
   const rows = [
     ["Metric / Tool", "Parameter", "Value"],
+    ["Technical Risk Matrix", "Composite Risk Score", document.getElementById('tr-out-score').innerText],
+    ["Technical Risk Matrix", "Feasibility Gate Risk Level", document.getElementById('tr-out-status').innerText],
+    ["Stage-Gate Exit", "Gate Release Verdict", document.getElementById('sg-out-status').innerText],
+    ["Stage-Gate Exit", "Categories With Real Issues", document.getElementById('sg-out-catcount').innerText],
+    ["NPI Build Yield", "First Pass Build Yield %", document.getElementById('by-out-yield').innerText],
+    ["NPI Build Yield", "Phase Readiness Assessment", document.getElementById('by-out-status').innerText],
+    ["ECO Impact Triage", "Classification", document.getElementById('eco-out-class').innerText],
+    ["ECO Impact Triage", "Estimated Financial Exposure", document.getElementById('eco-out-cost').innerText],
+    ["Bottom-Up Should-Cost", "Target Fair Unit Price", document.getElementById('sc-out-total').innerText],
+    ["Procurement Lead Time", "Schedule Gap", document.getElementById('lt-out-gap').innerText],
+    ["Procurement Lead Time", "Your Estimated Total (Base + Buffer)", document.getElementById('lt-out-total').innerText],
+    ["First Pass Yield (FPY)", "Rolled First Pass Yield (RFPY)", document.getElementById('fpy-out-rfpy').innerText],
+    ["First Pass Yield (FPY)", "Defect Rate (PPM)", document.getElementById('fpy-out-ppm').innerText],
     ["TAM/SAM", "TAM Output", document.getElementById('ts-out-tam').innerText],
     ["TAM/SAM", "SAM Output", document.getElementById('ts-out-sam').innerText],
     ["TAM/SAM", "SOM Output", document.getElementById('ts-out-som').innerText],
@@ -6083,26 +6254,56 @@ function exportCSV() {
     ["Factory Defect Pareto", "Closure Rate", document.getElementById('fd-out-closure-rate').innerText]
   ];
 
-  let csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
-  const encodedUri = encodeURI(csvContent);
+  rows.push(...scrapeTableForExport('mq-output-table', 'Multi-Quote Comparison'));
+
+  downloadCSV(rows, "hardware_operations_analytics.csv");
+}
+
+// Every field is quoted (with embedded quotes doubled per RFC 4180) so values containing
+// commas ($600,000,000) or a bare # don't split columns or get truncated. Uses a Blob +
+// object URL rather than a data: URI, which some browsers truncate at the first "#".
+function downloadCSV(rows, filename) {
+  const csvContent = rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\r\n");
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
-  link.setAttribute("href", encodedUri);
-  link.setAttribute("download", "hardware_operations_analytics.csv");
+  link.setAttribute("href", url);
+  link.setAttribute("download", filename);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
 
 function exportPDF() {
   const element = document.getElementById('report-container');
+  const html = document.documentElement;
+  const prevTheme = html.getAttribute('data-theme');
+
+  // Only the active pillar/tool is display:block at any moment -- capturing #report-container
+  // as-is would print just the upload panel plus whatever tool happened to be open, in
+  // whatever theme was active. Temporarily show every pillar/tool and force light theme so
+  // the PDF is the full report, not a screenshot of one panel.
+  const toggled = [];
+  document.querySelectorAll('.tab-pillar, .tool-view').forEach(el => {
+    if (!el.classList.contains('active')) { el.classList.add('active'); toggled.push(el); }
+  });
+  html.setAttribute('data-theme', 'light');
+
+  const restore = () => {
+    toggled.forEach(el => el.classList.remove('active'));
+    if (prevTheme) html.setAttribute('data-theme', prevTheme); else html.removeAttribute('data-theme');
+  };
+
   const opt = {
     margin:       0.3,
     filename:     'Hardware_Operations_Report.pdf',
     image:        { type: 'jpeg', quality: 0.98 },
     html2canvas:  { scale: 2 },
-    jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
+    jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' },
+    pagebreak:    { mode: ['css', 'legacy'] }
   };
-  html2pdf().set(opt).from(element).save();
+  html2pdf().set(opt).from(element).save().then(restore).catch(restore);
 }
 
 window.onload = function() {
