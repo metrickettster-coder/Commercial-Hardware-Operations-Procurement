@@ -283,6 +283,7 @@
         <div class="panel">
           <h2>Financial Feasibility Outputs</h2>
           <div class="readout"><div class="rlabel">Net Present Value (NPV)</div><div class="rvalue" id="npv-out-val" style="color:var(--amber);">$699,850</div></div>
+          <div class="readout"><div class="rlabel">Internal Rate of Return (IRR)</div><div class="rvalue" id="npv-out-irr">—</div></div>
           <div class="readout"><div class="rlabel">Simple Payback Period</div><div class="rvalue" id="npv-out-payback">2.1 Years</div></div>
           <div class="readout"><div class="rlabel">Program Viability Status</div><div class="rvalue" id="npv-out-status" style="color:var(--green);">VIABLE</div></div>
           <div id="npv-warn" style="color:var(--red); font-size:0.8em; margin-top:8px;"></div>
@@ -313,11 +314,11 @@
     <!-- Technical Risk Score -->
     <div id="tool-techrisk" class="tool-view">
       <h2 class="tool-title">Technical Risk Score Matrix</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Quantify architectural and technology readiness levels (TRL) prior to formal gate entry.</p>
+      <p style="color:var(--text-mid); margin-bottom:20px;">Quantify architectural and technology maturity prior to formal gate entry, using a simplified 1-5 internal scale (not the standard 9-point TRL scale, so it won't collide with a program's real TRL reporting).</p>
       <div class="grid">
         <div class="panel">
           <h2>Readiness Assessment (Score 1 to 5)</h2>
-          <div class="field"><label for="tr-trl">Technology Readiness Level (1 = Concept, 5 = Proven Component)</label><input type="number" id="tr-trl" value="3" max="5" min="1" oninput="calculateTechRisk()"></div>
+          <div class="field"><label for="tr-trl">Internal Technology Maturity Score — Not Standard TRL (1 = Concept, 5 = Proven Component)</label><input type="number" id="tr-trl" value="3" max="5" min="1" oninput="calculateTechRisk()"></div>
           <div class="field"><label for="tr-custom">Component Customization Level (1 = Off-shelf, 5 = Custom Tooling)</label><input type="number" id="tr-custom" value="4" max="5" min="1" oninput="calculateTechRisk()"></div>
           <div class="field"><label for="tr-mfg">Manufacturing Process Maturity (1 = Mature, 5 = Unproven)</label><input type="number" id="tr-mfg" value="3" max="5" min="1" oninput="calculateTechRisk()"></div>
         </div>
@@ -1268,6 +1269,9 @@
           <div class="readout"><div class="rlabel">Cost Variance (CV)</div><div class="rvalue" id="evm-cv" style="color:var(--red);">-$28,888</div></div>
           <div class="readout"><div class="rlabel">Schedule Variance (SV)</div><div class="rvalue" id="evm-sv" style="color:var(--amber);">-$20,000</div></div>
           <div class="readout"><div class="rlabel">Estimate at Completion (EAC)</div><div class="rvalue" id="evm-eac">$722,222</div></div>
+          <div class="readout"><div class="rlabel">Estimate to Complete (ETC)</div><div class="rvalue" id="evm-etc">—</div></div>
+          <div class="readout"><div class="rlabel">Variance at Completion (VAC)</div><div class="rvalue" id="evm-vac">—</div></div>
+          <div class="readout"><div class="rlabel">To-Complete Performance Index (TCPI)</div><div class="rvalue" id="evm-tcpi">—</div></div>
         </div>
       </div>
     </div>
@@ -1321,9 +1325,11 @@
       <div class="grid">
         <div class="panel">
           <h2>Accuracy Summary</h2>
-          <div class="readout"><div class="rlabel">MAPE (Mean Absolute % Error)</div><div class="rvalue" id="df-out-mape" style="color:var(--amber);">—</div></div>
+          <div class="readout"><div class="rlabel">MAPE (Mean Absolute % Error, Unweighted)</div><div class="rvalue" id="df-out-mape" style="color:var(--amber);">—</div></div>
+          <div class="readout"><div class="rlabel">WMAPE (Volume-Weighted)</div><div class="rvalue" id="df-out-wmape">—</div></div>
           <div class="readout"><div class="rlabel">Forecast Accuracy</div><div class="rvalue" id="df-out-accuracy">—</div></div>
-          <div class="readout"><div class="rlabel">Average Bias (Signed)</div><div class="rvalue" id="df-out-bias">—</div></div>
+          <div class="readout"><div class="rlabel">Average Bias (Signed, Unweighted)</div><div class="rvalue" id="df-out-bias">—</div></div>
+          <div class="readout"><div class="rlabel">Weighted Bias (Volume-Weighted)</div><div class="rvalue" id="df-out-wbias">—</div></div>
           <div class="readout"><div class="rlabel">Bias Direction</div><div class="rvalue" id="df-out-bias-dir" style="font-size:14px;">—</div></div>
         </div>
         <div class="panel">
@@ -2337,6 +2343,29 @@ function calculateNPV() {
   const npv = (pv1 + pv2 + pv3) - capex;
 
   document.getElementById('npv-out-val').innerText = '$' + Math.round(npv).toLocaleString();
+
+  // IRR: the discount rate at which NPV = 0, found by bisection since there's no closed form
+  // for a cubic-in-(1+r) equation. Requires the undiscounted cash flows to actually cross zero
+  // (i.e. a real solution exists in a sane rate range) -- an all-negative or never-recovering
+  // cash flow stream has no meaningful IRR, so that's reported explicitly rather than guessed at.
+  const irrEl = document.getElementById('npv-out-irr');
+  const npvAtRate = rate => (y1 / Math.pow(1 + rate, 1)) + (y2 / Math.pow(1 + rate, 2)) + (y3 / Math.pow(1 + rate, 3)) - capex;
+  let lo = -0.99, hi = 10;
+  let fLo = npvAtRate(lo), fHi = npvAtRate(hi);
+  if (fLo * fHi > 0) {
+    irrEl.innerText = 'No solution in range';
+    irrEl.style.color = 'var(--text-mid)';
+  } else {
+    for (let i = 0; i < 100; i++) {
+      const mid = (lo + hi) / 2;
+      const fMid = npvAtRate(mid);
+      if (Math.abs(fMid) < 1) break;
+      if ((fMid > 0) === (fLo > 0)) { lo = mid; fLo = fMid; } else { hi = mid; }
+    }
+    const irr = (lo + hi) / 2;
+    irrEl.innerText = (irr * 100).toFixed(1) + '%';
+    irrEl.style.color = irr >= r ? 'var(--green)' : 'var(--red)';
+  }
 
   let accum = 0;
   let payback = "3+ Years";
@@ -3512,6 +3541,27 @@ function calculateEVM() {
   svEl.style.color = sv >= 0 ? 'var(--green)' : 'var(--amber)';
 
   document.getElementById('evm-eac').innerText = '$' + Math.round(eac).toLocaleString();
+
+  const etc = eac - ac;
+  document.getElementById('evm-etc').innerText = '$' + Math.round(etc).toLocaleString();
+
+  const vac = bac - eac;
+  const vacEl = document.getElementById('evm-vac');
+  vacEl.innerText = (vac >= 0 ? '+$' : '-$') + Math.abs(Math.round(vac)).toLocaleString();
+  vacEl.style.color = vac >= 0 ? 'var(--green)' : 'var(--red)';
+
+  // TCPI: the cost efficiency still required on every remaining dollar to land on budget.
+  // Undefined once there's no budget left to spend against (BAC - AC <= 0).
+  const tcpiEl = document.getElementById('evm-tcpi');
+  const remainingBudget = bac - ac;
+  if (remainingBudget > 0) {
+    const tcpi = (bac - ev) / remainingBudget;
+    tcpiEl.innerText = tcpi.toFixed(2);
+    tcpiEl.style.color = tcpi <= 1.0 ? 'var(--green)' : (tcpi <= 1.1 ? 'var(--amber)' : 'var(--red)');
+  } else {
+    tcpiEl.innerText = 'N/A (budget exhausted)';
+    tcpiEl.style.color = 'var(--red)';
+  }
 
   document.getElementById('dot-cpi').style.background = cpi >= 1.0 ? 'var(--green)' : 'var(--red)';
   document.getElementById('dot-spi').style.background = spi >= 1.0 ? 'var(--green)' : 'var(--amber)';
@@ -5953,6 +6003,7 @@ function calculateForecastAcc() {
   const tbody = document.getElementById('df-tbody');
   const rows = Array.from(tbody.querySelectorAll('tr'));
   let errorSum = 0, biasSum = 0, validRows = 0;
+  let absErrorTotal = 0, signedErrorTotal = 0, actualTotal = 0;
 
   rows.forEach(tr => {
     const id = tr.id.replace('df-row-', '');
@@ -5971,6 +6022,12 @@ function calculateForecastAcc() {
       errorSum += errorPct;
       biasSum += bias;
       validRows++;
+      // WMAPE/weighted-bias sum absolute (and signed) unit error across rows, then divide by
+      // total actual volume once -- unlike MAPE, a high-volume SKU's error isn't diluted to
+      // the same weight as a low-volume one that happens to have the same percentage error.
+      absErrorTotal += Math.abs(forecast - actual);
+      signedErrorTotal += (forecast - actual);
+      actualTotal += actual;
     } else {
       errorEl.innerText = '—';
       biasEl.innerText = '—';
@@ -5979,10 +6036,14 @@ function calculateForecastAcc() {
 
   const mape = validRows > 0 ? errorSum / validRows : 0;
   const avgBias = validRows > 0 ? biasSum / validRows : 0;
+  const wmape = actualTotal > 0 ? (absErrorTotal / actualTotal) * 100 : 0;
+  const wbias = actualTotal > 0 ? (signedErrorTotal / actualTotal) * 100 : 0;
 
   document.getElementById('df-out-mape').innerText = validRows > 0 ? mape.toFixed(1) + '%' : '—';
+  document.getElementById('df-out-wmape').innerText = actualTotal > 0 ? wmape.toFixed(1) + '%' : '—';
   document.getElementById('df-out-accuracy').innerText = validRows > 0 ? Math.max(0, 100 - mape).toFixed(1) + '%' : '—';
   document.getElementById('df-out-bias').innerText = validRows > 0 ? (avgBias >= 0 ? '+' : '') + avgBias.toFixed(1) + '%' : '—';
+  document.getElementById('df-out-wbias').innerText = actualTotal > 0 ? (wbias >= 0 ? '+' : '') + wbias.toFixed(1) + '%' : '—';
 
   const biasDirEl = document.getElementById('df-out-bias-dir');
   const flags = [];
@@ -6006,6 +6067,9 @@ function calculateForecastAcc() {
     flags.push(`<strong>Persistent Over-Forecasting (avg bias +${avgBias.toFixed(1)}%):</strong> Consistently forecasting above actual demand ties up working capital in excess inventory — investigate whether the forecast model or sales input needs recalibrating.`);
   } else if (validRows > 0 && avgBias < -10) {
     flags.push(`<strong>Persistent Under-Forecasting (avg bias ${avgBias.toFixed(1)}%):</strong> Consistently forecasting below actual demand risks stockouts — this is the more expensive direction to get wrong for a hardware supply chain.`);
+  }
+  if (actualTotal > 0 && Math.abs(wbias - avgBias) > 3 && Math.abs(wbias) > 5) {
+    flags.push(`<strong>Unweighted Bias (${avgBias >= 0 ? '+' : ''}${avgBias.toFixed(1)}%) and Volume-Weighted Bias (${wbias >= 0 ? '+' : ''}${wbias.toFixed(1)}%) Disagree:</strong> The simple average looks roughly balanced, but your highest-volume SKUs are skewing in one direction — trust the weighted number for inventory decisions, since it's the one that actually reflects dollars and units at risk.`);
   }
 
   const riskList = document.getElementById('df-risk-list');
@@ -6298,12 +6362,16 @@ function exportCSV() {
     ["TAM/SAM", "SAM Output", document.getElementById('ts-out-sam').innerText],
     ["TAM/SAM", "SOM Output", document.getElementById('ts-out-som').innerText],
     ["NPV/IRR", "NPV Output", document.getElementById('npv-out-val').innerText],
+    ["NPV/IRR", "IRR", document.getElementById('npv-out-irr').innerText],
     ["NPV/IRR", "Payback Period", document.getElementById('npv-out-payback').innerText],
     ["Target Costing", "Max Manufactured BOM Cost", document.getElementById('dtc-out-bom').innerText],
     ["Landed Cost", "Total Unit Landed Cost", document.getElementById('tlc-out-total').innerText],
     ["Custom Part", "Effective Unit Price", document.getElementById('out-effective-unit').innerText],
     ["EVM", "CPI", document.getElementById('val-cpi').innerText],
     ["EVM", "SPI", document.getElementById('val-spi').innerText],
+    ["EVM", "ETC", document.getElementById('evm-etc').innerText],
+    ["EVM", "VAC", document.getElementById('evm-vac').innerText],
+    ["EVM", "TCPI", document.getElementById('evm-tcpi').innerText],
     ["EOQ", "Reorder Point (ROP)", document.getElementById('eoq-out-rop').innerText],
     ["Budget KPI", "Budget Variance ($)", document.getElementById('bk-out-variance-dollar').innerText],
     ["Budget KPI", "Budget Variance (%)", document.getElementById('bk-out-variance-pct').innerText],
