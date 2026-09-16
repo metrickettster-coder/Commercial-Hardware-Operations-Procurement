@@ -61,7 +61,8 @@
 
   header.top{ display:flex; justify-content:space-between; align-items:center; padding-bottom:14px; margin-bottom:16px; border-bottom:1px solid var(--grid-line); flex-wrap:wrap; gap:10px; }
   .brand .mark{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--amber); border:1px solid rgba(224,165,44,0.4); padding:2px 6px; border-radius:4px; margin-right:8px; }
-  .brand .name{ font-weight:800; font-size:17px; }
+  .brand .name{ font-weight:800; font-size:17px; margin:0; display:inline; }
+  .tool-title{ font-size:1.6em; font-weight:700; margin:0 0 4px 0; }
 
   .export-controls{ display:flex; gap:8px; }
   .btn-export{ background:var(--panel-2); border:1px solid var(--grid-line); color:var(--text-hi); font-family:'IBM Plex Mono',monospace; font-size:11px; padding:6px 12px; border-radius:6px; cursor:pointer; transition:all 0.15s ease; }
@@ -83,7 +84,8 @@
   @media(max-width: 900px){ nav.pillar-nav{ grid-template-columns: repeat(3, 1fr); } }
   @media(max-width: 600px){ nav.pillar-nav{ grid-template-columns: repeat(2, 1fr); } }
 
-  .pillar-btn{ background:var(--panel); border:1px solid var(--grid-line); color:var(--text-mid); padding:12px 8px; text-align:center; border-radius:var(--radius); cursor:pointer; transition:all 0.15s ease; }
+  .pillar-btn{ background:var(--panel); border:1px solid var(--grid-line); color:var(--text-mid); padding:12px 8px; text-align:center; border-radius:var(--radius); cursor:pointer; transition:all 0.15s ease; font-family:inherit; font-size:inherit; }
+  .pillar-btn:focus-visible{ outline:2px solid var(--amber); outline-offset:2px; }
   .pillar-btn:hover{ border-color:var(--text-dim); }
   .pillar-btn.active{ background:var(--panel-2); border-color:var(--amber); color:var(--amber); font-weight:700; }
   .pillar-btn .title{ font-size:12px; font-weight:700; display:block; }
@@ -176,7 +178,7 @@
   <header class="top">
     <div class="brand">
       <span class="mark">COMMERCIAL//PROCUREMENT</span>
-      <span class="name">Hardware Operations Analytics Suite</span>
+      <h1 class="name">Hardware Operations Analytics Suite</h1>
     </div>
     <div class="export-controls">
       <button class="btn-export" id="themeToggleBtn" onclick="toggleTheme()">☀️ Light Mode</button>
@@ -210,28 +212,28 @@
   </div>
 
   <!-- 5 Stage Lifecycle Sub-Navigation -->
-  <nav class="pillar-nav">
-    <div class="pillar-btn active" onclick="switchPillar('concept', this)">
+  <nav class="pillar-nav" role="tablist" aria-label="Lifecycle pillar">
+    <button type="button" class="pillar-btn active" role="tab" aria-selected="true" onclick="switchPillar('concept', this)">
       <span class="title">💡 1. Concept &amp; Feasibility</span>
-    </div>
-    <div class="pillar-btn" onclick="switchPillar('npi', this)">
+    </button>
+    <button type="button" class="pillar-btn" role="tab" aria-selected="false" onclick="switchPillar('npi', this)">
       <span class="title">🚀 2. NPI &amp; Stage-Gate Launch</span>
-    </div>
-    <div class="pillar-btn" onclick="switchPillar('sourcing', this)">
+    </button>
+    <button type="button" class="pillar-btn" role="tab" aria-selected="false" onclick="switchPillar('sourcing', this)">
       <span class="title">📦 3. Sourcing &amp; Costing</span>
-    </div>
-    <div class="pillar-btn" onclick="switchPillar('ops', this)">
+    </button>
+    <button type="button" class="pillar-btn" role="tab" aria-selected="false" onclick="switchPillar('ops', this)">
       <span class="title">⚙️ 4. Ops &amp; Quality Execution</span>
-    </div>
-    <div class="pillar-btn" onclick="switchPillar('sustaining', this)">
+    </button>
+    <button type="button" class="pillar-btn" role="tab" aria-selected="false" onclick="switchPillar('sustaining', this)">
       <span class="title">♻️ 5. Sustaining &amp; EOL Closeout</span>
-    </div>
-    <div class="pillar-btn" onclick="switchPillar('supplierrisk', this)">
+    </button>
+    <button type="button" class="pillar-btn" role="tab" aria-selected="false" onclick="switchPillar('supplierrisk', this)">
       <span class="title">🛡️ 6. Supplier &amp; Risk Mgmt</span>
-    </div>
-    <div class="pillar-btn" onclick="switchPillar('quality', this)">
+    </button>
+    <button type="button" class="pillar-btn" role="tab" aria-selected="false" onclick="switchPillar('quality', this)">
       <span class="title">🎯 7. Quality &amp; Reliability</span>
-    </div>
+    </button>
   </nav>
 
   <!-- PILLAR 1: CONCEPT & FEASIBILITY -->
@@ -245,15 +247,15 @@
 
     <!-- TAM / SAM -->
     <div id="tool-tamsam" class="tool-view active">
-      <h1>Total Addressable &amp; Serviceable Market (TAM/SAM/SOM)</h1>
+      <h2 class="tool-title">Total Addressable &amp; Serviceable Market (TAM/SAM/SOM)</h2>
       <p style="color:var(--text-mid); margin-bottom:20px;">Calculate top-down market opportunity and realistic capture parameters.</p>
       <div class="grid">
         <div class="panel">
           <h2>Market Sizing Inputs</h2>
-          <div class="field"><label>Total Potential Target Units (Global)</label><input type="number" id="ts-units" value="500000" min="0" oninput="calculateTAM()"></div>
-          <div class="field"><label>Average Selling Price (ASP)</label><div class="prefix-wrap"><span>$</span><input type="number" id="ts-asp" value="1200" min="0" oninput="calculateTAM()"></div></div>
-          <div class="field"><label>Serviceable Market Reach % (SAM Factor)</label><input type="number" id="ts-sam-pct" value="35" min="0" max="100" oninput="calculateTAM()"></div>
-          <div class="field"><label>Serviceable Obtainable Market % (SOM Target)</label><input type="number" id="ts-som-pct" value="10" min="0" max="100" oninput="calculateTAM()"></div>
+          <div class="field"><label for="ts-units">Total Potential Target Units (Global)</label><input type="number" id="ts-units" value="500000" min="0" oninput="calculateTAM()"></div>
+          <div class="field"><label for="ts-asp">Average Selling Price (ASP)</label><div class="prefix-wrap"><span>$</span><input type="number" id="ts-asp" value="1200" min="0" oninput="calculateTAM()"></div></div>
+          <div class="field"><label for="ts-sam-pct">Serviceable Market Reach % (SAM Factor)</label><input type="number" id="ts-sam-pct" value="35" min="0" max="100" oninput="calculateTAM()"></div>
+          <div class="field"><label for="ts-som-pct">Serviceable Obtainable Market % (SOM Target)</label><input type="number" id="ts-som-pct" value="10" min="0" max="100" oninput="calculateTAM()"></div>
         </div>
         <div class="panel">
           <h2>Market Sizing Outputs</h2>
@@ -267,16 +269,16 @@
 
     <!-- NPV / IRR Engine -->
     <div id="tool-npvirr" class="tool-view">
-      <h1>Financial Valuation: NPV &amp; Target IRR Model</h1>
+      <h2 class="tool-title">Financial Valuation: NPV &amp; Target IRR Model</h2>
       <p style="color:var(--text-mid); margin-bottom:20px;">Assess initial capital investment against projected cash inflows over a 3-year product horizon.</p>
       <div class="grid">
         <div class="panel">
           <h2>Investment &amp; Return Metrics</h2>
-          <div class="field"><label>Initial NRE &amp; Tooling Capex ($ Investment)</label><div class="prefix-wrap"><span>$</span><input type="number" id="npv-capex" value="1500000" oninput="calculateNPV()"></div></div>
-          <div class="field"><label>Discount Rate / Cost of Capital (%)</label><input type="number" id="npv-discount" value="10" oninput="calculateNPV()"></div>
-          <div class="field"><label>Year 1 Net Cash Flow</label><div class="prefix-wrap"><span>$</span><input type="number" id="npv-y1" value="400000" oninput="calculateNPV()"></div></div>
-          <div class="field"><label>Year 2 Net Cash Flow</label><div class="prefix-wrap"><span>$</span><input type="number" id="npv-y2" value="950000" oninput="calculateNPV()"></div></div>
-          <div class="field"><label>Year 3 Net Cash Flow</label><div class="prefix-wrap"><span>$</span><input type="number" id="npv-y3" value="1400000" oninput="calculateNPV()"></div></div>
+          <div class="field"><label for="npv-capex">Initial NRE &amp; Tooling Capex ($ Investment)</label><div class="prefix-wrap"><span>$</span><input type="number" id="npv-capex" value="1500000" oninput="calculateNPV()"></div></div>
+          <div class="field"><label for="npv-discount">Discount Rate / Cost of Capital (%)</label><input type="number" id="npv-discount" value="10" oninput="calculateNPV()"></div>
+          <div class="field"><label for="npv-y1">Year 1 Net Cash Flow</label><div class="prefix-wrap"><span>$</span><input type="number" id="npv-y1" value="400000" oninput="calculateNPV()"></div></div>
+          <div class="field"><label for="npv-y2">Year 2 Net Cash Flow</label><div class="prefix-wrap"><span>$</span><input type="number" id="npv-y2" value="950000" oninput="calculateNPV()"></div></div>
+          <div class="field"><label for="npv-y3">Year 3 Net Cash Flow</label><div class="prefix-wrap"><span>$</span><input type="number" id="npv-y3" value="1400000" oninput="calculateNPV()"></div></div>
         </div>
         <div class="panel">
           <h2>Financial Feasibility Outputs</h2>
@@ -290,14 +292,14 @@
 
     <!-- Target Costing (DTC) -->
     <div id="tool-dtc" class="tool-view">
-      <h1>Design-to-Cost (DTC) Allocator</h1>
+      <h2 class="tool-title">Design-to-Cost (DTC) Allocator</h2>
       <p style="color:var(--text-mid); margin-bottom:20px;">Derive maximum allowable BOM and assembly costs based on target MSRP and margin objectives.</p>
       <div class="grid">
         <div class="panel">
           <h2>Financial Boundary Inputs</h2>
-          <div class="field"><label>Target Commercial Price / MSRP</label><div class="prefix-wrap"><span>$</span><input type="number" id="dtc-msrp" value="450" oninput="calculateDTC()"></div></div>
-          <div class="field"><label>Target Gross Margin (%)</label><input type="number" id="dtc-margin" value="40" min="0" max="99" oninput="calculateDTC()"></div>
-          <div class="field"><label>Estimated Logistics, Packaging &amp; Freight Allowance</label><div class="prefix-wrap"><span>$</span><input type="number" id="dtc-logistics" value="25" oninput="calculateDTC()"></div></div>
+          <div class="field"><label for="dtc-msrp">Target Commercial Price / MSRP</label><div class="prefix-wrap"><span>$</span><input type="number" id="dtc-msrp" value="450" oninput="calculateDTC()"></div></div>
+          <div class="field"><label for="dtc-margin">Target Gross Margin (%)</label><input type="number" id="dtc-margin" value="40" min="0" max="99" oninput="calculateDTC()"></div>
+          <div class="field"><label for="dtc-logistics">Estimated Logistics, Packaging &amp; Freight Allowance</label><div class="prefix-wrap"><span>$</span><input type="number" id="dtc-logistics" value="25" oninput="calculateDTC()"></div></div>
         </div>
         <div class="panel">
           <h2>Max Allowable Cost Breakdown</h2>
@@ -310,14 +312,14 @@
 
     <!-- Technical Risk Score -->
     <div id="tool-techrisk" class="tool-view">
-      <h1>Technical Risk Score Matrix</h1>
+      <h2 class="tool-title">Technical Risk Score Matrix</h2>
       <p style="color:var(--text-mid); margin-bottom:20px;">Quantify architectural and technology readiness levels (TRL) prior to formal gate entry.</p>
       <div class="grid">
         <div class="panel">
           <h2>Readiness Assessment (Score 1 to 5)</h2>
-          <div class="field"><label>Technology Readiness Level (1 = Concept, 5 = Proven Component)</label><input type="number" id="tr-trl" value="3" max="5" min="1" oninput="calculateTechRisk()"></div>
-          <div class="field"><label>Component Customization Level (1 = Off-shelf, 5 = Custom Tooling)</label><input type="number" id="tr-custom" value="4" max="5" min="1" oninput="calculateTechRisk()"></div>
-          <div class="field"><label>Manufacturing Process Maturity (1 = Mature, 5 = Unproven)</label><input type="number" id="tr-mfg" value="3" max="5" min="1" oninput="calculateTechRisk()"></div>
+          <div class="field"><label for="tr-trl">Technology Readiness Level (1 = Concept, 5 = Proven Component)</label><input type="number" id="tr-trl" value="3" max="5" min="1" oninput="calculateTechRisk()"></div>
+          <div class="field"><label for="tr-custom">Component Customization Level (1 = Off-shelf, 5 = Custom Tooling)</label><input type="number" id="tr-custom" value="4" max="5" min="1" oninput="calculateTechRisk()"></div>
+          <div class="field"><label for="tr-mfg">Manufacturing Process Maturity (1 = Mature, 5 = Unproven)</label><input type="number" id="tr-mfg" value="3" max="5" min="1" oninput="calculateTechRisk()"></div>
         </div>
         <div class="panel">
           <h2>Feasibility Exposure</h2>
@@ -339,16 +341,16 @@
 
     <!-- Gate Exit Verification -->
     <div id="tool-stagegate" class="tool-view active">
-      <h1>Stage-Gate Launch Exit Verification</h1>
+      <h2 class="tool-title">Stage-Gate Launch Exit Verification</h2>
       <p style="color:var(--text-mid); margin-bottom:20px;">Checks whether a gate is actually ready — not just whether the boxes got checked. Problems that show up together across categories are treated as more dangerous than the same number of problems in one area.</p>
 
       <div class="grid">
         <div class="panel">
           <h2>1. Milestone Verification</h2>
-          <div class="field"><label>EVT Completed &amp; Functional Spec Met?</label><select id="sg-1" onchange="calculateStageGate()"><option value="passed">Passed</option><option value="rushed">Passed — but rushed / things still in flux</option><option value="open">Open</option></select></div>
-          <div class="field"><label>DVT Reliability &amp; Compliance Passed?</label><select id="sg-2" onchange="calculateStageGate()"><option value="passed">Passed</option><option value="rushed">Passed — but rushed / things still in flux</option><option value="open">Open</option></select></div>
-          <div class="field"><label>PVT Tooling &amp; Factory Line Qualified?</label><select id="sg-3" onchange="calculateStageGate()"><option value="passed">Passed</option><option value="rushed">Passed — but rushed / things still in flux</option><option value="open">Open</option></select></div>
-          <div class="field"><label>Mass Production (MP) Sourcing Secured?</label><select id="sg-4" onchange="calculateStageGate()"><option value="passed">Passed</option><option value="rushed">Passed — but rushed / things still in flux</option><option value="open">Open</option></select></div>
+          <div class="field"><label for="sg-1">EVT Completed &amp; Functional Spec Met?</label><select id="sg-1" onchange="calculateStageGate()"><option value="passed">Passed</option><option value="rushed">Passed — but rushed / things still in flux</option><option value="open">Open</option></select></div>
+          <div class="field"><label for="sg-2">DVT Reliability &amp; Compliance Passed?</label><select id="sg-2" onchange="calculateStageGate()"><option value="passed">Passed</option><option value="rushed">Passed — but rushed / things still in flux</option><option value="open">Open</option></select></div>
+          <div class="field"><label for="sg-3">PVT Tooling &amp; Factory Line Qualified?</label><select id="sg-3" onchange="calculateStageGate()"><option value="passed">Passed</option><option value="rushed">Passed — but rushed / things still in flux</option><option value="open">Open</option></select></div>
+          <div class="field"><label for="sg-4">Mass Production (MP) Sourcing Secured?</label><select id="sg-4" onchange="calculateStageGate()"><option value="passed">Passed</option><option value="rushed">Passed — but rushed / things still in flux</option><option value="open">Open</option></select></div>
         </div>
         <div class="panel">
           <h2>Verdict</h2>
@@ -362,7 +364,7 @@
         <div class="panel">
           <h2>2. Schedule &amp; Process Integrity</h2>
           <div class="field">
-            <label>Were any stages rushed or skipped entirely?</label>
+            <label for="sg-stage-integrity">Were any stages rushed or skipped entirely?</label>
             <select id="sg-stage-integrity" onchange="calculateStageGate()">
               <option value="none">None rushed or skipped</option>
               <option value="rushed">Some stages rushed</option>
@@ -370,7 +372,7 @@
             </select>
           </div>
           <div class="field">
-            <label>PRD Lock Status</label>
+            <label for="sg-prd">PRD Lock Status</label>
             <select id="sg-prd" onchange="calculateStageGate()">
               <option value="locked">Locked</option>
               <option value="loose">Loosely locked — still moving</option>
@@ -378,7 +380,7 @@
             </select>
           </div>
           <div class="field">
-            <label>Was the schedule feasible from the start?</label>
+            <label for="sg-schedule">Was the schedule feasible from the start?</label>
             <select id="sg-schedule" onchange="calculateStageGate()">
               <option value="yes">Yes, realistic from day one</option>
               <option value="no">No — aspirational or known infeasible from the start</option>
@@ -389,42 +391,42 @@
         <div class="panel">
           <h2>3. Manufacturing &amp; Logistics Readiness</h2>
           <div class="field">
-            <label>Factory Setup Status</label>
+            <label for="sg-factory">Factory Setup Status</label>
             <select id="sg-factory" onchange="calculateStageGate()">
               <option value="verified">Verified complete</option>
               <option value="assumed">Assumed complete, not verified</option>
               <option value="incomplete">Not complete</option>
             </select>
           </div>
-          <div class="field"><label>Factory Capacity Validated Against Required Production Rate/Delivery Dates?</label><select id="sg-capacity" onchange="calculateStageGate()"><option value="yes">Yes</option><option value="no">No</option><option value="unknown">Unknown / Not Sure</option></select></div>
-          <div class="field"><label>Is There an Actual Logistics Plan (Inbound + Outbound)?</label><select id="sg-logistics" onchange="calculateStageGate()"><option value="yes">Yes, defined</option><option value="no">No — undefined or assumed</option><option value="unknown">Unknown / Not Sure</option></select></div>
-          <div class="field"><label>Long-Lead Items Identified Early?</label><select id="sg-longlead" onchange="calculateStageGate()"><option value="yes">Yes, ordered early</option><option value="no">No — discovered late</option><option value="unknown">Unknown / Not Sure</option></select></div>
+          <div class="field"><label for="sg-capacity">Factory Capacity Validated Against Required Production Rate/Delivery Dates?</label><select id="sg-capacity" onchange="calculateStageGate()"><option value="yes">Yes</option><option value="no">No</option><option value="unknown">Unknown / Not Sure</option></select></div>
+          <div class="field"><label for="sg-logistics">Is There an Actual Logistics Plan (Inbound + Outbound)?</label><select id="sg-logistics" onchange="calculateStageGate()"><option value="yes">Yes, defined</option><option value="no">No — undefined or assumed</option><option value="unknown">Unknown / Not Sure</option></select></div>
+          <div class="field"><label for="sg-longlead">Long-Lead Items Identified Early?</label><select id="sg-longlead" onchange="calculateStageGate()"><option value="yes">Yes, ordered early</option><option value="no">No — discovered late</option><option value="unknown">Unknown / Not Sure</option></select></div>
         </div>
 
         <div class="panel">
           <h2>4. Factory &amp; Process Structure</h2>
           <div class="field">
-            <label>Is there a defined, documented manufacturing process/sequence for this product?</label>
+            <label for="sg-process-fit">Is there a defined, documented manufacturing process/sequence for this product?</label>
             <select id="sg-process-fit" onchange="calculateStageGate()"><option value="yes">Yes, defined and documented</option><option value="no">No</option><option value="unknown">Unknown / Not Sure</option></select>
           </div>
           <div class="field">
-            <label>Does material flow (raw material → production → finishing → dispatch) follow a clean path, without backtracking or crossing itself?</label>
+            <label for="sg-material-flow">Does material flow (raw material → production → finishing → dispatch) follow a clean path, without backtracking or crossing itself?</label>
             <select id="sg-material-flow" onchange="calculateStageGate()"><option value="yes">Yes</option><option value="no">No — flow crosses or backtracks</option><option value="unknown">Unknown / Not Mapped</option></select>
           </div>
           <div class="field">
-            <label>Are SOPs defined and in place, independent of who's currently hired to run them?</label>
+            <label for="sg-sops">Are SOPs defined and in place, independent of who's currently hired to run them?</label>
             <select id="sg-sops" onchange="calculateStageGate()"><option value="yes">Yes</option><option value="no">No — people are compensating without documented SOPs</option><option value="unknown">Unknown / Not Sure</option></select>
           </div>
           <div class="field">
-            <label>Is there a defined quality/inspection plan in place?</label>
+            <label for="sg-quality-plan">Is there a defined quality/inspection plan in place?</label>
             <select id="sg-quality-plan" onchange="calculateStageGate()"><option value="yes">Yes</option><option value="no">No</option><option value="unknown">Unknown / Not Sure</option></select>
           </div>
           <div class="field">
-            <label>Can this setup handle 2x demand without a major restructure?</label>
+            <label for="sg-scalability">Can this setup handle 2x demand without a major restructure?</label>
             <select id="sg-scalability" onchange="calculateStageGate()"><option value="yes">Yes</option><option value="no">No — would require major rework</option><option value="unknown">Unknown / Not Assessed</option></select>
           </div>
           <div class="field">
-            <label>Has compliance/export/audit readiness for this facility actually been planned (not assumed)?</label>
+            <label for="sg-compliance-readiness">Has compliance/export/audit readiness for this facility actually been planned (not assumed)?</label>
             <select id="sg-compliance-readiness" onchange="calculateStageGate()"><option value="yes">Yes, planned</option><option value="no">No</option><option value="unknown">Unknown / Not Sure</option></select>
           </div>
         </div>
@@ -432,7 +434,7 @@
         <div class="panel">
           <h2>5. BOM &amp; Component Integrity</h2>
           <div class="field">
-            <label>Are All Assemblies/Components Confirmed Available?</label>
+            <label for="sg-components">Are All Assemblies/Components Confirmed Available?</label>
             <select id="sg-components" onchange="calculateStageGate()">
               <option value="confirmed">Confirmed available</option>
               <option value="some-missing">Some missing or assumed available</option>
@@ -440,9 +442,9 @@
               <option value="unknown">Unknown / Not Checked</option>
             </select>
           </div>
-          <div class="field"><label>Is the BOM Broken/Mismatched Right Now (structure issues, orphaned items)?</label><select id="sg-bom-broken" onchange="calculateStageGate()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Unknown / Not Sure</option></select></div>
+          <div class="field"><label for="sg-bom-broken">Is the BOM Broken/Mismatched Right Now (structure issues, orphaned items)?</label><select id="sg-bom-broken" onchange="calculateStageGate()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Unknown / Not Sure</option></select></div>
           <div class="field">
-            <label>Is BOM Ownership Clearly Assigned?</label>
+            <label for="sg-bom-owner">Is BOM Ownership Clearly Assigned?</label>
             <select id="sg-bom-owner" onchange="calculateStageGate()">
               <option value="clear">Clearly assigned to one accountable party</option>
               <option value="ambiguous">Ambiguous or informally/ad-hoc delegated</option>
@@ -466,14 +468,14 @@
 
     <!-- EVT / DVT / PVT / MP Build Yields -->
     <div id="tool-buildyields" class="tool-view">
-      <h1>NPI Build Yield Tracker (EVT / DVT / PVT / MP)</h1>
+      <h2 class="tool-title">NPI Build Yield Tracker (EVT / DVT / PVT / MP)</h2>
       <p style="color:var(--text-mid); margin-bottom:20px;">Track prototype and production build performance — acceptable yield rises sharply as you move toward mass production.</p>
       <div class="grid">
         <div class="panel">
           <h2>Build Quantities &amp; Defects</h2>
-          <div class="field"><label>Target Build Phase</label><select id="by-phase" onchange="calculateBuildYields()"><option value="EVT">EVT Build</option><option value="DVT">DVT Build</option><option value="PVT">PVT Build</option><option value="MP">MP (Mass Production) Build</option></select></div>
-          <div class="field"><label>Total Units Started</label><input type="number" id="by-total" value="250" oninput="calculateBuildYields()"></div>
-          <div class="field"><label>Scrapped / Failed Units</label><input type="number" id="by-failed" value="18" oninput="calculateBuildYields()"></div>
+          <div class="field"><label for="by-phase">Target Build Phase</label><select id="by-phase" onchange="calculateBuildYields()"><option value="EVT">EVT Build</option><option value="DVT">DVT Build</option><option value="PVT">PVT Build</option><option value="MP">MP (Mass Production) Build</option></select></div>
+          <div class="field"><label for="by-total">Total Units Started</label><input type="number" id="by-total" value="250" oninput="calculateBuildYields()"></div>
+          <div class="field"><label for="by-failed">Scrapped / Failed Units</label><input type="number" id="by-failed" value="18" oninput="calculateBuildYields()"></div>
         </div>
         <div class="panel">
           <h2>Yield Metrics</h2>
@@ -485,17 +487,17 @@
 
     <!-- ECO Severity & Downstream Impact Triage -->
     <div id="tool-eco" class="tool-view">
-      <h1>ECO Severity &amp; Downstream Impact Triage</h1>
+      <h2 class="tool-title">ECO Severity &amp; Downstream Impact Triage</h2>
       <p style="color:var(--text-mid); margin-bottom:20px;">A fast, judgment-based read on how much scrutiny a proposed change actually deserves — before it reaches the board.</p>
       <div class="grid">
         <div class="panel">
           <h2>1. Classification</h2>
           <div class="field">
-            <label>Change Description (optional, for your own reference)</label>
+            <label for="eco-desc">Change Description (optional, for your own reference)</label>
             <input type="text" id="eco-desc" placeholder="e.g. Switch connector supplier on Board Rev C">
           </div>
           <div class="field">
-            <label>Does this change affect Form, Fit, Function, Safety, Cost, or the Contract/Customer Baseline?</label>
+            <label for="eco-class1">Does this change affect Form, Fit, Function, Safety, Cost, or the Contract/Customer Baseline?</label>
             <select id="eco-class1" onchange="calculateECO()">
               <option value="yes" selected>Yes</option>
               <option value="no">No — administrative / documentation only</option>
@@ -503,7 +505,7 @@
             <p style="font-size:11px; color:var(--text-dim); margin-top:4px;">This is the real triage question a CCB asks first. Leave it on "Yes" to see the full downstream assessment below — switch to "No" only once you're sure this is a minor, paperwork-only change.</p>
           </div>
           <div class="field">
-            <label>Program / Industry Type</label>
+            <label for="eco-program-type">Program / Industry Type</label>
             <select id="eco-program-type" onchange="calculateECO()">
               <option value="commercial">Commercial — General Hardware (no DoD/FAA/FDA/DC-specific regime)</option>
               <option value="aviation">Commercial Aviation / Aeronautics (FAA / AS9100)</option>
@@ -531,7 +533,7 @@
           <div class="panel">
             <h2>2. Downstream Impact Factors</h2>
             <div class="field">
-              <label>Existing Inventory / WIP Exposure</label>
+              <label for="eco-inventory">Existing Inventory / WIP Exposure</label>
               <select id="eco-inventory" onchange="calculateECO()">
                 <option value="none">None on hand or on order</option>
                 <option value="some">Some stock/WIP — disposition not yet decided</option>
@@ -540,19 +542,19 @@
               </select>
             </div>
             <div class="field">
-              <label>Tooling, Fixtures, or Equipment Reprogramming Required?</label>
+              <label for="eco-tooling-flag">Tooling, Fixtures, or Equipment Reprogramming Required?</label>
               <select id="eco-tooling-flag" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select>
             </div>
             <div class="field">
-              <label>Requires Re-Testing / Re-Qualification?</label>
+              <label for="eco-requal">Requires Re-Testing / Re-Qualification?</label>
               <select id="eco-requal" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select>
             </div>
             <div class="field">
-              <label>Driven by a Part Going Obsolete/EOL (Lifetime-Buy Clock Running)?</label>
+              <label for="eco-eol">Driven by a Part Going Obsolete/EOL (Lifetime-Buy Clock Running)?</label>
               <select id="eco-eol" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select>
             </div>
             <div class="field">
-              <label>Single-Source Components or Single Points of Failure Involved?</label>
+              <label for="eco-singlesource">Single-Source Components or Single Points of Failure Involved?</label>
               <select id="eco-singlesource" onchange="calculateECO()">
                 <option value="none">None involved</option>
                 <option value="one">One single-source component involved</option>
@@ -561,11 +563,11 @@
               </select>
             </div>
             <div class="field">
-              <label>Multiple Systems of Record Involved (e.g., PLM, ERP, spreadsheets not synced)?</label>
+              <label for="eco-sot">Multiple Systems of Record Involved (e.g., PLM, ERP, spreadsheets not synced)?</label>
               <select id="eco-sot" onchange="calculateECO()"><option value="no">No — single source of truth</option><option value="yes">Yes — data lives in more than one place</option><option value="unknown">Not Sure</option></select>
             </div>
             <div class="field">
-              <label>If Sub-Tier (Tier 2+) Suppliers Are Involved, Has This Change Been Flowed Down to Them?</label>
+              <label for="eco-subtier">If Sub-Tier (Tier 2+) Suppliers Are Involved, Has This Change Been Flowed Down to Them?</label>
               <select id="eco-subtier" onchange="calculateECO()">
                 <option value="na">Not applicable — no sub-tier suppliers involved</option>
                 <option value="yes">Yes, confirmed flowed down</option>
@@ -574,7 +576,7 @@
               </select>
             </div>
             <div class="field">
-              <label>Involves Batteries or Energy Storage Components?</label>
+              <label for="eco-battery">Involves Batteries or Energy Storage Components?</label>
               <select id="eco-battery" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select>
               <p style="font-size:11px; color:var(--text-dim); margin-top:4px;">Applies on top of whatever program type is selected above — a battery change on a defense or medical program carries both sets of requirements, not one or the other.</p>
             </div>
@@ -582,9 +584,9 @@
 
           <div id="eco-battery-panel" class="panel hidden">
             <h2>Battery / Energy Storage Factors</h2>
-            <div class="field"><label>UN 38.3 Transport/Shipping Classification Impact?</label><select id="eco-un383" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
-            <div class="field"><label>UL 1642/2054 or IEC 62133 Certification Impact?</label><select id="eco-batt-cert" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
-            <div class="field"><label>Thermal Runaway / Battery Safety Retesting Required?</label><select id="eco-thermal" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+            <div class="field"><label for="eco-un383">UN 38.3 Transport/Shipping Classification Impact?</label><select id="eco-un383" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+            <div class="field"><label for="eco-batt-cert">UL 1642/2054 or IEC 62133 Certification Impact?</label><select id="eco-batt-cert" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+            <div class="field"><label for="eco-thermal">Thermal Runaway / Battery Safety Retesting Required?</label><select id="eco-thermal" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
           </div>
 
           <div id="eco-reg-panel" class="panel hidden">
@@ -592,27 +594,27 @@
 
             <div id="eco-reg-aviation">
               <p style="font-size:11px; color:var(--text-dim); margin-bottom:10px;">Commercial Aviation / Aeronautics (FAA / AS9100)</p>
-              <div class="field"><label>Affects FAA-Approved Data (Type Certificate / STC / PMA) — Needs DER Sign-Off or Re-Approval?</label><select id="eco-faa-data" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
-              <div class="field"><label>Requires Formal AS9100 Nonconformance Disposition or Configuration Control Action?</label><select id="eco-as9100" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
-              <div class="field"><label>Could This Affect Airworthiness (Potential Airworthiness Directive Exposure)?</label><select id="eco-airworthiness" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
-              <div class="field"><label>Elevated Counterfeit/Fraudulent Part Risk (AS6081)?</label><select id="eco-as6081" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
-              <div class="field"><label>Affects Avionics Software/Cybersecurity (DO-326A)?</label><select id="eco-do326a" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
-              <div class="field"><label>Technical Data Package Needs ITAR/EAR Export-Control Review?</label><select id="eco-aviation-itar" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label for="eco-faa-data">Affects FAA-Approved Data (Type Certificate / STC / PMA) — Needs DER Sign-Off or Re-Approval?</label><select id="eco-faa-data" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label for="eco-as9100">Requires Formal AS9100 Nonconformance Disposition or Configuration Control Action?</label><select id="eco-as9100" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label for="eco-airworthiness">Could This Affect Airworthiness (Potential Airworthiness Directive Exposure)?</label><select id="eco-airworthiness" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label for="eco-as6081">Elevated Counterfeit/Fraudulent Part Risk (AS6081)?</label><select id="eco-as6081" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label for="eco-do326a">Affects Avionics Software/Cybersecurity (DO-326A)?</label><select id="eco-do326a" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label for="eco-aviation-itar">Technical Data Package Needs ITAR/EAR Export-Control Review?</label><select id="eco-aviation-itar" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
             </div>
 
             <div id="eco-reg-space">
               <p style="font-size:11px; color:var(--text-dim); margin-bottom:10px;">Commercial Space / Satellite</p>
-              <div class="field"><label>Affects FCC Spectrum Authorization or Interference Profile (47 CFR Part 25)?</label><select id="eco-fcc-spectrum" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
-              <div class="field"><label>Affects Deorbit/Disposal Capability (FCC 5-Year Deorbit Rule)?</label><select id="eco-deorbit" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
-              <div class="field"><label>Affects Launch/Re-Entry Licensing (FAA Part 450) or Debris Assessment?</label><select id="eco-part450" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
-              <div class="field"><label>Affects Remote Sensing License Class (NOAA, 15 CFR Part 960)?</label><select id="eco-noaa" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
-              <div class="field"><label>Technical Data Package Needs ITAR/EAR Export-Control Review?</label><select id="eco-space-itar" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label for="eco-fcc-spectrum">Affects FCC Spectrum Authorization or Interference Profile (47 CFR Part 25)?</label><select id="eco-fcc-spectrum" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label for="eco-deorbit">Affects Deorbit/Disposal Capability (FCC 5-Year Deorbit Rule)?</label><select id="eco-deorbit" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label for="eco-part450">Affects Launch/Re-Entry Licensing (FAA Part 450) or Debris Assessment?</label><select id="eco-part450" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label for="eco-noaa">Affects Remote Sensing License Class (NOAA, 15 CFR Part 960)?</label><select id="eco-noaa" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label for="eco-space-itar">Technical Data Package Needs ITAR/EAR Export-Control Review?</label><select id="eco-space-itar" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
             </div>
 
             <div id="eco-reg-defense">
               <p style="font-size:11px; color:var(--text-dim); margin-bottom:10px;">Defense / DoD / Government Contract</p>
               <div class="field">
-                <label>Which MIL-STD Standards Does This Change Likely Trigger? (check all that apply)</label>
+                <label for="eco-mil-810">Which MIL-STD Standards Does This Change Likely Trigger? (check all that apply)</label>
                 <div style="display:flex; align-items:center; gap:6px; margin:5px 0;"><input type="checkbox" id="eco-mil-810" onchange="calculateECO()"><label for="eco-mil-810" style="margin:0; font-weight:400; display:inline;">MIL-STD-810 — Environmental (vibration, humidity, temperature)</label></div>
                 <div style="display:flex; align-items:center; gap:6px; margin:5px 0;"><input type="checkbox" id="eco-mil-461" onchange="calculateECO()"><label for="eco-mil-461" style="margin:0; font-weight:400; display:inline;">MIL-STD-461 — EMI/EMC</label></div>
                 <div style="display:flex; align-items:center; gap:6px; margin:5px 0;"><input type="checkbox" id="eco-mil-883" onchange="calculateECO()"><label for="eco-mil-883" style="margin:0; font-weight:400; display:inline;">MIL-STD-883 — Microelectronics Test Methods</label></div>
@@ -622,23 +624,23 @@
                 <div style="display:flex; align-items:center; gap:6px; margin:5px 0;"><input type="checkbox" id="eco-mil-2073" onchange="calculateECO()"><label for="eco-mil-2073" style="margin:0; font-weight:400; display:inline;">MIL-STD-2073-1 — Military Packaging</label></div>
                 <div style="display:flex; align-items:center; gap:6px; margin:5px 0;"><input type="checkbox" id="eco-mil-unsure" onchange="calculateECO()"><label for="eco-mil-unsure" style="margin:0; font-weight:400; display:inline;">Not Sure Which Apply</label></div>
               </div>
-              <div class="field"><label>Technical Data Package Needs ITAR/Export-Control Review?</label><select id="eco-itar" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
-              <div class="field"><label>Requires New NSN or Relabeling (UDI / MIL-STD-130)?</label><select id="eco-nsn" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
-              <div class="field"><label>Requires DCMA Notification or Affects CAS-Covered Cost Accounting?</label><select id="eco-refiling" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label for="eco-itar">Technical Data Package Needs ITAR/Export-Control Review?</label><select id="eco-itar" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label for="eco-nsn">Requires New NSN or Relabeling (UDI / MIL-STD-130)?</label><select id="eco-nsn" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label for="eco-refiling">Requires DCMA Notification or Affects CAS-Covered Cost Accounting?</label><select id="eco-refiling" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
             </div>
 
             <div id="eco-reg-medical">
               <p style="font-size:11px; color:var(--text-dim); margin-bottom:10px;">Medical Device (FDA / ISO 13485)</p>
-              <div class="field"><label>Triggers IEC 60601 (or Equivalent) Re-Testing?</label><select id="eco-iec60601" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
-              <div class="field"><label>Involves an AI/Algorithm Update That Could Shift Classification or Intended Use?</label><select id="eco-ai-classification" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
-              <div class="field"><label>Requires New 510(k)/PMA Supplement or a Letter to File?</label><select id="eco-510k" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
-              <div class="field"><label>Affects UDI/Labeling or ISO 13485 Design-Change Control?</label><select id="eco-udi" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
-              <div class="field"><label>If UDI/Labeling Is Affected, Is It Clear Whether Manufacturer or Brand Owner Is Responsible for the Update?</label><select id="eco-udi-ownership" onchange="calculateECO()"><option value="na">Not applicable</option><option value="clear">Clear</option><option value="ambiguous">Ambiguous between parties</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label for="eco-iec60601">Triggers IEC 60601 (or Equivalent) Re-Testing?</label><select id="eco-iec60601" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label for="eco-ai-classification">Involves an AI/Algorithm Update That Could Shift Classification or Intended Use?</label><select id="eco-ai-classification" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label for="eco-510k">Requires New 510(k)/PMA Supplement or a Letter to File?</label><select id="eco-510k" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label for="eco-udi">Affects UDI/Labeling or ISO 13485 Design-Change Control?</label><select id="eco-udi" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label for="eco-udi-ownership">If UDI/Labeling Is Affected, Is It Clear Whether Manufacturer or Brand Owner Is Responsible for the Update?</label><select id="eco-udi-ownership" onchange="calculateECO()"><option value="na">Not applicable</option><option value="clear">Clear</option><option value="ambiguous">Ambiguous between parties</option><option value="unknown">Not Sure</option></select></div>
             </div>
 
             <div id="eco-reg-datacenter">
               <p style="font-size:11px; color:var(--text-dim); margin-bottom:10px;">Data Center / Infrastructure</p>
-              <div class="field"><label>Was This Upgrade Fully Thought Through Before Proceeding?</label>
+              <div class="field"><label for="eco-dc-planning">Was This Upgrade Fully Thought Through Before Proceeding?</label>
                 <select id="eco-dc-planning" onchange="calculateECO()">
                   <option value="planned">Yes — planned and reviewed (dependencies, downstream effects, capacity)</option>
                   <option value="partial">Partially — some things weren't considered</option>
@@ -647,17 +649,17 @@
                 </select>
               </div>
               <p style="font-size:11px; color:var(--text-dim); margin:10px 0 4px;">IT Hardware &amp; Configuration</p>
-              <div class="field"><label>Configuration Scope</label>
+              <div class="field"><label for="eco-dc-config-scope">Configuration Scope</label>
                 <select id="eco-dc-config-scope" onchange="calculateECO()">
                   <option value="single">Single site/config variant</option>
                   <option value="multiple">Multiple site configurations affected</option>
                   <option value="unknown">Not Sure</option>
                 </select>
               </div>
-              <div class="field"><label>Cross-Site Rollout Sequencing Defined?</label><select id="eco-dc-rollout" onchange="calculateECO()"><option value="yes">Yes, defined and tracked</option><option value="no">No — unclear which sites have which revision</option><option value="unknown">Not Sure</option></select></div>
-              <div class="field"><label>Rack/Power/Electrical Compatibility Validated at Every Destination Site?</label><select id="eco-dc-compat" onchange="calculateECO()"><option value="yes">Yes</option><option value="no">No — only validated at one site</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label for="eco-dc-rollout">Cross-Site Rollout Sequencing Defined?</label><select id="eco-dc-rollout" onchange="calculateECO()"><option value="yes">Yes, defined and tracked</option><option value="no">No — unclear which sites have which revision</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label for="eco-dc-compat">Rack/Power/Electrical Compatibility Validated at Every Destination Site?</label><select id="eco-dc-compat" onchange="calculateECO()"><option value="yes">Yes</option><option value="no">No — only validated at one site</option><option value="unknown">Not Sure</option></select></div>
               <p style="font-size:11px; color:var(--text-dim); margin:10px 0 4px;">Facility Equipment (Generator / HVAC / Cooling / Electrical)</p>
-              <div class="field"><label>Equipment Ownership &amp; Change Authority</label>
+              <div class="field"><label for="eco-dc-ownership">Equipment Ownership &amp; Change Authority</label>
                 <select id="eco-dc-ownership" onchange="calculateECO()">
                   <option value="internal">Internal — owned and managed by us</option>
                   <option value="landlord">Landlord / colo provider controlled</option>
@@ -665,28 +667,28 @@
                   <option value="unclear">Unclear who owns this</option>
                 </select>
               </div>
-              <div class="field"><label>Contract/Warranty Terms Actually Reviewed for This Change?</label><select id="eco-dc-contract" onchange="calculateECO()"><option value="reviewed">Yes, reviewed</option><option value="assumed">No — assumed it's fine</option><option value="unknown">Not Sure</option></select></div>
-              <div class="field"><label>Requires Equipment Shutdown to Implement?</label>
+              <div class="field"><label for="eco-dc-contract">Contract/Warranty Terms Actually Reviewed for This Change?</label><select id="eco-dc-contract" onchange="calculateECO()"><option value="reviewed">Yes, reviewed</option><option value="assumed">No — assumed it's fine</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label for="eco-dc-shutdown">Requires Equipment Shutdown to Implement?</label>
                 <select id="eco-dc-shutdown" onchange="calculateECO()">
                   <option value="no">No shutdown required</option>
                   <option value="redundant">Yes, but redundant path available</option>
                   <option value="exposed">Yes — full exposure, no redundancy during change</option>
                 </select>
               </div>
-              <div class="field"><label>Post-Maintenance Return-to-Service Verification Plan Exists?</label><select id="eco-dc-return-service" onchange="calculateECO()"><option value="yes">Yes, defined test plan</option><option value="no">No — assumed it'll just work</option><option value="unknown">Not Sure</option></select></div>
-              <div class="field"><label>Backup Power/Failover Tested Under Load?</label><select id="eco-dc-failover" onchange="calculateECO()"><option value="yes">Yes, tested</option><option value="no">No — untested</option><option value="unknown">Not Sure</option></select></div>
-              <div class="field"><label>Rack Power Density vs. Validated Cooling/Power Design Margin</label>
+              <div class="field"><label for="eco-dc-return-service">Post-Maintenance Return-to-Service Verification Plan Exists?</label><select id="eco-dc-return-service" onchange="calculateECO()"><option value="yes">Yes, defined test plan</option><option value="no">No — assumed it'll just work</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label for="eco-dc-failover">Backup Power/Failover Tested Under Load?</label><select id="eco-dc-failover" onchange="calculateECO()"><option value="yes">Yes, tested</option><option value="no">No — untested</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label for="eco-dc-density">Rack Power Density vs. Validated Cooling/Power Design Margin</label>
                 <select id="eco-dc-density" onchange="calculateECO()">
                   <option value="within">Within validated margin</option>
                   <option value="exceeds">Exceeds validated margin</option>
                   <option value="unknown">Not Assessed</option>
                 </select>
               </div>
-              <div class="field"><label>Environmental/Regulatory Exposure (Noise, Emissions Permits)?</label><select id="eco-dc-environmental" onchange="calculateECO()"><option value="no">No impact</option><option value="yes">Yes — may affect permit/ordinance compliance</option><option value="unknown">Not Sure</option></select></div>
-              <div class="field"><label>Long-Lead Capital Equipment Exposure (Generators, Switchgear, Transformers)?</label><select id="eco-dc-longlead" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
-              <div class="field"><label>IT or Facility Equipment Obsolescence Exposure (EOL/No Longer Supported, Spares Getting Scarce)?</label><select id="eco-dc-obsolescence" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
-              <div class="field"><label>Moisture/Environmental Exposure Risk?</label><select id="eco-dc-moisture" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
-              <div class="field"><label>Estimated Utility/Operating Cost Impact (optional)</label><div class="prefix-wrap"><span>$</span><input type="number" id="eco-dc-utility-cost" value="0" oninput="calculateECO()"></div></div>
+              <div class="field"><label for="eco-dc-environmental">Environmental/Regulatory Exposure (Noise, Emissions Permits)?</label><select id="eco-dc-environmental" onchange="calculateECO()"><option value="no">No impact</option><option value="yes">Yes — may affect permit/ordinance compliance</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label for="eco-dc-longlead">Long-Lead Capital Equipment Exposure (Generators, Switchgear, Transformers)?</label><select id="eco-dc-longlead" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label for="eco-dc-obsolescence">IT or Facility Equipment Obsolescence Exposure (EOL/No Longer Supported, Spares Getting Scarce)?</label><select id="eco-dc-obsolescence" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label for="eco-dc-moisture">Moisture/Environmental Exposure Risk?</label><select id="eco-dc-moisture" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label for="eco-dc-utility-cost">Estimated Utility/Operating Cost Impact (optional)</label><div class="prefix-wrap"><span>$</span><input type="number" id="eco-dc-utility-cost" value="0" oninput="calculateECO()"></div></div>
             </div>
 
             <div id="eco-reg-unsure">
@@ -695,28 +697,28 @@
 
             <div id="eco-reg-consumer">
               <p style="font-size:11px; color:var(--text-dim); margin-bottom:10px;">Consumer Electronics (FCC / UL / CE / RoHS)</p>
-              <div class="field"><label>Affects FCC Part 15 Emissions — May Require Re-Test/New FCC ID?</label><select id="eco-fcc15" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
-              <div class="field"><label>Affects UL/CE/CB Scheme Safety Certification?</label><select id="eco-ul-ce" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
-              <div class="field"><label>Affects RoHS/REACH Hazardous-Substance Compliance?</label><select id="eco-rohs" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
-              <div class="field"><label>Requires Re-Certification in Other Target Markets (e.g., PSE Japan, KC Korea)?</label><select id="eco-intl-cert" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label for="eco-fcc15">Affects FCC Part 15 Emissions — May Require Re-Test/New FCC ID?</label><select id="eco-fcc15" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label for="eco-ul-ce">Affects UL/CE/CB Scheme Safety Certification?</label><select id="eco-ul-ce" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label for="eco-rohs">Affects RoHS/REACH Hazardous-Substance Compliance?</label><select id="eco-rohs" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label for="eco-intl-cert">Requires Re-Certification in Other Target Markets (e.g., PSE Japan, KC Korea)?</label><select id="eco-intl-cert" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
             </div>
 
             <div id="eco-reg-automotive">
               <p style="font-size:11px; color:var(--text-dim); margin-bottom:10px;">Automotive (IATF 16949 / FMVSS / ISO 26262)</p>
-              <div class="field"><label>Requires PPAP Re-Submission (IATF 16949)?</label><select id="eco-ppap" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
-              <div class="field"><label>Are Critical/Special Characteristics for the Affected Feature Clearly Defined by the Customer?</label><select id="eco-cc-sc" onchange="calculateECO()"><option value="defined">Yes, clearly defined</option><option value="undefined">No — undefined or ambiguous</option><option value="unknown">Not Sure</option></select></div>
-              <div class="field"><label>Affects Functional Safety Classification (ISO 26262) — Re-Assessment Needed?</label><select id="eco-iso26262" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
-              <div class="field"><label>Affects FMVSS Compliance?</label><select id="eco-fmvss" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
-              <div class="field"><label>Affects Emissions-Related Components (EPA/CARB)?</label><select id="eco-emissions" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label for="eco-ppap">Requires PPAP Re-Submission (IATF 16949)?</label><select id="eco-ppap" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label for="eco-cc-sc">Are Critical/Special Characteristics for the Affected Feature Clearly Defined by the Customer?</label><select id="eco-cc-sc" onchange="calculateECO()"><option value="defined">Yes, clearly defined</option><option value="undefined">No — undefined or ambiguous</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label for="eco-iso26262">Affects Functional Safety Classification (ISO 26262) — Re-Assessment Needed?</label><select id="eco-iso26262" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label for="eco-fmvss">Affects FMVSS Compliance?</label><select id="eco-fmvss" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
+              <div class="field"><label for="eco-emissions">Affects Emissions-Related Components (EPA/CARB)?</label><select id="eco-emissions" onchange="calculateECO()"><option value="no">No</option><option value="yes">Yes</option><option value="unknown">Not Sure</option></select></div>
             </div>
           </div>
 
           <div class="panel">
             <h2>4. Optional Cost Inputs (fill in what you know)</h2>
-            <div class="field"><label>Estimated Engineering/Drafting Hours</label><input type="number" id="eco-hrs" value="0" oninput="calculateECO()"></div>
-            <div class="field"><label>Engineering Labor Rate ($/hr)</label><div class="prefix-wrap"><span>$</span><input type="number" id="eco-rate" value="0" oninput="calculateECO()"></div></div>
-            <div class="field"><label>Known/Estimated Scrap or WIP Value</label><div class="prefix-wrap"><span>$</span><input type="number" id="eco-scrap" value="0" oninput="calculateECO()"></div></div>
-            <div class="field"><label>Known/Estimated Tooling or Re-Qual Cost</label><div class="prefix-wrap"><span>$</span><input type="number" id="eco-tooling-cost" value="0" oninput="calculateECO()"></div></div>
+            <div class="field"><label for="eco-hrs">Estimated Engineering/Drafting Hours</label><input type="number" id="eco-hrs" value="0" oninput="calculateECO()"></div>
+            <div class="field"><label for="eco-rate">Engineering Labor Rate ($/hr)</label><div class="prefix-wrap"><span>$</span><input type="number" id="eco-rate" value="0" oninput="calculateECO()"></div></div>
+            <div class="field"><label for="eco-scrap">Known/Estimated Scrap or WIP Value</label><div class="prefix-wrap"><span>$</span><input type="number" id="eco-scrap" value="0" oninput="calculateECO()"></div></div>
+            <div class="field"><label for="eco-tooling-cost">Known/Estimated Tooling or Re-Qual Cost</label><div class="prefix-wrap"><span>$</span><input type="number" id="eco-tooling-cost" value="0" oninput="calculateECO()"></div></div>
             <p style="font-size:11px; color:var(--text-dim);">Leave at 0 if unknown — the severity read doesn't depend on these, but filling them in sharpens the cost estimate.</p>
           </div>
         </div>
@@ -733,17 +735,17 @@
 
     <!-- Build Readiness Scorecard -->
     <div id="tool-buildready" class="tool-view">
-      <h1>NPI Build Readiness Scorecard</h1>
+      <h2 class="tool-title">NPI Build Readiness Scorecard</h2>
       <p style="color:var(--text-mid); margin-bottom:20px;">Assess whether a build is actually ready to start — equipment, test coverage, staffing, material, capacity, and documentation — before committing the line and burning the schedule finding out live.</p>
       <div class="grid">
         <div class="panel">
           <h2>Readiness by Dimension (%)</h2>
-          <div class="field"><label>Equipment &amp; Tooling Readiness</label><input type="number" id="br-equipment" value="85" min="0" max="100" oninput="calculateBuildReadiness()"></div>
-          <div class="field"><label>Test Coverage Readiness</label><input type="number" id="br-test" value="70" min="0" max="100" oninput="calculateBuildReadiness()"></div>
-          <div class="field"><label>Staffing Readiness</label><input type="number" id="br-staffing" value="90" min="0" max="100" oninput="calculateBuildReadiness()"></div>
-          <div class="field"><label>Material Availability</label><input type="number" id="br-material" value="75" min="0" max="100" oninput="calculateBuildReadiness()"></div>
-          <div class="field"><label>Line / Capacity Readiness</label><input type="number" id="br-capacity" value="80" min="0" max="100" oninput="calculateBuildReadiness()"></div>
-          <div class="field"><label>Documentation / Work Instructions Readiness</label><input type="number" id="br-docs" value="95" min="0" max="100" oninput="calculateBuildReadiness()"></div>
+          <div class="field"><label for="br-equipment">Equipment &amp; Tooling Readiness</label><input type="number" id="br-equipment" value="85" min="0" max="100" oninput="calculateBuildReadiness()"></div>
+          <div class="field"><label for="br-test">Test Coverage Readiness</label><input type="number" id="br-test" value="70" min="0" max="100" oninput="calculateBuildReadiness()"></div>
+          <div class="field"><label for="br-staffing">Staffing Readiness</label><input type="number" id="br-staffing" value="90" min="0" max="100" oninput="calculateBuildReadiness()"></div>
+          <div class="field"><label for="br-material">Material Availability</label><input type="number" id="br-material" value="75" min="0" max="100" oninput="calculateBuildReadiness()"></div>
+          <div class="field"><label for="br-capacity">Line / Capacity Readiness</label><input type="number" id="br-capacity" value="80" min="0" max="100" oninput="calculateBuildReadiness()"></div>
+          <div class="field"><label for="br-docs">Documentation / Work Instructions Readiness</label><input type="number" id="br-docs" value="95" min="0" max="100" oninput="calculateBuildReadiness()"></div>
         </div>
         <div class="panel">
           <h2>Build Readiness Outputs</h2>
@@ -779,15 +781,15 @@
 
     <!-- Total Landed Cost Engine -->
     <div id="tool-landedcost" class="tool-view active">
-      <h1>Total Landed Cost Engine</h1>
+      <h2 class="tool-title">Total Landed Cost Engine</h2>
       <p style="color:var(--text-mid); margin-bottom:20px;">Aggregate EXW price, freight, tariffs, customs duties, and handling into unit landed cost.</p>
       <div class="grid">
         <div class="panel">
           <h2>Cost Components (Per Unit)</h2>
-          <div class="field"><label>Factory Unit Price (EXW / FOB)</label><div class="prefix-wrap"><span>$</span><input type="number" id="tlc-unit" value="85.00" oninput="calculateLandedCost()"></div></div>
-          <div class="field"><label>Freight &amp; Logistics Costs per Unit</label><div class="prefix-wrap"><span>$</span><input type="number" id="tlc-freight" value="6.50" oninput="calculateLandedCost()"></div></div>
-          <div class="field"><label>Customs Duty / Import Tariff Rate (%)</label><input type="number" id="tlc-tariff" value="7.5" oninput="calculateLandedCost()"></div>
-          <div class="field"><label>Local Warehousing &amp; Port Handling per Unit</label><div class="prefix-wrap"><span>$</span><input type="number" id="tlc-handling" value="2.25" oninput="calculateLandedCost()"></div></div>
+          <div class="field"><label for="tlc-unit">Factory Unit Price (EXW / FOB)</label><div class="prefix-wrap"><span>$</span><input type="number" id="tlc-unit" value="85.00" oninput="calculateLandedCost()"></div></div>
+          <div class="field"><label for="tlc-freight">Freight &amp; Logistics Costs per Unit</label><div class="prefix-wrap"><span>$</span><input type="number" id="tlc-freight" value="6.50" oninput="calculateLandedCost()"></div></div>
+          <div class="field"><label for="tlc-tariff">Customs Duty / Import Tariff Rate (%)</label><input type="number" id="tlc-tariff" value="7.5" oninput="calculateLandedCost()"></div>
+          <div class="field"><label for="tlc-handling">Local Warehousing &amp; Port Handling per Unit</label><div class="prefix-wrap"><span>$</span><input type="number" id="tlc-handling" value="2.25" oninput="calculateLandedCost()"></div></div>
         </div>
         <div class="panel">
           <h2>Landed Cost Summary</h2>
@@ -800,13 +802,13 @@
 
     <!-- Freight & Transportation Mode Comparator -->
     <div id="tool-freightmode" class="tool-view">
-      <h1>Freight &amp; Transportation Mode Comparator</h1>
+      <h2 class="tool-title">Freight &amp; Transportation Mode Comparator</h2>
       <p style="color:var(--text-mid); margin-bottom:20px;">Compare freight modes on more than freight cost alone — a slower mode ties up inventory value in transit, which has its own carrying cost.</p>
 
       <div class="panel" style="margin-bottom:20px;">
         <div class="grid" style="grid-template-columns: repeat(2, 1fr);">
-          <div class="field"><label>Shipment Value ($)</label><div class="prefix-wrap"><span>$</span><input type="number" id="fm-shipvalue" value="50000" oninput="calculateFreightMode()"></div></div>
-          <div class="field"><label>Annual Inventory Carrying Cost Rate (%)</label><input type="number" id="fm-carryrate" value="20" oninput="calculateFreightMode()"></div>
+          <div class="field"><label for="fm-shipvalue">Shipment Value ($)</label><div class="prefix-wrap"><span>$</span><input type="number" id="fm-shipvalue" value="50000" oninput="calculateFreightMode()"></div></div>
+          <div class="field"><label for="fm-carryrate">Annual Inventory Carrying Cost Rate (%)</label><input type="number" id="fm-carryrate" value="20" oninput="calculateFreightMode()"></div>
         </div>
       </div>
 
@@ -845,7 +847,7 @@
 
     <!-- Custom Part Risk Review -->
     <div id="tool-custom-part-breakdown" class="tool-view">
-      <h1>Custom Part &amp; NPI Quote Breakdown</h1>
+      <h2 class="tool-title">Custom Part &amp; NPI Quote Breakdown</h2>
       <p style="color:var(--text-mid); margin-bottom:20px;">Analyze tooling amortization, small-batch setup penalties, and raw material sensitivity.</p>
 
       <div class="grid">
@@ -853,37 +855,37 @@
           <h2>Quote &amp; Process Parameters</h2>
           
           <div class="field">
-            <label>Part Description / Material</label>
+            <label for="cp-material">Part Description / Material</label>
             <input type="text" id="cp-material" value="AL 6061-T6 (Custom CNC Part)" placeholder="e.g. AL 6061-T6">
           </div>
 
           <div class="field">
-            <label>Base Unit Production Cost ($/unit)</label>
+            <label for="cp-base-unit">Base Unit Production Cost ($/unit)</label>
             <div class="prefix-wrap"><span>$</span><input type="number" id="cp-base-unit" value="35.00" min="0" oninput="calculateCustomPartBreakdown()"></div>
           </div>
 
           <div class="field">
-            <label>One-Time Setup Fee ($)</label>
+            <label for="cp-setup">One-Time Setup Fee ($)</label>
             <div class="prefix-wrap"><span>$</span><input type="number" id="cp-setup" value="600" min="0" oninput="calculateCustomPartBreakdown()"></div>
           </div>
 
           <div class="field">
-            <label>Fixture / Tooling NRE ($)</label>
+            <label for="cp-tooling">Fixture / Tooling NRE ($)</label>
             <div class="prefix-wrap"><span>$</span><input type="number" id="cp-tooling" value="2500" min="0" oninput="calculateCustomPartBreakdown()"></div>
           </div>
 
           <div class="field">
-            <label>Current Quote Order Quantity (Units)</label>
+            <label for="cp-qty">Current Quote Order Quantity (Units)</label>
             <input type="number" id="cp-qty" value="50" min="1" oninput="calculateCustomPartBreakdown()">
           </div>
 
           <div class="field">
-            <label>Material Cost Share of Unit Price (%)</label>
+            <label for="cp-mat-share">Material Cost Share of Unit Price (%)</label>
             <input type="number" id="cp-mat-share" value="35" min="0" max="100" oninput="calculateCustomPartBreakdown()">
           </div>
 
           <div class="field">
-            <label>Tooling Ownership</label>
+            <label for="cp-tooling-owner">Tooling Ownership</label>
             <select id="cp-tooling-owner" onchange="calculateCustomPartBreakdown()">
               <option value="unknown">Unknown / Not Specified</option>
               <option value="buyer">Buyer Owns Tooling</option>
@@ -892,7 +894,7 @@
           </div>
 
           <div class="field">
-            <label>Expected Future Order Volume</label>
+            <label for="cp-future-volume">Expected Future Order Volume</label>
             <select id="cp-future-volume" onchange="calculateCustomPartBreakdown()">
               <option value="none">None Expected / One-Time Build</option>
               <option value="near">Yes, Within 90 Days</option>
@@ -905,16 +907,16 @@
 
           <h2 style="margin-top:15px;">Tariff / Import Exposure</h2>
           <div class="field">
-            <label>Country/Region of Manufacture</label>
+            <label for="cp-origin">Country/Region of Manufacture</label>
             <input type="text" id="cp-origin" value="" placeholder="e.g. China, Vietnam, USA">
           </div>
           <div class="field">
-            <label>Estimated Tariff / Duty Rate (%)</label>
+            <label for="cp-tariff-rate">Estimated Tariff / Duty Rate (%)</label>
             <input type="number" id="cp-tariff-rate" value="0" min="0" oninput="calculateCustomPartBreakdown()">
             <p style="color:var(--text-mid); font-size:0.8em; margin-top:4px;">Applied to base unit cost as a rough estimate — confirm the actual HTS classification and rate before relying on this number.</p>
           </div>
           <div class="field">
-            <label>Shipping Term (Incoterm)</label>
+            <label for="cp-incoterm">Shipping Term (Incoterm)</label>
             <select id="cp-incoterm" onchange="calculateCustomPartBreakdown()">
               <option value="unknown">Unknown / Not Specified</option>
               <option value="exw">EXW — Ex Works</option>
@@ -973,16 +975,16 @@
 
     <!-- Bottom-Up Should-Cost -->
     <div id="tool-shouldcost" class="tool-view">
-      <h1>Bottom-Up Should-Cost Model</h1>
+      <h2 class="tool-title">Bottom-Up Should-Cost Model</h2>
       <p style="color:var(--text-mid); margin-bottom:20px;">Build a baseline pricing objective using raw material, labor, overhead, and margin structures.</p>
       <div class="grid">
         <div class="panel">
           <h2>Cost Teardown Inputs</h2>
-          <div class="field"><label>Direct Material / Raw BOM Cost</label><div class="prefix-wrap"><span>$</span><input type="number" id="sc-bom" value="34.00" oninput="calculateShouldCost()"></div></div>
-          <div class="field"><label>Direct Assembly Labor Hours</label><input type="number" id="sc-hours" value="0.75" step="0.05" oninput="calculateShouldCost()"></div>
-          <div class="field"><label>Labor Rate ($/hr)</label><div class="prefix-wrap"><span>$</span><input type="number" id="sc-rate" value="28.00" oninput="calculateShouldCost()"></div></div>
-          <div class="field"><label>Factory Overhead Burden Rate (%)</label><input type="number" id="sc-oh" value="15" oninput="calculateShouldCost()"></div>
-          <div class="field"><label>Supplier Target Margin (%)</label><input type="number" id="sc-margin" value="12" oninput="calculateShouldCost()"></div>
+          <div class="field"><label for="sc-bom">Direct Material / Raw BOM Cost</label><div class="prefix-wrap"><span>$</span><input type="number" id="sc-bom" value="34.00" oninput="calculateShouldCost()"></div></div>
+          <div class="field"><label for="sc-hours">Direct Assembly Labor Hours</label><input type="number" id="sc-hours" value="0.75" step="0.05" oninput="calculateShouldCost()"></div>
+          <div class="field"><label for="sc-rate">Labor Rate ($/hr)</label><div class="prefix-wrap"><span>$</span><input type="number" id="sc-rate" value="28.00" oninput="calculateShouldCost()"></div></div>
+          <div class="field"><label for="sc-oh">Factory Overhead Burden Rate (%)</label><input type="number" id="sc-oh" value="15" oninput="calculateShouldCost()"></div>
+          <div class="field"><label for="sc-margin">Supplier Target Margin (%)</label><input type="number" id="sc-margin" value="12" oninput="calculateShouldCost()"></div>
         </div>
         <div class="panel">
           <h2>Should-Cost Target</h2>
@@ -995,14 +997,14 @@
 
     <!-- Procurement Lead Time -->
     <div id="tool-leadtime" class="tool-view">
-      <h1>Procurement Lead Time &amp; Critical Path Model</h1>
+      <h2 class="tool-title">Procurement Lead Time &amp; Critical Path Model</h2>
       <p style="color:var(--text-mid); margin-bottom:20px;">Model operational buffers and transit risks for critical component sourcing.</p>
       <div class="grid">
         <div class="panel">
           <h2>Supplier's Quote &amp; Your Requirement</h2>
 
           <div class="field">
-            <label>Supplier's Quoted Lead Time (as stated in the quote)</label>
+            <label for="lt-supplier-quoted">Supplier's Quoted Lead Time (as stated in the quote)</label>
             <div style="display:flex; gap:8px;">
               <input type="number" id="lt-supplier-quoted" value="8" min="0" step="any" oninput="calculateLeadTime()" style="flex:2;">
               <select id="lt-supplier-quoted-unit" onchange="calculateLeadTime()" style="flex:1;">
@@ -1015,7 +1017,7 @@
             </div>
           </div>
           <div class="field">
-            <label>When Does the Supplier's Lead-Time Clock Start?</label>
+            <label for="lt-clock-start">When Does the Supplier's Lead-Time Clock Start?</label>
             <select id="lt-clock-start" onchange="calculateLeadTime()">
               <option value="po">PO Receipt</option>
               <option value="drawing">Drawing Approval</option>
@@ -1024,7 +1026,7 @@
             </select>
           </div>
           <div class="field">
-            <label>Your Required Schedule (Until Parts Needed)</label>
+            <label for="lt-required-days">Your Required Schedule (Until Parts Needed)</label>
             <div style="display:flex; gap:8px;">
               <input type="number" id="lt-required-days" value="60" min="0" step="any" oninput="calculateLeadTime()" style="flex:2;">
               <select id="lt-required-unit" onchange="calculateLeadTime()" style="flex:1;">
@@ -1037,7 +1039,7 @@
             </div>
           </div>
           <div class="field">
-            <label>Known Holidays / Plant Shutdowns in This Window (Calendar Days)</label>
+            <label for="lt-holiday-days">Known Holidays / Plant Shutdowns in This Window (Calendar Days)</label>
             <input type="number" id="lt-holiday-days" value="0" min="0" step="any" oninput="calculateLeadTime()">
             <p style="color:var(--text-mid); font-size:0.8em; margin-top:4px;">E.g. Chinese New Year, Golden Week, or a plant's annual shutdown — these commonly add real time that isn't reflected in a supplier's stated lead time.</p>
           </div>
@@ -1046,11 +1048,11 @@
 
           <h2 style="margin-top:15px;">Optional: Estimated Breakdown (Days)</h2>
           <p style="color:var(--text-mid); font-size:0.85em; margin-bottom:10px;">If you know or can estimate what's inside the supplier's number, fill this in as a cross-check. Leave at 0 if unknown.</p>
-          <div class="field"><label>PO Admin &amp; Order Processing Time</label><input type="number" id="lt-admin" value="5" min="0" oninput="calculateLeadTime()"></div>
-          <div class="field"><label>Raw Material Procurement Lead Time</label><input type="number" id="lt-mat" value="30" min="0" oninput="calculateLeadTime()"></div>
-          <div class="field"><label>Manufacturing &amp; Assembly Cycle</label><input type="number" id="lt-mfg" value="25" min="0" oninput="calculateLeadTime()"></div>
-          <div class="field"><label>Overseas Transit &amp; Customs Clearance</label><input type="number" id="lt-transit" value="14" min="0" oninput="calculateLeadTime()"></div>
-          <div class="field"><label>Buffer Risk Adjustment (%)</label><input type="number" id="lt-buf" value="15" min="0" oninput="calculateLeadTime()"></div>
+          <div class="field"><label for="lt-admin">PO Admin &amp; Order Processing Time</label><input type="number" id="lt-admin" value="5" min="0" oninput="calculateLeadTime()"></div>
+          <div class="field"><label for="lt-mat">Raw Material Procurement Lead Time</label><input type="number" id="lt-mat" value="30" min="0" oninput="calculateLeadTime()"></div>
+          <div class="field"><label for="lt-mfg">Manufacturing &amp; Assembly Cycle</label><input type="number" id="lt-mfg" value="25" min="0" oninput="calculateLeadTime()"></div>
+          <div class="field"><label for="lt-transit">Overseas Transit &amp; Customs Clearance</label><input type="number" id="lt-transit" value="14" min="0" oninput="calculateLeadTime()"></div>
+          <div class="field"><label for="lt-buf">Buffer Risk Adjustment (%)</label><input type="number" id="lt-buf" value="15" min="0" oninput="calculateLeadTime()"></div>
         </div>
         <div class="panel">
           <h2>Schedule Comparison</h2>
@@ -1080,17 +1082,17 @@
 
     <!-- Make-vs-Buy Analysis -->
     <div id="tool-makevsbuy" class="tool-view">
-      <h1>Make-vs-Buy Analysis</h1>
+      <h2 class="tool-title">Make-vs-Buy Analysis</h2>
       <p style="color:var(--text-mid); margin-bottom:20px;">Compare bringing a part in-house against buying it outside, including the breakeven volume where the two costs cross.</p>
       <div class="grid">
         <div class="panel">
           <h2>Volume &amp; Cost Inputs</h2>
-          <div class="field"><label>Annual Volume Required (Units)</label><input type="number" id="mvb-volume" value="20000" min="0" oninput="calculateMakeVsBuy()"></div>
-          <div class="field"><label>Outside Purchase Price per Unit</label><div class="prefix-wrap"><span>$</span><input type="number" id="mvb-buyprice" value="18.50" oninput="calculateMakeVsBuy()"></div></div>
-          <div class="field"><label>In-House Variable Cost per Unit (Material + Labor)</label><div class="prefix-wrap"><span>$</span><input type="number" id="mvb-varcost" value="11.00" oninput="calculateMakeVsBuy()"></div></div>
-          <div class="field"><label>One-Time Tooling / Equipment Investment</label><div class="hint">Capex — amortized across the evaluation horizon below.</div><div class="prefix-wrap"><span>$</span><input type="number" id="mvb-fixedinv" value="450000" min="0" oninput="calculateMakeVsBuy()"></div></div>
-          <div class="field"><label>Additional In-House Fixed Overhead per Year</label><div class="prefix-wrap"><span>$</span><input type="number" id="mvb-fixedoh" value="80000" min="0" oninput="calculateMakeVsBuy()"></div></div>
-          <div class="field"><label>Evaluation Horizon (Years)</label><input type="number" id="mvb-years" value="4" min="1" step="0.5" oninput="calculateMakeVsBuy()"></div>
+          <div class="field"><label for="mvb-volume">Annual Volume Required (Units)</label><input type="number" id="mvb-volume" value="20000" min="0" oninput="calculateMakeVsBuy()"></div>
+          <div class="field"><label for="mvb-buyprice">Outside Purchase Price per Unit</label><div class="prefix-wrap"><span>$</span><input type="number" id="mvb-buyprice" value="18.50" oninput="calculateMakeVsBuy()"></div></div>
+          <div class="field"><label for="mvb-varcost">In-House Variable Cost per Unit (Material + Labor)</label><div class="prefix-wrap"><span>$</span><input type="number" id="mvb-varcost" value="11.00" oninput="calculateMakeVsBuy()"></div></div>
+          <div class="field"><label for="mvb-fixedinv">One-Time Tooling / Equipment Investment</label><div class="hint">Capex — amortized across the evaluation horizon below.</div><div class="prefix-wrap"><span>$</span><input type="number" id="mvb-fixedinv" value="450000" min="0" oninput="calculateMakeVsBuy()"></div></div>
+          <div class="field"><label for="mvb-fixedoh">Additional In-House Fixed Overhead per Year</label><div class="prefix-wrap"><span>$</span><input type="number" id="mvb-fixedoh" value="80000" min="0" oninput="calculateMakeVsBuy()"></div></div>
+          <div class="field"><label for="mvb-years">Evaluation Horizon (Years)</label><input type="number" id="mvb-years" value="4" min="1" step="0.5" oninput="calculateMakeVsBuy()"></div>
         </div>
         <div class="panel">
           <h2>Make vs. Buy Outputs</h2>
@@ -1112,17 +1114,17 @@
 
     <!-- Duty Drawback / Tariff Impact -->
     <div id="tool-dutydrawback" class="tool-view">
-      <h1>Duty Drawback / Tariff &amp; HTS Cost Impact</h1>
+      <h2 class="tool-title">Duty Drawback / Tariff &amp; HTS Cost Impact</h2>
       <p style="color:var(--text-mid); margin-bottom:20px;">Model landed-cost exposure to tariffs and how much of it is recoverable through a duty drawback program.</p>
       <div class="grid">
         <div class="panel">
           <h2>Import &amp; Duty Inputs</h2>
-          <div class="field"><label>Unit Customs / FOB Value</label><div class="prefix-wrap"><span>$</span><input type="number" id="dd-value" value="24.00" oninput="calculateDutyDrawback()"></div></div>
-          <div class="field"><label>Applicable Duty / Tariff Rate (%)</label><input type="number" id="dd-rate" value="25" min="0" step="0.1" oninput="calculateDutyDrawback()"></div>
-          <div class="field"><label>Annual Import Volume (Units)</label><input type="number" id="dd-volume" value="50000" min="0" oninput="calculateDutyDrawback()"></div>
-          <div class="field"><label>% of Volume Eligible for Drawback</label><div class="hint">Re-exported unused, or incorporated into an exported finished good.</div><input type="number" id="dd-eligible-pct" value="30" min="0" max="100" oninput="calculateDutyDrawback()"></div>
-          <div class="field"><label>Drawback Recovery Rate (%)</label><div class="hint">Typically up to 99% for unused-merchandise drawback claims.</div><input type="number" id="dd-recovery-pct" value="99" min="0" max="100" oninput="calculateDutyDrawback()"></div>
-          <div class="field"><label>Tariff Change Scenario (± Percentage Points)</label><input type="number" id="dd-scenario" value="10" oninput="calculateDutyDrawback()"></div>
+          <div class="field"><label for="dd-value">Unit Customs / FOB Value</label><div class="prefix-wrap"><span>$</span><input type="number" id="dd-value" value="24.00" oninput="calculateDutyDrawback()"></div></div>
+          <div class="field"><label for="dd-rate">Applicable Duty / Tariff Rate (%)</label><input type="number" id="dd-rate" value="25" min="0" step="0.1" oninput="calculateDutyDrawback()"></div>
+          <div class="field"><label for="dd-volume">Annual Import Volume (Units)</label><input type="number" id="dd-volume" value="50000" min="0" oninput="calculateDutyDrawback()"></div>
+          <div class="field"><label for="dd-eligible-pct">% of Volume Eligible for Drawback</label><div class="hint">Re-exported unused, or incorporated into an exported finished good.</div><input type="number" id="dd-eligible-pct" value="30" min="0" max="100" oninput="calculateDutyDrawback()"></div>
+          <div class="field"><label for="dd-recovery-pct">Drawback Recovery Rate (%)</label><div class="hint">Typically up to 99% for unused-merchandise drawback claims.</div><input type="number" id="dd-recovery-pct" value="99" min="0" max="100" oninput="calculateDutyDrawback()"></div>
+          <div class="field"><label for="dd-scenario">Tariff Change Scenario (± Percentage Points)</label><input type="number" id="dd-scenario" value="10" oninput="calculateDutyDrawback()"></div>
         </div>
         <div class="panel">
           <h2>Duty &amp; Drawback Outputs</h2>
@@ -1144,7 +1146,7 @@
 
     <!-- Multi-Quote Comparison -->
     <div id="tool-multiquote" class="tool-view">
-      <h1>Multi-Quote Comparison</h1>
+      <h2 class="tool-title">Multi-Quote Comparison</h2>
       <p style="color:var(--text-mid); margin-bottom:20px;">Upload 2–5 supplier quotes to see what's the same, what's different, and how each stacks up against the requirements you set. Parsed 100% locally — nothing is uploaded anywhere.</p>
 
       <div class="panel" style="margin-bottom:20px;">
@@ -1162,14 +1164,14 @@
         <h2>2. Your Requirements (Optional — Sharpens the Match Score)</h2>
         <p style="color:var(--text-mid); font-size:0.85em; margin-bottom:10px;">Leave any field blank to exclude it from scoring. Only fields you set here count toward each quote's match %.</p>
         <div class="grid" style="grid-template-columns: repeat(4, 1fr);">
-          <div class="field"><label>Max Unit Price ($)</label><input type="number" id="mq-req-price" placeholder="e.g. 12.50" min="0"></div>
-          <div class="field"><label>Max Setup Fee ($)</label><input type="number" id="mq-req-setup" placeholder="e.g. 500" min="0"></div>
-          <div class="field"><label>Max Tooling/NRE Fee ($)</label><input type="number" id="mq-req-tooling" placeholder="e.g. 15000" min="0"></div>
-          <div class="field"><label>Max MOQ (Units)</label><input type="number" id="mq-req-moq" placeholder="e.g. 5000" min="0"></div>
-          <div class="field"><label>Min Warranty (Months)</label><input type="number" id="mq-req-warranty" placeholder="e.g. 12" min="0"></div>
-          <div class="field"><label>Max Lead Time (Weeks)</label><input type="number" id="mq-req-leadtime" placeholder="e.g. 8" min="0"></div>
-          <div class="field"><label>Required Payment Terms</label><input type="text" id="mq-req-payment" placeholder="e.g. Net 30"></div>
-          <div class="field"><label>Required Incoterm</label><input type="text" id="mq-req-incoterm" placeholder="e.g. FOB"></div>
+          <div class="field"><label for="mq-req-price">Max Unit Price ($)</label><input type="number" id="mq-req-price" placeholder="e.g. 12.50" min="0"></div>
+          <div class="field"><label for="mq-req-setup">Max Setup Fee ($)</label><input type="number" id="mq-req-setup" placeholder="e.g. 500" min="0"></div>
+          <div class="field"><label for="mq-req-tooling">Max Tooling/NRE Fee ($)</label><input type="number" id="mq-req-tooling" placeholder="e.g. 15000" min="0"></div>
+          <div class="field"><label for="mq-req-moq">Max MOQ (Units)</label><input type="number" id="mq-req-moq" placeholder="e.g. 5000" min="0"></div>
+          <div class="field"><label for="mq-req-warranty">Min Warranty (Months)</label><input type="number" id="mq-req-warranty" placeholder="e.g. 12" min="0"></div>
+          <div class="field"><label for="mq-req-leadtime">Max Lead Time (Weeks)</label><input type="number" id="mq-req-leadtime" placeholder="e.g. 8" min="0"></div>
+          <div class="field"><label for="mq-req-payment">Required Payment Terms</label><input type="text" id="mq-req-payment" placeholder="e.g. Net 30"></div>
+          <div class="field"><label for="mq-req-incoterm">Required Incoterm</label><input type="text" id="mq-req-incoterm" placeholder="e.g. FOB"></div>
         </div>
         <button type="button" class="btn-action" onclick="compareQuotes()">Compare Quotes</button>
       </div>
@@ -1188,7 +1190,7 @@
 
     <!-- Cost Reduction / VE Pipeline -->
     <div id="tool-vepipeline" class="tool-view">
-      <h1>Cost Reduction / Value Engineering Pipeline</h1>
+      <h2 class="tool-title">Cost Reduction / Value Engineering Pipeline</h2>
       <p style="color:var(--text-mid); margin-bottom:20px;">Track savings initiatives from identified through realized — the same pipeline finance wants to see before crediting a cost-down number to the forecast.</p>
 
       <div class="panel" style="margin-bottom:20px;">
@@ -1246,7 +1248,7 @@
 
     <!-- EVM -->
     <div id="tool-evm" class="tool-view active">
-      <h1>Earned Value Management System (EVMS)</h1>
+      <h2 class="tool-title">Earned Value Management System (EVMS)</h2>
       <p style="color:var(--text-mid); margin-bottom:20px;">Track program performance using standard EVM cost and schedule variance indices.</p>
       <div class="board">
         <div class="light-card"><div class="light-row"><span class="light-dot" id="dot-cpi" style="background:var(--red);"></span><span class="light-label">Cost Efficiency</span></div><div class="light-value" id="val-cpi">0.90</div><div class="light-status">CPI Metric</div></div>
@@ -1256,10 +1258,10 @@
       <div class="grid">
         <div class="panel">
           <h2>Program Execution Baseline</h2>
-          <div class="field"><label>Budget at Completion (BAC)</label><div class="prefix-wrap"><span>$</span><input type="number" id="bac" value="650000" oninput="calculateEVM()"></div></div>
-          <div class="field"><label>Planned Value (PV)</label><div class="prefix-wrap"><span>$</span><input type="number" id="pv" value="280000" oninput="calculateEVM()"></div></div>
-          <div class="field"><label>Earned Value (EV)</label><div class="prefix-wrap"><span>$</span><input type="number" id="ev" value="260000" oninput="calculateEVM()"></div></div>
-          <div class="field"><label>Actual Cost (AC)</label><div class="prefix-wrap"><span>$</span><input type="number" id="ac" value="288888" oninput="calculateEVM()"></div></div>
+          <div class="field"><label for="bac">Budget at Completion (BAC)</label><div class="prefix-wrap"><span>$</span><input type="number" id="bac" value="650000" oninput="calculateEVM()"></div></div>
+          <div class="field"><label for="pv">Planned Value (PV)</label><div class="prefix-wrap"><span>$</span><input type="number" id="pv" value="280000" oninput="calculateEVM()"></div></div>
+          <div class="field"><label for="ev">Earned Value (EV)</label><div class="prefix-wrap"><span>$</span><input type="number" id="ev" value="260000" oninput="calculateEVM()"></div></div>
+          <div class="field"><label for="ac">Actual Cost (AC)</label><div class="prefix-wrap"><span>$</span><input type="number" id="ac" value="288888" oninput="calculateEVM()"></div></div>
         </div>
         <div class="panel">
           <h2>Variances &amp; Forecasts</h2>
@@ -1272,17 +1274,17 @@
 
     <!-- EOQ & Reorder Point -->
     <div id="tool-eoq" class="tool-view">
-      <h1>Economic Order Quantity (EOQ) &amp; Safety Stock Engine</h1>
+      <h2 class="tool-title">Economic Order Quantity (EOQ) &amp; Safety Stock Engine</h2>
       <p style="color:var(--text-mid); margin-bottom:20px;">Optimize lot sizing, inventory holding costs, and automated stock replenishment points.</p>
       <div class="grid">
         <div class="panel">
           <h2>Inventory Parameters</h2>
-          <div class="field"><label>Annual Unit Demand (D)</label><input type="number" id="eoq-demand" value="12000" oninput="calculateEOQ()"></div>
-          <div class="field"><label>Fixed Order Procurement Cost (S)</label><div class="prefix-wrap"><span>$</span><input type="number" id="eoq-setup" value="150" oninput="calculateEOQ()"></div></div>
-          <div class="field"><label>Annual Holding Cost per Unit (H)</label><div class="prefix-wrap"><span>$</span><input type="number" id="eoq-holding" value="8.50" oninput="calculateEOQ()"></div></div>
-          <div class="field"><label>Supplier Lead Time (Days)</label><input type="number" id="eoq-lead" value="21" oninput="calculateEOQ()"></div>
-          <div class="field"><label>Daily Demand Rate (d)</label><input type="number" id="eoq-daily" value="33" oninput="calculateEOQ()"></div>
-          <div class="field"><label>Safety Stock Days Buffer</label><input type="number" id="eoq-ss-days" value="10" oninput="calculateEOQ()"></div>
+          <div class="field"><label for="eoq-demand">Annual Unit Demand (D)</label><input type="number" id="eoq-demand" value="12000" oninput="calculateEOQ()"></div>
+          <div class="field"><label for="eoq-setup">Fixed Order Procurement Cost (S)</label><div class="prefix-wrap"><span>$</span><input type="number" id="eoq-setup" value="150" oninput="calculateEOQ()"></div></div>
+          <div class="field"><label for="eoq-holding">Annual Holding Cost per Unit (H)</label><div class="prefix-wrap"><span>$</span><input type="number" id="eoq-holding" value="8.50" oninput="calculateEOQ()"></div></div>
+          <div class="field"><label for="eoq-lead">Supplier Lead Time (Days)</label><input type="number" id="eoq-lead" value="21" oninput="calculateEOQ()"></div>
+          <div class="field"><label for="eoq-daily">Daily Demand Rate (d)</label><input type="number" id="eoq-daily" value="33" oninput="calculateEOQ()"></div>
+          <div class="field"><label for="eoq-ss-days">Safety Stock Days Buffer</label><input type="number" id="eoq-ss-days" value="10" oninput="calculateEOQ()"></div>
         </div>
         <div class="panel">
           <h2>Lot Sizing &amp; Reorder Targets</h2>
@@ -1295,7 +1297,7 @@
 
     <!-- Demand Forecast Accuracy -->
     <div id="tool-forecastacc" class="tool-view">
-      <h1>Demand Forecast Accuracy (MAPE)</h1>
+      <h2 class="tool-title">Demand Forecast Accuracy (MAPE)</h2>
       <p style="color:var(--text-mid); margin-bottom:20px;">Track forecast vs. actual by SKU or period — a wide MAPE or a persistent bias is what actually drives the safety stock in the EOQ engine, so this is worth checking before you trust that buffer.</p>
 
       <div class="panel" style="margin-bottom:20px;">
@@ -1333,14 +1335,14 @@
 
     <!-- FPY / PPM -->
     <div id="tool-fpy" class="tool-view">
-      <h1>Factory First Pass Yield (FPY) &amp; Defect Rate (PPM)</h1>
+      <h2 class="tool-title">Factory First Pass Yield (FPY) &amp; Defect Rate (PPM)</h2>
       <p style="color:var(--text-mid); margin-bottom:20px;">Calculate cumulative yield across multi-stage assembly lines and convert to Parts Per Million defects.</p>
       <div class="grid">
         <div class="panel">
           <h2>Stage Yield Inputs (%)</h2>
-          <div class="field"><label>Stage 1: SMT &amp; Board Assembly Yield %</label><input type="number" id="fpy-s1" value="98.5" oninput="calculateFPY()"></div>
-          <div class="field"><label>Stage 2: Mechanical Integration Yield %</label><input type="number" id="fpy-s2" value="97.0" oninput="calculateFPY()"></div>
-          <div class="field"><label>Stage 3: Firmware &amp; Final Test Yield %</label><input type="number" id="fpy-s3" value="99.0" oninput="calculateFPY()"></div>
+          <div class="field"><label for="fpy-s1">Stage 1: SMT &amp; Board Assembly Yield %</label><input type="number" id="fpy-s1" value="98.5" oninput="calculateFPY()"></div>
+          <div class="field"><label for="fpy-s2">Stage 2: Mechanical Integration Yield %</label><input type="number" id="fpy-s2" value="97.0" oninput="calculateFPY()"></div>
+          <div class="field"><label for="fpy-s3">Stage 3: Firmware &amp; Final Test Yield %</label><input type="number" id="fpy-s3" value="99.0" oninput="calculateFPY()"></div>
         </div>
         <div class="panel">
           <h2>Rolled Yield Metrics</h2>
@@ -1352,7 +1354,7 @@
 
     <!-- OEE / Downtime Tracker -->
     <div id="tool-oee" class="tool-view">
-      <h1>OEE / Machine Downtime Tracker</h1>
+      <h2 class="tool-title">OEE / Machine Downtime Tracker</h2>
       <p style="color:var(--text-mid); margin-bottom:20px;">Availability × Performance × Quality, per line or shift, with a downtime log to see where the hours are actually going.</p>
 
       <div class="panel" style="margin-bottom:20px;">
@@ -1392,7 +1394,7 @@
 
     <!-- Budget KPI Dashboard -->
     <div id="tool-budgetkpi" class="tool-view">
-      <h1>Budget KPI Dashboard</h1>
+      <h2 class="tool-title">Budget KPI Dashboard</h2>
       <p style="color:var(--text-mid); margin-bottom:20px;">Track scoped budget vs. actual spend, burn rate, cost variance, revenue growth, and forecast accuracy in one place.</p>
       <div class="board">
         <div class="light-card"><div class="light-row"><span class="light-dot" id="bk-dot-variance" style="background:var(--green);"></span><span class="light-label">Budget Health</span></div><div class="light-value" id="bk-val-variance-pct">0.0%</div><div class="light-status">Variance vs. Scoped</div></div>
@@ -1402,19 +1404,19 @@
       <div class="grid">
         <div class="panel">
           <h2>Scoped Budget &amp; Actual Spend</h2>
-          <div class="field"><label>Total Scoped / Planned Budget</label><div class="prefix-wrap"><span>$</span><input type="number" id="bk-scoped-budget" value="500000" oninput="calculateBudgetKPI()"></div></div>
-          <div class="field"><label>Actual Spend to Date</label><div class="prefix-wrap"><span>$</span><input type="number" id="bk-actual-spend" value="420000" oninput="calculateBudgetKPI()"></div></div>
-          <div class="field"><label>Months Elapsed in Program</label><input type="number" id="bk-months-elapsed" value="7" min="0" step="0.1" oninput="calculateBudgetKPI()"></div>
-          <div class="field"><label>Total Program Duration (Months)</label><input type="number" id="bk-months-total" value="12" min="0" step="0.1" oninput="calculateBudgetKPI()"></div>
+          <div class="field"><label for="bk-scoped-budget">Total Scoped / Planned Budget</label><div class="prefix-wrap"><span>$</span><input type="number" id="bk-scoped-budget" value="500000" oninput="calculateBudgetKPI()"></div></div>
+          <div class="field"><label for="bk-actual-spend">Actual Spend to Date</label><div class="prefix-wrap"><span>$</span><input type="number" id="bk-actual-spend" value="420000" oninput="calculateBudgetKPI()"></div></div>
+          <div class="field"><label for="bk-months-elapsed">Months Elapsed in Program</label><input type="number" id="bk-months-elapsed" value="7" min="0" step="0.1" oninput="calculateBudgetKPI()"></div>
+          <div class="field"><label for="bk-months-total">Total Program Duration (Months)</label><input type="number" id="bk-months-total" value="12" min="0" step="0.1" oninput="calculateBudgetKPI()"></div>
         </div>
         <div class="panel">
           <h2>Operating Cost &amp; Revenue Inputs</h2>
-          <div class="field"><label>Budgeted Operating Expense (Labor/Materials) — Period</label><div class="prefix-wrap"><span>$</span><input type="number" id="bk-opex-budget" value="150000" oninput="calculateBudgetKPI()"></div></div>
-          <div class="field"><label>Actual Operating Expense — Period</label><div class="prefix-wrap"><span>$</span><input type="number" id="bk-opex-actual" value="162000" oninput="calculateBudgetKPI()"></div></div>
-          <div class="field"><label>Prior Period Revenue</label><div class="prefix-wrap"><span>$</span><input type="number" id="bk-rev-prior" value="380000" oninput="calculateBudgetKPI()"></div></div>
-          <div class="field"><label>Current Period Revenue</label><div class="prefix-wrap"><span>$</span><input type="number" id="bk-rev-current" value="410000" oninput="calculateBudgetKPI()"></div></div>
-          <div class="field"><label>Previously Forecasted Amount</label><div class="prefix-wrap"><span>$</span><input type="number" id="bk-forecast-amt" value="400000" oninput="calculateBudgetKPI()"></div></div>
-          <div class="field"><label>Actual Outcome for Forecast Period</label><div class="prefix-wrap"><span>$</span><input type="number" id="bk-forecast-actual" value="420000" oninput="calculateBudgetKPI()"></div></div>
+          <div class="field"><label for="bk-opex-budget">Budgeted Operating Expense (Labor/Materials) — Period</label><div class="prefix-wrap"><span>$</span><input type="number" id="bk-opex-budget" value="150000" oninput="calculateBudgetKPI()"></div></div>
+          <div class="field"><label for="bk-opex-actual">Actual Operating Expense — Period</label><div class="prefix-wrap"><span>$</span><input type="number" id="bk-opex-actual" value="162000" oninput="calculateBudgetKPI()"></div></div>
+          <div class="field"><label for="bk-rev-prior">Prior Period Revenue</label><div class="prefix-wrap"><span>$</span><input type="number" id="bk-rev-prior" value="380000" oninput="calculateBudgetKPI()"></div></div>
+          <div class="field"><label for="bk-rev-current">Current Period Revenue</label><div class="prefix-wrap"><span>$</span><input type="number" id="bk-rev-current" value="410000" oninput="calculateBudgetKPI()"></div></div>
+          <div class="field"><label for="bk-forecast-amt">Previously Forecasted Amount</label><div class="prefix-wrap"><span>$</span><input type="number" id="bk-forecast-amt" value="400000" oninput="calculateBudgetKPI()"></div></div>
+          <div class="field"><label for="bk-forecast-actual">Actual Outcome for Forecast Period</label><div class="prefix-wrap"><span>$</span><input type="number" id="bk-forecast-actual" value="420000" oninput="calculateBudgetKPI()"></div></div>
         </div>
       </div>
       <div class="grid" style="margin-top:20px;">
@@ -1439,7 +1441,7 @@
 
     <!-- Data Cut / Report Builder -->
     <div id="tool-datacut" class="tool-view">
-      <h1>Data Cut / Report Builder</h1>
+      <h2 class="tool-title">Data Cut / Report Builder</h2>
       <p style="color:var(--text-mid); margin-bottom:20px;">Paste a wide export straight out of Excel or your GL/ERP/inventory system, then cut it by any column — GL Code, Cost Center, Part Number, Location, whatever headers are actually in your data. Parsed 100% locally, nothing leaves the browser.</p>
 
       <div class="panel" style="margin-bottom:20px;">
@@ -1456,10 +1458,10 @@
       <div class="panel" style="margin-bottom:20px;">
         <h2>2. Cut By</h2>
         <div class="grid" style="grid-template-columns: repeat(4, 1fr);">
-          <div class="field"><label>Cut By (Group 1)</label><select id="dc-group1"><option value="">— Parse data first —</option></select></div>
-          <div class="field"><label>Then By (Group 2, optional)</label><select id="dc-group2"><option value="">— None —</option></select></div>
-          <div class="field"><label>Value Column</label><select id="dc-value"><option value="">— Parse data first —</option></select></div>
-          <div class="field"><label>Aggregation</label>
+          <div class="field"><label for="dc-group1">Cut By (Group 1)</label><select id="dc-group1"><option value="">— Parse data first —</option></select></div>
+          <div class="field"><label for="dc-group2">Then By (Group 2, optional)</label><select id="dc-group2"><option value="">— None —</option></select></div>
+          <div class="field"><label for="dc-value">Value Column</label><select id="dc-value"><option value="">— Parse data first —</option></select></div>
+          <div class="field"><label for="dc-agg">Aggregation</label>
             <select id="dc-agg">
               <option value="sum">Sum</option>
               <option value="count">Count of Rows</option>
@@ -1487,7 +1489,7 @@
 
     <!-- CapEx/OpEx & Direct/Indirect Classifier -->
     <div id="tool-capexopex" class="tool-view">
-      <h1>CapEx/OpEx &amp; Direct/Indirect Cost Classifier</h1>
+      <h2 class="tool-title">CapEx/OpEx &amp; Direct/Indirect Cost Classifier</h2>
       <p style="color:var(--text-mid); margin-bottom:20px;">Log cost line items and classify each on two axes — capital vs. operating, direct vs. indirect — to get a rollup Finance can use straight for CAPEX/OPEX budget tracking.</p>
 
       <div class="panel" style="margin-bottom:20px;">
@@ -1535,12 +1537,12 @@
 
     <!-- Inventory Record Accuracy / Cycle Count -->
     <div id="tool-cyclecount" class="tool-view">
-      <h1>Inventory Record Accuracy / Cycle Count</h1>
+      <h2 class="tool-title">Inventory Record Accuracy / Cycle Count</h2>
       <p style="color:var(--text-mid); margin-bottom:20px;">Compare system quantity to physical count by location and see whether your ERP/MRP data is trustworthy enough to plan against.</p>
 
       <div class="panel" style="margin-bottom:20px;">
         <h2>Cycle Count Data</h2>
-        <div class="field" style="max-width:280px;"><label>Accuracy Tolerance (%)</label><div class="hint">Variance within this band still counts as "accurate" — 2% is a common default.</div><input type="number" id="cc-tolerance" value="2" min="0" step="0.1" oninput="calculateCycleCount()"></div>
+        <div class="field" style="max-width:280px;"><label for="cc-tolerance">Accuracy Tolerance (%)</label><div class="hint">Variance within this band still counts as "accurate" — 2% is a common default.</div><input type="number" id="cc-tolerance" value="2" min="0" step="0.1" oninput="calculateCycleCount()"></div>
         <div class="data-table-wrap">
           <table class="data-table">
             <thead><tr>
@@ -1585,15 +1587,15 @@
 
     <!-- RMA & Warranty -->
     <div id="tool-rma" class="tool-view active">
-      <h1>RMA &amp; Warranty Field Loss Risk Engine</h1>
+      <h2 class="tool-title">RMA &amp; Warranty Field Loss Risk Engine</h2>
       <p style="color:var(--text-mid); margin-bottom:20px;">Model return rates, field failure trends, warranty terms, return disposition, and warranty reserve liabilities.</p>
       <div class="grid">
         <div class="panel">
           <h2>Field Deployment &amp; Warranty Terms</h2>
-          <div class="field"><label>Units Deployed in Field</label><input type="number" id="rma-units" value="15000" oninput="calculateRMA()"></div>
-          <div class="field"><label>Historical Return / Failure Rate (%)</label><input type="number" id="rma-rate" value="2.8" step="0.1" oninput="calculateRMA()"></div>
-          <div class="field"><label>Warranty Period (Months)</label><input type="number" id="rma-warranty-months" value="12" min="0" oninput="calculateRMA()"></div>
-          <div class="field"><label>Warranty Coverage Type</label>
+          <div class="field"><label for="rma-units">Units Deployed in Field</label><input type="number" id="rma-units" value="15000" oninput="calculateRMA()"></div>
+          <div class="field"><label for="rma-rate">Historical Return / Failure Rate (%)</label><input type="number" id="rma-rate" value="2.8" step="0.1" oninput="calculateRMA()"></div>
+          <div class="field"><label for="rma-warranty-months">Warranty Period (Months)</label><input type="number" id="rma-warranty-months" value="12" min="0" oninput="calculateRMA()"></div>
+          <div class="field"><label for="rma-warranty-type">Warranty Coverage Type</label>
             <select id="rma-warranty-type" onchange="calculateRMA()">
               <option value="full">Full Replacement (No Charge to Customer)</option>
               <option value="repair">Repair &amp; Return (No Charge to Customer)</option>
@@ -1601,19 +1603,19 @@
               <option value="extended">Extended / Paid Warranty</option>
             </select>
           </div>
-          <div class="field"><label>Existing Warranty Reserve Balance</label><div class="hint">Funds already accrued/on the books for this program, before this period's forecast.</div><div class="prefix-wrap"><span>$</span><input type="number" id="rma-reserve-balance" value="0" min="0" oninput="calculateRMA()"></div></div>
+          <div class="field"><label for="rma-reserve-balance">Existing Warranty Reserve Balance</label><div class="hint">Funds already accrued/on the books for this program, before this period's forecast.</div><div class="prefix-wrap"><span>$</span><input type="number" id="rma-reserve-balance" value="0" min="0" oninput="calculateRMA()"></div></div>
         </div>
         <div class="panel">
           <h2>Return Disposition Mix &amp; Cost Capture</h2>
           <p style="color:var(--text-mid); font-size:0.85em; margin-bottom:10px;">Split expected returns by how they're actually dispositioned — each path carries a different cost. Percentages should total 100%.</p>
-          <div class="field"><label>% Repaired &amp; Returned to Field</label><input type="number" id="rma-disp-repair-pct" value="60" min="0" max="100" oninput="calculateRMA()"></div>
-          <div class="field"><label>Repair Cost per Unit</label><div class="prefix-wrap"><span>$</span><input type="number" id="rma-disp-repair-cost" value="90" min="0" oninput="calculateRMA()"></div></div>
-          <div class="field"><label>% Scrapped / Written Off (No Repair)</label><input type="number" id="rma-disp-scrap-pct" value="15" min="0" max="100" oninput="calculateRMA()"></div>
-          <div class="field"><label>Scrap / Write-off Cost per Unit</label><div class="prefix-wrap"><span>$</span><input type="number" id="rma-disp-scrap-cost" value="180" min="0" oninput="calculateRMA()"></div></div>
-          <div class="field"><label>% Replaced with New Unit</label><input type="number" id="rma-disp-replace-pct" value="20" min="0" max="100" oninput="calculateRMA()"></div>
-          <div class="field"><label>New Unit Replacement Cost per Unit</label><div class="prefix-wrap"><span>$</span><input type="number" id="rma-disp-replace-cost" value="220" min="0" oninput="calculateRMA()"></div></div>
-          <div class="field"><label>% Credit / Refund Issued to Customer</label><input type="number" id="rma-disp-credit-pct" value="5" min="0" max="100" oninput="calculateRMA()"></div>
-          <div class="field"><label>Credit / Refund Amount per Unit</label><div class="prefix-wrap"><span>$</span><input type="number" id="rma-disp-credit-cost" value="150" min="0" oninput="calculateRMA()"></div></div>
+          <div class="field"><label for="rma-disp-repair-pct">% Repaired &amp; Returned to Field</label><input type="number" id="rma-disp-repair-pct" value="60" min="0" max="100" oninput="calculateRMA()"></div>
+          <div class="field"><label for="rma-disp-repair-cost">Repair Cost per Unit</label><div class="prefix-wrap"><span>$</span><input type="number" id="rma-disp-repair-cost" value="90" min="0" oninput="calculateRMA()"></div></div>
+          <div class="field"><label for="rma-disp-scrap-pct">% Scrapped / Written Off (No Repair)</label><input type="number" id="rma-disp-scrap-pct" value="15" min="0" max="100" oninput="calculateRMA()"></div>
+          <div class="field"><label for="rma-disp-scrap-cost">Scrap / Write-off Cost per Unit</label><div class="prefix-wrap"><span>$</span><input type="number" id="rma-disp-scrap-cost" value="180" min="0" oninput="calculateRMA()"></div></div>
+          <div class="field"><label for="rma-disp-replace-pct">% Replaced with New Unit</label><input type="number" id="rma-disp-replace-pct" value="20" min="0" max="100" oninput="calculateRMA()"></div>
+          <div class="field"><label for="rma-disp-replace-cost">New Unit Replacement Cost per Unit</label><div class="prefix-wrap"><span>$</span><input type="number" id="rma-disp-replace-cost" value="220" min="0" oninput="calculateRMA()"></div></div>
+          <div class="field"><label for="rma-disp-credit-pct">% Credit / Refund Issued to Customer</label><input type="number" id="rma-disp-credit-pct" value="5" min="0" max="100" oninput="calculateRMA()"></div>
+          <div class="field"><label for="rma-disp-credit-cost">Credit / Refund Amount per Unit</label><div class="prefix-wrap"><span>$</span><input type="number" id="rma-disp-credit-cost" value="150" min="0" oninput="calculateRMA()"></div></div>
         </div>
       </div>
       <div class="grid" style="margin-top:20px;">
@@ -1639,15 +1641,15 @@
 
     <!-- Alternate Part Qualification -->
     <div id="tool-altpart" class="tool-view">
-      <h1>Alternate Part / Form-Fit-Function (FFF) Qualifier</h1>
+      <h2 class="tool-title">Alternate Part / Form-Fit-Function (FFF) Qualifier</h2>
       <p style="color:var(--text-mid); margin-bottom:20px;">Evaluate drop-in component replacements for obsolescence or cost reduction.</p>
       <div class="grid">
         <div class="panel">
           <h2>Substitute / Alternate Part Identification</h2>
-          <div class="field"><label>Original (Obsolete) Part Number</label><input type="text" id="fff-orig-pn" placeholder="e.g. TPS54331DR" oninput="calculateFFF()"></div>
-          <div class="field"><label>Proposed Substitute Part Number</label><input type="text" id="fff-sub-pn" placeholder="e.g. TPS54331DR-EQ1" oninput="calculateFFF()"></div>
-          <div class="field"><label>Substitute Manufacturer</label><input type="text" id="fff-sub-mfr" placeholder="e.g. Texas Instruments" oninput="calculateFFF()"></div>
-          <div class="field"><label>Substitute Source</label>
+          <div class="field"><label for="fff-orig-pn">Original (Obsolete) Part Number</label><input type="text" id="fff-orig-pn" placeholder="e.g. TPS54331DR" oninput="calculateFFF()"></div>
+          <div class="field"><label for="fff-sub-pn">Proposed Substitute Part Number</label><input type="text" id="fff-sub-pn" placeholder="e.g. TPS54331DR-EQ1" oninput="calculateFFF()"></div>
+          <div class="field"><label for="fff-sub-mfr">Substitute Manufacturer</label><input type="text" id="fff-sub-mfr" placeholder="e.g. Texas Instruments" oninput="calculateFFF()"></div>
+          <div class="field"><label for="fff-sub-source">Substitute Source</label>
             <select id="fff-sub-source" onchange="calculateFFF()">
               <option value="authorized">Authorized / Franchised Distributor</option>
               <option value="oem">OEM Direct (Manufacturer)</option>
@@ -1657,13 +1659,13 @@
               <option value="unknown">Unknown / Not Yet Verified</option>
             </select>
           </div>
-          <div class="field"><label>Substitution Notes / Justification</label><textarea id="fff-sub-notes" style="height:80px;" placeholder="Why this substitute, any known caveats, test coverage planned..." oninput="calculateFFF()"></textarea></div>
+          <div class="field"><label for="fff-sub-notes">Substitution Notes / Justification</label><textarea id="fff-sub-notes" style="height:80px;" placeholder="Why this substitute, any known caveats, test coverage planned..." oninput="calculateFFF()"></textarea></div>
         </div>
         <div class="panel">
           <h2>Qualification Criteria</h2>
-          <div class="field"><label>Form / Mechanical Fit Match?</label><select id="fff-1" onchange="calculateFFF()"><option value="1">Match (Yes)</option><option value="0">Mismatch (No)</option></select></div>
-          <div class="field"><label>Fit / Electrical Pinout &amp; Spec Match?</label><select id="fff-2" onchange="calculateFFF()"><option value="1">Match (Yes)</option><option value="0">Mismatch (No)</option></select></div>
-          <div class="field"><label>Function / Software &amp; Protocol Match?</label><select id="fff-3" onchange="calculateFFF()"><option value="1">Match (Yes)</option><option value="0">Mismatch (No)</option></select></div>
+          <div class="field"><label for="fff-1">Form / Mechanical Fit Match?</label><select id="fff-1" onchange="calculateFFF()"><option value="1">Match (Yes)</option><option value="0">Mismatch (No)</option></select></div>
+          <div class="field"><label for="fff-2">Fit / Electrical Pinout &amp; Spec Match?</label><select id="fff-2" onchange="calculateFFF()"><option value="1">Match (Yes)</option><option value="0">Mismatch (No)</option></select></div>
+          <div class="field"><label for="fff-3">Function / Software &amp; Protocol Match?</label><select id="fff-3" onchange="calculateFFF()"><option value="1">Match (Yes)</option><option value="0">Mismatch (No)</option></select></div>
           <hr class="divider">
           <h2 style="margin-top:15px;">Qualification Status</h2>
           <div class="readout"><div class="rlabel">FFF Compatibility Status</div><div class="rvalue" id="fff-out-status" style="color:var(--green);">DROP-IN REPLACEMENT</div></div>
@@ -1681,14 +1683,14 @@
 
     <!-- EOL & LTB Planner -->
     <div id="tool-eol" class="tool-view">
-      <h1>End-of-Life (EOL) &amp; Last Time Buy (LTB) Planner</h1>
+      <h2 class="tool-title">End-of-Life (EOL) &amp; Last Time Buy (LTB) Planner</h2>
       <p style="color:var(--text-mid); margin-bottom:20px;">EOL and LTB are related but distinct disciplines — EOL manages the phase-out of what's already on hand (scrap risk), while LTB secures the final lifetime supply from the vendor (stockout risk). Plan both sides separately below.</p>
 
       <div class="panel" style="margin-bottom:20px;">
         <h2>Planning Strategy</h2>
         <p style="color:var(--text-mid); font-size:0.85em; margin-bottom:10px;">Pick a posture and both sections below switch their default execution levers and accepted risk to match. You can still override any individual field after picking one.</p>
         <div class="field">
-          <label>Strategy</label>
+          <label for="planning-strategy">Strategy</label>
           <select id="planning-strategy" onchange="applyPlanningStrategy()">
             <option value="service">Service Level Optimization — protect fill rate, accept E&amp;O write-off risk</option>
             <option value="cost">Cost Reduction Optimization — protect capital, accept stockout risk</option>
@@ -1700,16 +1702,16 @@
       <div class="grid">
         <div class="panel">
           <h2>Phase-Out Inventory &amp; Cost Inputs</h2>
-          <div class="field"><label>Current On-Hand Inventory (Units)</label><input type="number" id="eol-onhand" value="3000" min="0" oninput="calculateEOL()"></div>
-          <div class="field"><label>Average Monthly Sell-Through / Demand (Units)</label><input type="number" id="eol-runrate" value="250" min="0" oninput="calculateEOL()"></div>
-          <div class="field"><label>Demand-Shift Uplift from Promotions (Units/Month)</label><div class="hint">Incentivize customers to transition early so there's less old material left to scrap.</div><input type="number" id="eol-demand-shift" value="0" min="0" oninput="calculateEOL()"></div>
-          <div class="field"><label>Months Until Hard Cutoff / End-of-Support Date</label><input type="number" id="eol-months-to-cutoff" value="8" min="0" step="0.5" oninput="calculateEOL()"></div>
-          <div class="field"><label>Unit Book Value / Cost</label><div class="prefix-wrap"><span>$</span><input type="number" id="eol-unit-cost" value="42.00" oninput="calculateEOL()"></div></div>
-          <div class="field"><label>Holding Cost per Unit per Month</label><div class="prefix-wrap"><span>$</span><input type="number" id="eol-holding-cost" value="1.10" oninput="calculateEOL()"></div></div>
-          <div class="field"><label>Scrap / Disposal Recovery Value per Unit</label><div class="hint">Salvage value or secondary-market buyback that offsets the final write-off.</div><div class="prefix-wrap"><span>$</span><input type="number" id="eol-scrap-recovery" value="5.00" min="0" oninput="calculateEOL()"></div></div>
-          <div class="field"><label>Reverse Logistics Cost per Returned Unit</label><div class="prefix-wrap"><span>$</span><input type="number" id="eol-reverse-cost" value="8.00" min="0" oninput="calculateEOL()"></div></div>
-          <div class="field"><label>Expected Units Returned During Phase-Down</label><input type="number" id="eol-returns-units" value="60" min="0" oninput="calculateEOL()"></div>
-          <div class="field"><label>Inventory Allocation Policy</label>
+          <div class="field"><label for="eol-onhand">Current On-Hand Inventory (Units)</label><input type="number" id="eol-onhand" value="3000" min="0" oninput="calculateEOL()"></div>
+          <div class="field"><label for="eol-runrate">Average Monthly Sell-Through / Demand (Units)</label><input type="number" id="eol-runrate" value="250" min="0" oninput="calculateEOL()"></div>
+          <div class="field"><label for="eol-demand-shift">Demand-Shift Uplift from Promotions (Units/Month)</label><div class="hint">Incentivize customers to transition early so there's less old material left to scrap.</div><input type="number" id="eol-demand-shift" value="0" min="0" oninput="calculateEOL()"></div>
+          <div class="field"><label for="eol-months-to-cutoff">Months Until Hard Cutoff / End-of-Support Date</label><input type="number" id="eol-months-to-cutoff" value="8" min="0" step="0.5" oninput="calculateEOL()"></div>
+          <div class="field"><label for="eol-unit-cost">Unit Book Value / Cost</label><div class="prefix-wrap"><span>$</span><input type="number" id="eol-unit-cost" value="42.00" oninput="calculateEOL()"></div></div>
+          <div class="field"><label for="eol-holding-cost">Holding Cost per Unit per Month</label><div class="prefix-wrap"><span>$</span><input type="number" id="eol-holding-cost" value="1.10" oninput="calculateEOL()"></div></div>
+          <div class="field"><label for="eol-scrap-recovery">Scrap / Disposal Recovery Value per Unit</label><div class="hint">Salvage value or secondary-market buyback that offsets the final write-off.</div><div class="prefix-wrap"><span>$</span><input type="number" id="eol-scrap-recovery" value="5.00" min="0" oninput="calculateEOL()"></div></div>
+          <div class="field"><label for="eol-reverse-cost">Reverse Logistics Cost per Returned Unit</label><div class="prefix-wrap"><span>$</span><input type="number" id="eol-reverse-cost" value="8.00" min="0" oninput="calculateEOL()"></div></div>
+          <div class="field"><label for="eol-returns-units">Expected Units Returned During Phase-Down</label><input type="number" id="eol-returns-units" value="60" min="0" oninput="calculateEOL()"></div>
+          <div class="field"><label for="eol-allocation-policy">Inventory Allocation Policy</label>
             <select id="eol-allocation-policy" onchange="calculateEOL()">
               <option value="tiered">Fixed Allocation by Customer Tier/SLA — protect priority accounts</option>
               <option value="fcfs">First-Come, First-Served — clear remaining stock quickly</option>
@@ -1740,24 +1742,24 @@
       <div class="grid">
         <div class="panel">
           <h2>Lifetime Demand &amp; Purchase Inputs</h2>
-          <div class="field"><label>LTB Quantity Method</label>
+          <div class="field"><label for="ltb-method">LTB Quantity Method</label>
             <select id="ltb-method" onchange="calculateLTB()">
               <option value="mtbf">Failure Rate (MTBF) + Insurance Buffer</option>
               <option value="netdemand">Forecasted Demand − On-Hand Inventory (No Padding)</option>
             </select>
           </div>
-          <div class="field"><label>Remaining Service Life (Years)</label><input type="number" id="ltb-years" value="4" min="0" step="0.5" oninput="calculateLTB()"></div>
-          <div class="field"><label>Projected Annual Service &amp; Production Demand</label><input type="number" id="ltb-demand" value="1200" min="0" oninput="calculateLTB()"></div>
-          <div class="field"><label>Installed Base for Failure Modeling (Units in Field)</label><div class="hint">Used with MTBF, not the no-padding method.</div><input type="number" id="ltb-installed-base" value="15000" min="0" oninput="calculateLTB()"></div>
-          <div class="field"><label>MTBF — Mean Time Between Failures (Months)</label><input type="number" id="ltb-mtbf-months" value="96" min="1" oninput="calculateLTB()"></div>
-          <div class="field"><label>On-Hand Inventory to Net Against Order (Units)</label><div class="hint">Used with the no-padding method, not MTBF.</div><input type="number" id="ltb-onhand-net" value="500" min="0" oninput="calculateLTB()"></div>
-          <div class="field"><label>Insurance / Forecast Buffer (%)</label><div class="hint">"Last man standing" buffer against supplier yield issues on the final run — typically 10–20%. Applies only with the MTBF method.</div><input type="number" id="ltb-buffer" value="15" min="0" oninput="calculateLTB()"></div>
-          <div class="field"><label>Part Unit Cost (List Price)</label><div class="prefix-wrap"><span>$</span><input type="number" id="ltb-unitcost" value="42.00" oninput="calculateLTB()"></div></div>
-          <div class="field"><label>Volume Discount at LTB Quantity (%)</label><input type="number" id="ltb-discount" value="8" min="0" max="100" oninput="calculateLTB()"></div>
-          <div class="field"><label>Annual Holding Cost Rate (% of Unit Cost)</label><div class="hint">A discounted-future-value check: model 20–30% to see whether holding this part for years costs more than a later spot buy.</div><input type="number" id="ltb-holding-cost-pct" value="8" min="0" oninput="calculateLTB()"></div>
-          <div class="field"><label>Approved LTB Budget / Spend Limit</label><div class="prefix-wrap"><span>$</span><input type="number" id="ltb-budget" value="650000" min="0" oninput="calculateLTB()"></div></div>
-          <div class="field"><label>Target Service Fill Rate (%)</label><input type="number" id="ltb-target-fill" value="98" min="0" max="100" oninput="calculateLTB()"></div>
-          <div class="field"><label>Staggered Delivery Tranches</label><div class="hint">Negotiate multiple deliveries instead of taking 100% of cash and inventory on day one.</div><input type="number" id="ltb-tranches" value="1" min="1" step="1" oninput="calculateLTB()"></div>
+          <div class="field"><label for="ltb-years">Remaining Service Life (Years)</label><input type="number" id="ltb-years" value="4" min="0" step="0.5" oninput="calculateLTB()"></div>
+          <div class="field"><label for="ltb-demand">Projected Annual Service &amp; Production Demand</label><input type="number" id="ltb-demand" value="1200" min="0" oninput="calculateLTB()"></div>
+          <div class="field"><label for="ltb-installed-base">Installed Base for Failure Modeling (Units in Field)</label><div class="hint">Used with MTBF, not the no-padding method.</div><input type="number" id="ltb-installed-base" value="15000" min="0" oninput="calculateLTB()"></div>
+          <div class="field"><label for="ltb-mtbf-months">MTBF — Mean Time Between Failures (Months)</label><input type="number" id="ltb-mtbf-months" value="96" min="1" oninput="calculateLTB()"></div>
+          <div class="field"><label for="ltb-onhand-net">On-Hand Inventory to Net Against Order (Units)</label><div class="hint">Used with the no-padding method, not MTBF.</div><input type="number" id="ltb-onhand-net" value="500" min="0" oninput="calculateLTB()"></div>
+          <div class="field"><label for="ltb-buffer">Insurance / Forecast Buffer (%)</label><div class="hint">"Last man standing" buffer against supplier yield issues on the final run — typically 10–20%. Applies only with the MTBF method.</div><input type="number" id="ltb-buffer" value="15" min="0" oninput="calculateLTB()"></div>
+          <div class="field"><label for="ltb-unitcost">Part Unit Cost (List Price)</label><div class="prefix-wrap"><span>$</span><input type="number" id="ltb-unitcost" value="42.00" oninput="calculateLTB()"></div></div>
+          <div class="field"><label for="ltb-discount">Volume Discount at LTB Quantity (%)</label><input type="number" id="ltb-discount" value="8" min="0" max="100" oninput="calculateLTB()"></div>
+          <div class="field"><label for="ltb-holding-cost-pct">Annual Holding Cost Rate (% of Unit Cost)</label><div class="hint">A discounted-future-value check: model 20–30% to see whether holding this part for years costs more than a later spot buy.</div><input type="number" id="ltb-holding-cost-pct" value="8" min="0" oninput="calculateLTB()"></div>
+          <div class="field"><label for="ltb-budget">Approved LTB Budget / Spend Limit</label><div class="prefix-wrap"><span>$</span><input type="number" id="ltb-budget" value="650000" min="0" oninput="calculateLTB()"></div></div>
+          <div class="field"><label for="ltb-target-fill">Target Service Fill Rate (%)</label><input type="number" id="ltb-target-fill" value="98" min="0" max="100" oninput="calculateLTB()"></div>
+          <div class="field"><label for="ltb-tranches">Staggered Delivery Tranches</label><div class="hint">Negotiate multiple deliveries instead of taking 100% of cash and inventory on day one.</div><input type="number" id="ltb-tranches" value="1" min="1" step="1" oninput="calculateLTB()"></div>
         </div>
         <div class="panel">
           <h2>LTB Financial &amp; Fill-Rate Outputs</h2>
@@ -1786,12 +1788,12 @@
       <div class="grid">
         <div class="panel">
           <h2>Transition Inputs</h2>
-          <div class="field"><label>Legacy On-Hand Inventory (Units)</label><input type="number" id="cov-legacy-onhand" value="4000" min="0" oninput="calculateCutOver()"></div>
-          <div class="field"><label>Monthly Demand Rate (Units/Month)</label><input type="number" id="cov-demand" value="500" min="0" oninput="calculateCutOver()"></div>
-          <div class="field"><label>Legacy Part Order Lead Time (Months)</label><input type="number" id="cov-leadtime" value="2" min="0" step="0.5" oninput="calculateCutOver()"></div>
-          <div class="field"><label>Months Until New Hardware Ready (Planned Ramp)</label><input type="number" id="cov-newready" value="6" min="0" step="0.5" oninput="calculateCutOver()"></div>
-          <div class="field"><label>Schedule Risk Buffer (Months)</label><div class="hint">How many months of new-hardware slip you want to protect against.</div><input type="number" id="cov-buffer" value="2" min="0" step="0.5" oninput="calculateCutOver()"></div>
-          <div class="field"><label>Legacy Unit Cost</label><div class="prefix-wrap"><span>$</span><input type="number" id="cov-unitcost" value="42.00" min="0" oninput="calculateCutOver()"></div></div>
+          <div class="field"><label for="cov-legacy-onhand">Legacy On-Hand Inventory (Units)</label><input type="number" id="cov-legacy-onhand" value="4000" min="0" oninput="calculateCutOver()"></div>
+          <div class="field"><label for="cov-demand">Monthly Demand Rate (Units/Month)</label><input type="number" id="cov-demand" value="500" min="0" oninput="calculateCutOver()"></div>
+          <div class="field"><label for="cov-leadtime">Legacy Part Order Lead Time (Months)</label><input type="number" id="cov-leadtime" value="2" min="0" step="0.5" oninput="calculateCutOver()"></div>
+          <div class="field"><label for="cov-newready">Months Until New Hardware Ready (Planned Ramp)</label><input type="number" id="cov-newready" value="6" min="0" step="0.5" oninput="calculateCutOver()"></div>
+          <div class="field"><label for="cov-buffer">Schedule Risk Buffer (Months)</label><div class="hint">How many months of new-hardware slip you want to protect against.</div><input type="number" id="cov-buffer" value="2" min="0" step="0.5" oninput="calculateCutOver()"></div>
+          <div class="field"><label for="cov-unitcost">Legacy Unit Cost</label><div class="prefix-wrap"><span>$</span><input type="number" id="cov-unitcost" value="42.00" min="0" oninput="calculateCutOver()"></div></div>
         </div>
         <div class="panel">
           <h2>Cut-Over Outputs</h2>
@@ -1828,7 +1830,7 @@
 
     <!-- Supplier Qualification / Onboarding -->
     <div id="tool-suppqual" class="tool-view active">
-      <h1>Supplier Qualification &amp; Onboarding Scorecard</h1>
+      <h2 class="tool-title">Supplier Qualification &amp; Onboarding Scorecard</h2>
       <p style="color:var(--text-mid); margin-bottom:20px;">Gate new/candidate suppliers before you award business — separate from the Performance Scorecard, which tracks suppliers you're already running.</p>
 
       <div class="panel" style="margin-bottom:20px;">
@@ -1871,18 +1873,18 @@
 
     <!-- Supplier Performance Scorecard -->
     <div id="tool-suppscore" class="tool-view">
-      <h1>Supplier Performance Scorecard</h1>
+      <h2 class="tool-title">Supplier Performance Scorecard</h2>
       <p style="color:var(--text-mid); margin-bottom:20px;">Rank your supply base on a weighted composite of delivery, quality, cost, and responsiveness — add as many suppliers as you're tracking.</p>
 
       <div class="panel" style="margin-bottom:20px;">
         <h2>Composite Score Weights</h2>
         <p style="color:var(--text-mid); font-size:0.85em; margin-bottom:10px;">Must total 100%. Adjust to match what matters most for this supply base.</p>
         <div class="grid" style="grid-template-columns: repeat(5, 1fr);">
-          <div class="field"><label>On-Time Delivery Weight (%)</label><input type="number" id="ss-w-otd" value="25" min="0" max="100" oninput="calculateSupplierScorecard()"></div>
-          <div class="field"><label>Quality Weight (%)</label><input type="number" id="ss-w-quality" value="25" min="0" max="100" oninput="calculateSupplierScorecard()"></div>
-          <div class="field"><label>Cost Weight (%)</label><input type="number" id="ss-w-cost" value="20" min="0" max="100" oninput="calculateSupplierScorecard()"></div>
-          <div class="field"><label>Responsiveness Weight (%)</label><input type="number" id="ss-w-resp" value="15" min="0" max="100" oninput="calculateSupplierScorecard()"></div>
-          <div class="field"><label>ESG / Compliance Weight (%)</label><input type="number" id="ss-w-esg" value="15" min="0" max="100" oninput="calculateSupplierScorecard()"></div>
+          <div class="field"><label for="ss-w-otd">On-Time Delivery Weight (%)</label><input type="number" id="ss-w-otd" value="25" min="0" max="100" oninput="calculateSupplierScorecard()"></div>
+          <div class="field"><label for="ss-w-quality">Quality Weight (%)</label><input type="number" id="ss-w-quality" value="25" min="0" max="100" oninput="calculateSupplierScorecard()"></div>
+          <div class="field"><label for="ss-w-cost">Cost Weight (%)</label><input type="number" id="ss-w-cost" value="20" min="0" max="100" oninput="calculateSupplierScorecard()"></div>
+          <div class="field"><label for="ss-w-resp">Responsiveness Weight (%)</label><input type="number" id="ss-w-resp" value="15" min="0" max="100" oninput="calculateSupplierScorecard()"></div>
+          <div class="field"><label for="ss-w-esg">ESG / Compliance Weight (%)</label><input type="number" id="ss-w-esg" value="15" min="0" max="100" oninput="calculateSupplierScorecard()"></div>
         </div>
         <div class="readout"><div class="rlabel">Weight Total</div><div class="rvalue" id="ss-weight-total">100%</div></div>
       </div>
@@ -1929,7 +1931,7 @@
 
     <!-- Program Risk Register -->
     <div id="tool-riskreg" class="tool-view">
-      <h1>Program Risk Register</h1>
+      <h2 class="tool-title">Program Risk Register</h2>
       <p style="color:var(--text-mid); margin-bottom:20px;">Track cost, schedule, technical, supplier, and quality risks with a probability-weighted dollar exposure — the same math behind a BCR/LRE conversation.</p>
 
       <div class="panel" style="margin-bottom:20px;">
@@ -1971,7 +1973,7 @@
 
     <!-- Supplier Segmentation (Kraljic Matrix) -->
     <div id="tool-kraljic" class="tool-view">
-      <h1>Supplier Segmentation (Kraljic Matrix)</h1>
+      <h2 class="tool-title">Supplier Segmentation (Kraljic Matrix)</h2>
       <p style="color:var(--text-mid); margin-bottom:20px;">Plot each supplier or category on supply risk vs. business impact to decide where to partner closely, negotiate hard, secure alternates, or simplify.</p>
 
       <div class="panel" style="margin-bottom:20px;">
@@ -2016,7 +2018,7 @@
 
     <!-- Contract Renewal Tracker -->
     <div id="tool-contracts" class="tool-view">
-      <h1>Contract Renewal Tracker</h1>
+      <h2 class="tool-title">Contract Renewal Tracker</h2>
       <p style="color:var(--text-mid); margin-bottom:20px;">Track upcoming renewals against their notice periods so an auto-renewal clause never catches you after the window has closed.</p>
 
       <div class="panel" style="margin-bottom:20px;">
@@ -2058,7 +2060,7 @@
 
     <!-- Supplier Audit / Compliance Scorecard -->
     <div id="tool-suppaudit" class="tool-view">
-      <h1>Supplier Audit / Compliance Scorecard</h1>
+      <h2 class="tool-title">Supplier Audit / Compliance Scorecard</h2>
       <p style="color:var(--text-mid); margin-bottom:20px;">Log periodic supplier audits — quality system, labor/social compliance, business continuity, and environmental — and turn them into a pass/conditional/fail call.</p>
 
       <div class="panel" style="margin-bottom:20px;">
@@ -2111,16 +2113,16 @@
 
     <!-- Process Capability -->
     <div id="tool-cpk" class="tool-view active">
-      <h1>Process Capability (Cp/Cpk, Pp/Ppk)</h1>
+      <h2 class="tool-title">Process Capability (Cp/Cpk, Pp/Ppk)</h2>
       <p style="color:var(--text-mid); margin-bottom:20px;">Standard SPC capability indices from a spec window and process spread, with an estimated out-of-spec defect rate.</p>
       <div class="grid">
         <div class="panel">
           <h2>Specification &amp; Process Inputs</h2>
-          <div class="field"><label>Upper Spec Limit (USL)</label><input type="number" id="cpk-usl" value="10.50" step="0.01" oninput="calculateCpk()"></div>
-          <div class="field"><label>Lower Spec Limit (LSL)</label><input type="number" id="cpk-lsl" value="9.50" step="0.01" oninput="calculateCpk()"></div>
-          <div class="field"><label>Process Mean (x̄)</label><input type="number" id="cpk-mean" value="10.10" step="0.01" oninput="calculateCpk()"></div>
-          <div class="field"><label>Short-Term (Within-Subgroup) Std Dev — for Cp/Cpk</label><input type="number" id="cpk-sigma-st" value="0.12" step="0.001" min="0.0001" oninput="calculateCpk()"></div>
-          <div class="field"><label>Long-Term (Overall) Std Dev — for Pp/Ppk</label><input type="number" id="cpk-sigma-lt" value="0.16" step="0.001" min="0.0001" oninput="calculateCpk()"></div>
+          <div class="field"><label for="cpk-usl">Upper Spec Limit (USL)</label><input type="number" id="cpk-usl" value="10.50" step="0.01" oninput="calculateCpk()"></div>
+          <div class="field"><label for="cpk-lsl">Lower Spec Limit (LSL)</label><input type="number" id="cpk-lsl" value="9.50" step="0.01" oninput="calculateCpk()"></div>
+          <div class="field"><label for="cpk-mean">Process Mean (x̄)</label><input type="number" id="cpk-mean" value="10.10" step="0.01" oninput="calculateCpk()"></div>
+          <div class="field"><label for="cpk-sigma-st">Short-Term (Within-Subgroup) Std Dev — for Cp/Cpk</label><input type="number" id="cpk-sigma-st" value="0.12" step="0.001" min="0.0001" oninput="calculateCpk()"></div>
+          <div class="field"><label for="cpk-sigma-lt">Long-Term (Overall) Std Dev — for Pp/Ppk</label><input type="number" id="cpk-sigma-lt" value="0.16" step="0.001" min="0.0001" oninput="calculateCpk()"></div>
         </div>
         <div class="panel">
           <h2>Capability Indices &amp; Estimated Defect Rate</h2>
@@ -2144,7 +2146,7 @@
 
     <!-- FMEA / 8D Tracker -->
     <div id="tool-pfmea" class="tool-view">
-      <h1>FMEA / 8D Corrective Action Tracker</h1>
+      <h2 class="tool-title">FMEA / 8D Corrective Action Tracker</h2>
       <p style="color:var(--text-mid); margin-bottom:20px;">Score failure modes by Severity × Occurrence × Detection (RPN) and track them through 8D-style corrective action to closure. One register for Design, System, and Process FMEA side by side — the RPN math is identical across all three; what differs is where the failure mode comes from.</p>
 
       <div class="panel" style="margin-bottom:20px;">
@@ -2188,14 +2190,14 @@
 
     <!-- Factory Defect Pareto / RCA Tracker -->
     <div id="tool-factorydefect" class="tool-view">
-      <h1>Factory Defect Pareto &amp; RCA Workflow Tracker</h1>
+      <h2 class="tool-title">Factory Defect Pareto &amp; RCA Workflow Tracker</h2>
       <p style="color:var(--text-mid); margin-bottom:20px;">Reactive, not proactive: log defects actually found on the line, rank them by how much factory yield each one is destroying, and move each through containment → root cause → ECO → verification. This complements FMEA/8D (which scores anticipated risk) rather than replacing it.</p>
 
       <div class="panel" style="margin-bottom:20px;">
         <div class="grid" style="grid-template-columns: repeat(3, 1fr);">
-          <div class="field"><label>Total Units Built (Period)</label><input type="number" id="fd-totalbuilt" value="10000" min="0" oninput="calculateFactoryDefects()"></div>
-          <div class="field"><label>Critical Threshold — Yield Loss ≥ (%)</label><input type="number" id="fd-critthresh" value="3" min="0" oninput="calculateFactoryDefects()"></div>
-          <div class="field"><label>Major Threshold — Yield Loss ≥ (%)</label><input type="number" id="fd-majorthresh" value="1" min="0" oninput="calculateFactoryDefects()"></div>
+          <div class="field"><label for="fd-totalbuilt">Total Units Built (Period)</label><input type="number" id="fd-totalbuilt" value="10000" min="0" oninput="calculateFactoryDefects()"></div>
+          <div class="field"><label for="fd-critthresh">Critical Threshold — Yield Loss ≥ (%)</label><input type="number" id="fd-critthresh" value="3" min="0" oninput="calculateFactoryDefects()"></div>
+          <div class="field"><label for="fd-majorthresh">Major Threshold — Yield Loss ≥ (%)</label><input type="number" id="fd-majorthresh" value="1" min="0" oninput="calculateFactoryDefects()"></div>
         </div>
         <p style="color:var(--text-dim); font-size:0.8em; margin-top:8px;">These thresholds aren't a fixed industry standard — they vary a lot by industry and process (e.g., semiconductor fabs commonly use much higher cutoffs). Set them to match your own line's tolerance.</p>
       </div>
@@ -2240,15 +2242,15 @@
 
     <!-- Reliability Prediction -->
     <div id="tool-reliability" class="tool-view">
-      <h1>Reliability Prediction (MTBF / FIT Rate)</h1>
+      <h2 class="tool-title">Reliability Prediction (MTBF / FIT Rate)</h2>
       <p style="color:var(--text-mid); margin-bottom:20px;">Constant-failure-rate (exponential) reliability model from observed field or test data — the standard basis for spares planning and warranty reserve sizing.</p>
       <div class="grid">
         <div class="panel">
           <h2>Field / Test Data Inputs</h2>
-          <div class="field"><label>Total Accumulated Operating Hours</label><div class="hint">Sum across the whole fleet or test sample — e.g. units × hours/unit.</div><input type="number" id="rel-hours" value="2000000" min="0" oninput="calculateReliability()"></div>
-          <div class="field"><label>Number of Failures Observed</label><input type="number" id="rel-failures" value="4" min="0" oninput="calculateReliability()"></div>
-          <div class="field"><label>Mission Time / Warranty Period (Hours)</label><input type="number" id="rel-mission" value="17520" min="0" oninput="calculateReliability()"></div>
-          <div class="field"><label>Installed Base / Fleet Size (Units)</label><input type="number" id="rel-fleet" value="15000" min="0" oninput="calculateReliability()"></div>
+          <div class="field"><label for="rel-hours">Total Accumulated Operating Hours</label><div class="hint">Sum across the whole fleet or test sample — e.g. units × hours/unit.</div><input type="number" id="rel-hours" value="2000000" min="0" oninput="calculateReliability()"></div>
+          <div class="field"><label for="rel-failures">Number of Failures Observed</label><input type="number" id="rel-failures" value="4" min="0" oninput="calculateReliability()"></div>
+          <div class="field"><label for="rel-mission">Mission Time / Warranty Period (Hours)</label><input type="number" id="rel-mission" value="17520" min="0" oninput="calculateReliability()"></div>
+          <div class="field"><label for="rel-fleet">Installed Base / Fleet Size (Units)</label><input type="number" id="rel-fleet" value="15000" min="0" oninput="calculateReliability()"></div>
         </div>
         <div class="panel">
           <h2>Reliability Outputs</h2>
@@ -2276,9 +2278,10 @@
 // --- CORE NAVIGATION ---
 function switchPillar(pillarId, btn) {
   document.querySelectorAll('.tab-pillar').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.pillar-btn').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.pillar-btn').forEach(el => { el.classList.remove('active'); el.setAttribute('aria-selected', 'false'); });
   document.getElementById('pillar-' + pillarId).classList.add('active');
   btn.classList.add('active');
+  btn.setAttribute('aria-selected', 'true');
 }
 
 function switchTool(pillarId, toolId, btn) {
@@ -6706,7 +6709,7 @@ window.onload = function() {
       <p class="ctx-note">We'll automatically note which tool you were using — no need to explain that part.</p>
       <form id="feedback-form">
         <div class="field">
-          <label>What's this about?</label>
+          <label for="fb-type">What's this about?</label>
           <select id="fb-type">
             <option value="Bug">Something's broken</option>
             <option value="Feature Idea">A feature or tool I'd want</option>
@@ -6714,11 +6717,11 @@ window.onload = function() {
           </select>
         </div>
         <div class="field">
-          <label>Details</label>
+          <label for="fb-message">Details</label>
           <textarea id="fb-message" placeholder="Tell us what happened, or what you'd like to see..." required></textarea>
         </div>
         <div class="field">
-          <label>Email (optional, if you'd like a reply)</label>
+          <label for="fb-email">Email (optional, if you'd like a reply)</label>
           <input type="email" id="fb-email" placeholder="you@example.com">
         </div>
         <div class="feedback-actions">
