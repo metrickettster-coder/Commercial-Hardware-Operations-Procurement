@@ -10,6 +10,9 @@
       if (localStorage.getItem('hoas-theme') === 'light') {
         document.documentElement.setAttribute('data-theme', 'light');
       }
+      if (localStorage.getItem('hoas-density') === 'compact') {
+        document.documentElement.setAttribute('data-density', 'compact');
+      }
     } catch (e) {}
   })();
 </script>
@@ -79,7 +82,8 @@
   @media (max-width:600px){ .info-tip .tip-bubble{ width:200px; } }
 
   /* Primary Lifecycle Stage Nav */
-  nav.pillar-nav{ display:grid; grid-template-columns: repeat(7, 1fr); gap:8px; margin-bottom:16px; }
+  nav.pillar-nav{ display:grid; grid-template-columns: repeat(8, 1fr); gap:8px; margin-bottom:16px; }
+  @media(max-width: 1200px){ nav.pillar-nav{ grid-template-columns: repeat(4, 1fr); } }
   @media(max-width: 1100px){ nav.pillar-nav{ grid-template-columns: repeat(4, 1fr); } }
   @media(max-width: 900px){ nav.pillar-nav{ grid-template-columns: repeat(3, 1fr); } }
   @media(max-width: 600px){ nav.pillar-nav{ grid-template-columns: repeat(2, 1fr); } }
@@ -120,6 +124,8 @@
   .field{ margin-bottom:14px; }
   .field label{ display:block; font-size:12.5px; font-weight:600; margin-bottom:4px; }
   .field .hint{ font-size:11px; color:var(--text-dim); margin-bottom:4px; }
+  html[data-density="compact"] .tool-desc,
+  html[data-density="compact"] .hint{ display:none; }
   .field input, .field select, textarea{ width:100%; background:var(--ink); border:1px solid var(--grid-line); color:var(--text-hi); font-family:'IBM Plex Mono', monospace; font-size:13px; padding:8px 10px; border-radius:6px; outline:none; }
   .field input:focus, textarea:focus, select:focus{ border-color: var(--focus); }
   .prefix-wrap{ position:relative; }
@@ -151,6 +157,8 @@
   .btn-row-remove{ background:transparent; border:1px solid var(--red); color:var(--red); border-radius:4px; padding:5px 9px; cursor:pointer; font-size:12px; font-family:'IBM Plex Mono', monospace; }
   .btn-row-remove:hover{ background:rgba(217,88,79,0.12); }
   .btn-row-add{ background:transparent; border:1px dashed var(--grid-line); color:var(--text-mid); padding:9px; border-radius:6px; cursor:pointer; width:100%; font-family:'IBM Plex Mono', monospace; font-size:12.5px; font-weight:600; }
+  .btn-goto{ background:var(--panel-2); border:1px solid var(--grid-line); color:var(--amber); padding:3px 10px; border-radius:6px; cursor:pointer; width:auto; flex:none; font-family:'IBM Plex Mono', monospace; font-size:11.5px; font-weight:600; white-space:nowrap; }
+  .btn-goto:hover{ border-color:var(--amber); }
   .btn-row-add:hover{ border-color:var(--amber); color:var(--amber); }
   textarea.dump-paste{ width:100%; height:140px; background:var(--ink); border:1px solid var(--grid-line); color:var(--text-hi); font-family:'IBM Plex Mono', monospace; font-size:12px; padding:10px; border-radius:6px; resize:vertical; outline:none; }
   textarea.dump-paste:focus{ border-color: var(--focus); }
@@ -182,6 +190,7 @@
     </div>
     <div class="export-controls">
       <button class="btn-export" id="themeToggleBtn" onclick="toggleTheme()">☀️ Light Mode</button>
+      <button class="btn-export" id="densityToggleBtn" onclick="toggleDensity()">▤ Compact Mode</button>
       <button class="btn-export" onclick="saveScenarioToFile()">💾 Save Scenario</button>
       <button class="btn-export" onclick="document.getElementById('scenarioFileInput').click()">📂 Load Scenario</button>
       <input type="file" id="scenarioFileInput" accept=".json" style="display:none;" onchange="loadScenarioFromFile(event)">
@@ -213,7 +222,10 @@
 
   <!-- 5 Stage Lifecycle Sub-Navigation -->
   <nav class="pillar-nav" role="tablist" aria-label="Lifecycle pillar">
-    <button type="button" class="pillar-btn active" role="tab" aria-selected="true" onclick="switchPillar('concept', this)">
+    <button type="button" class="pillar-btn active" role="tab" aria-selected="true" onclick="switchPillar('command', this)">
+      <span class="title">🚨 0. Command Center</span>
+    </button>
+    <button type="button" class="pillar-btn" role="tab" aria-selected="false" onclick="switchPillar('concept', this)">
       <span class="title">💡 1. Concept &amp; Feasibility</span>
     </button>
     <button type="button" class="pillar-btn" role="tab" aria-selected="false" onclick="switchPillar('npi', this)">
@@ -236,8 +248,33 @@
     </button>
   </nav>
 
+  <!-- PILLAR 0: COMMAND CENTER -->
+  <div id="pillar-command" class="tab-pillar active">
+    <div class="panel" style="margin-bottom:20px;">
+      <h2 class="tool-title" style="margin-top:0;">Risk &amp; Flags Command Center</h2>
+      <p class="tool-desc" style="color:var(--text-mid);">Every ⚠️ flag any tool in this suite has raised, in one place — so you can see what actually needs attention without clicking through all 41 tools. New here? Each of the 7 pillars below covers one stage of the hardware lifecycle (Concept → NPI → Sourcing → Ops → Sustaining → Supplier &amp; Risk → Quality); pick the pillar that matches what you're working on, or just start scanning flags below. Your inputs autosave to this browser as you go — nothing is uploaded anywhere.</p>
+      <p class="tool-desc" style="color:var(--text-dim); font-size:0.85em;">Note: every tool ships pre-loaded with example data chosen to demonstrate its flagging logic, so this list will look busy the first time you see it. Click "↺ Reset to Example Data" and then clear a tool's rows, or start entering your own numbers, and this list will reflect your real work instead.</p>
+      <div class="board">
+        <div class="light-card"><div class="light-row"><span class="light-dot" id="cmd-dot-critical" style="background:var(--red);"></span><span class="light-label">Critical Flags</span></div><div class="light-value" id="cmd-out-critical">0</div><div class="light-status">Across All Tools</div></div>
+        <div class="light-card"><div class="light-row"><span class="light-dot" id="cmd-dot-total" style="background:var(--amber);"></span><span class="light-label">Total Active Flags</span></div><div class="light-value" id="cmd-out-total">0</div><div class="light-status">Across All Tools</div></div>
+        <div class="light-card"><div class="light-row"><span class="light-dot" id="cmd-dot-tools" style="background:var(--green);"></span><span class="light-label">Tools With Flags</span></div><div class="light-value" id="cmd-out-toolcount">0 / 0</div><div class="light-status">Clean Elsewhere</div></div>
+      </div>
+      <button type="button" class="btn-export" style="margin-top:12px;" onclick="renderCommandCenter()">↻ Refresh Flags</button>
+    </div>
+
+    <div class="panel" style="margin-bottom:20px;" id="cmd-critical-panel">
+      <h2 style="color: var(--red);">🚨 Critical — Needs Attention Now</h2>
+      <ul id="cmd-critical-list" class="risk-list"></ul>
+    </div>
+
+    <div class="panel">
+      <h2 style="color: var(--amber);">⚠️ All Active Flags, by Tool</h2>
+      <div id="cmd-all-list"></div>
+    </div>
+  </div>
+
   <!-- PILLAR 1: CONCEPT & FEASIBILITY -->
-  <div id="pillar-concept" class="tab-pillar active">
+  <div id="pillar-concept" class="tab-pillar">
     <div class="subnav-bar">
       <button class="sub-btn active" onclick="switchTool('concept', 'tamsam', this)">TAM/SAM Analysis</button>
       <button class="sub-btn" onclick="switchTool('concept', 'npvirr', this)">NPV/IRR Engine</button>
@@ -248,7 +285,7 @@
     <!-- TAM / SAM -->
     <div id="tool-tamsam" class="tool-view active">
       <h2 class="tool-title">Total Addressable &amp; Serviceable Market (TAM/SAM/SOM)</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Calculate top-down market opportunity and realistic capture parameters.</p>
+      <p class="tool-desc" style="color:var(--text-mid); margin-bottom:20px;">Calculate top-down market opportunity and realistic capture parameters.</p>
       <div class="grid">
         <div class="panel">
           <h2>Market Sizing Inputs</h2>
@@ -270,7 +307,7 @@
     <!-- NPV / IRR Engine -->
     <div id="tool-npvirr" class="tool-view">
       <h2 class="tool-title">Financial Valuation: NPV &amp; Target IRR Model</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Assess initial capital investment against projected cash inflows over a 3-year product horizon.</p>
+      <p class="tool-desc" style="color:var(--text-mid); margin-bottom:20px;">Assess initial capital investment against projected cash inflows over a 3-year product horizon.</p>
       <div class="grid">
         <div class="panel">
           <h2>Investment &amp; Return Metrics</h2>
@@ -294,7 +331,7 @@
     <!-- Target Costing (DTC) -->
     <div id="tool-dtc" class="tool-view">
       <h2 class="tool-title">Design-to-Cost (DTC) Allocator</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Derive maximum allowable BOM and assembly costs based on target MSRP and margin objectives.</p>
+      <p class="tool-desc" style="color:var(--text-mid); margin-bottom:20px;">Derive maximum allowable BOM and assembly costs based on target MSRP and margin objectives.</p>
       <div class="grid">
         <div class="panel">
           <h2>Financial Boundary Inputs</h2>
@@ -314,7 +351,7 @@
     <!-- Technical Risk Score -->
     <div id="tool-techrisk" class="tool-view">
       <h2 class="tool-title">Technical Risk Score Matrix</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Quantify architectural and technology maturity prior to formal gate entry, using a simplified 1-5 internal scale (not the standard 9-point TRL scale, so it won't collide with a program's real TRL reporting).</p>
+      <p class="tool-desc" style="color:var(--text-mid); margin-bottom:20px;">Quantify architectural and technology maturity prior to formal gate entry, using a simplified 1-5 internal scale (not the standard 9-point TRL scale, so it won't collide with a program's real TRL reporting).</p>
       <div class="grid">
         <div class="panel">
           <h2>Readiness Assessment (Score 1 to 5)</h2>
@@ -345,7 +382,7 @@
     <!-- Gate Exit Verification -->
     <div id="tool-stagegate" class="tool-view active">
       <h2 class="tool-title">Stage-Gate Launch Exit Verification</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Checks whether a gate is actually ready — not just whether the boxes got checked. Problems that show up together across categories are treated as more dangerous than the same number of problems in one area.</p>
+      <p class="tool-desc" style="color:var(--text-mid); margin-bottom:20px;">Checks whether a gate is actually ready — not just whether the boxes got checked. Problems that show up together across categories are treated as more dangerous than the same number of problems in one area.</p>
 
       <div class="grid">
         <div class="panel">
@@ -472,7 +509,7 @@
     <!-- EVT / DVT / PVT / MP Build Yields -->
     <div id="tool-buildyields" class="tool-view">
       <h2 class="tool-title">NPI Build Yield Tracker (EVT / DVT / PVT / MP)</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Track prototype and production build performance — acceptable yield rises sharply as you move toward mass production.</p>
+      <p class="tool-desc" style="color:var(--text-mid); margin-bottom:20px;">Track prototype and production build performance — acceptable yield rises sharply as you move toward mass production.</p>
       <div class="grid">
         <div class="panel">
           <h2>Build Quantities &amp; Defects</h2>
@@ -491,7 +528,7 @@
     <!-- ECO Severity & Downstream Impact Triage -->
     <div id="tool-eco" class="tool-view">
       <h2 class="tool-title">ECO Severity &amp; Downstream Impact Triage</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">A fast, judgment-based read on how much scrutiny a proposed change actually deserves — before it reaches the board.</p>
+      <p class="tool-desc" style="color:var(--text-mid); margin-bottom:20px;">A fast, judgment-based read on how much scrutiny a proposed change actually deserves — before it reaches the board.</p>
       <div class="grid">
         <div class="panel">
           <h2>1. Classification</h2>
@@ -739,7 +776,7 @@
     <!-- Build Readiness Scorecard -->
     <div id="tool-buildready" class="tool-view">
       <h2 class="tool-title">NPI Build Readiness Scorecard</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Assess whether a build is actually ready to start — equipment, test coverage, staffing, material, capacity, and documentation — before committing the line and burning the schedule finding out live.</p>
+      <p class="tool-desc" style="color:var(--text-mid); margin-bottom:20px;">Assess whether a build is actually ready to start — equipment, test coverage, staffing, material, capacity, and documentation — before committing the line and burning the schedule finding out live.</p>
       <div class="grid">
         <div class="panel">
           <h2>Readiness by Dimension (%)</h2>
@@ -770,7 +807,7 @@
     <!-- FAT/SAT Qualification Tracker -->
     <div id="tool-fatsat" class="tool-view">
       <h2 class="tool-title">FAT/SAT Qualification Tracker</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Factory Acceptance Testing and Site Acceptance Testing qualify a specific unit or system right before it's trusted with production load — a distinct gate from EVT/DVT/PVT, which qualify the design. A critical/safety failure blocks sign-off regardless of overall pass rate.</p>
+      <p class="tool-desc" style="color:var(--text-mid); margin-bottom:20px;">Factory Acceptance Testing and Site Acceptance Testing qualify a specific unit or system right before it's trusted with production load — a distinct gate from EVT/DVT/PVT, which qualify the design. A critical/safety failure blocks sign-off regardless of overall pass rate.</p>
 
       <div class="panel" style="margin-bottom:20px;">
         <h2>FAT / SAT Log</h2>
@@ -814,7 +851,7 @@
     <!-- Standards & Compliance Qualification Checklist -->
     <div id="tool-standards" class="tool-view">
       <h2 class="tool-title">Standards &amp; Compliance Qualification Checklist</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Track which codes and standards apply to this product and where each stands — for genuinely new-to-market or new-to-supplier equipment, this checklist is often as much of the qualification program as the test lab work.</p>
+      <p class="tool-desc" style="color:var(--text-mid); margin-bottom:20px;">Track which codes and standards apply to this product and where each stands — for genuinely new-to-market or new-to-supplier equipment, this checklist is often as much of the qualification program as the test lab work.</p>
 
       <div class="panel" style="margin-bottom:20px;">
         <h2>Applicable Standards</h2>
@@ -883,7 +920,7 @@
     <!-- Total Landed Cost Engine -->
     <div id="tool-landedcost" class="tool-view active">
       <h2 class="tool-title">Total Landed Cost Engine</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Aggregate factory price, freight, tariffs, customs duties, and handling into unit landed cost.</p>
+      <p class="tool-desc" style="color:var(--text-mid); margin-bottom:20px;">Aggregate factory price, freight, tariffs, customs duties, and handling into unit landed cost.</p>
       <div class="grid">
         <div class="panel">
           <h2>Cost Components (Per Unit)</h2>
@@ -913,7 +950,7 @@
     <!-- Freight & Transportation Mode Comparator -->
     <div id="tool-freightmode" class="tool-view">
       <h2 class="tool-title">Freight &amp; Transportation Mode Comparator</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Compare freight modes on more than freight cost alone — a slower mode ties up inventory value in transit, which has its own carrying cost.</p>
+      <p class="tool-desc" style="color:var(--text-mid); margin-bottom:20px;">Compare freight modes on more than freight cost alone — a slower mode ties up inventory value in transit, which has its own carrying cost.</p>
 
       <div class="panel" style="margin-bottom:20px;">
         <div class="grid" style="grid-template-columns: repeat(2, 1fr);">
@@ -958,7 +995,7 @@
     <!-- Custom Part Risk Review -->
     <div id="tool-custom-part-breakdown" class="tool-view">
       <h2 class="tool-title">Custom Part &amp; NPI Quote Breakdown</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Analyze tooling amortization, small-batch setup penalties, and raw material sensitivity.</p>
+      <p class="tool-desc" style="color:var(--text-mid); margin-bottom:20px;">Analyze tooling amortization, small-batch setup penalties, and raw material sensitivity.</p>
 
       <div class="grid">
         <div class="panel">
@@ -1086,7 +1123,7 @@
     <!-- Bottom-Up Should-Cost -->
     <div id="tool-shouldcost" class="tool-view">
       <h2 class="tool-title">Bottom-Up Should-Cost Model</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Build a baseline pricing objective using raw material, labor, overhead, and margin structures.</p>
+      <p class="tool-desc" style="color:var(--text-mid); margin-bottom:20px;">Build a baseline pricing objective using raw material, labor, overhead, and margin structures.</p>
       <div class="grid">
         <div class="panel">
           <h2>Cost Teardown Inputs</h2>
@@ -1108,7 +1145,7 @@
     <!-- Procurement Lead Time -->
     <div id="tool-leadtime" class="tool-view">
       <h2 class="tool-title">Procurement Lead Time &amp; Critical Path Model</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Model operational buffers and transit risks for critical component sourcing.</p>
+      <p class="tool-desc" style="color:var(--text-mid); margin-bottom:20px;">Model operational buffers and transit risks for critical component sourcing.</p>
       <div class="grid">
         <div class="panel">
           <h2>Supplier's Quote &amp; Your Requirement</h2>
@@ -1193,7 +1230,7 @@
     <!-- Make-vs-Buy Analysis -->
     <div id="tool-makevsbuy" class="tool-view">
       <h2 class="tool-title">Make-vs-Buy Analysis</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Compare bringing a part in-house against buying it outside, including the breakeven volume where the two costs cross.</p>
+      <p class="tool-desc" style="color:var(--text-mid); margin-bottom:20px;">Compare bringing a part in-house against buying it outside, including the breakeven volume where the two costs cross.</p>
       <div class="grid">
         <div class="panel">
           <h2>Volume &amp; Cost Inputs</h2>
@@ -1225,7 +1262,7 @@
     <!-- Duty Drawback / Tariff Impact -->
     <div id="tool-dutydrawback" class="tool-view">
       <h2 class="tool-title">Duty Drawback / Tariff &amp; HTS Cost Impact</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Model landed-cost exposure to tariffs and how much of it is recoverable through a duty drawback program.</p>
+      <p class="tool-desc" style="color:var(--text-mid); margin-bottom:20px;">Model landed-cost exposure to tariffs and how much of it is recoverable through a duty drawback program.</p>
       <div class="grid">
         <div class="panel">
           <h2>Import &amp; Duty Inputs</h2>
@@ -1257,7 +1294,7 @@
     <!-- Multi-Quote Comparison -->
     <div id="tool-multiquote" class="tool-view">
       <h2 class="tool-title">Multi-Quote Comparison</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Upload 2–5 supplier quotes to see what's the same, what's different, and how each stacks up against the requirements you set. Parsed 100% locally — nothing is uploaded anywhere.</p>
+      <p class="tool-desc" style="color:var(--text-mid); margin-bottom:20px;">Upload 2–5 supplier quotes to see what's the same, what's different, and how each stacks up against the requirements you set. Parsed 100% locally — nothing is uploaded anywhere.</p>
 
       <div class="panel" style="margin-bottom:20px;">
         <h2>1. Upload Quotes (2–5)</h2>
@@ -1301,7 +1338,7 @@
     <!-- Cost Reduction / VE Pipeline -->
     <div id="tool-vepipeline" class="tool-view">
       <h2 class="tool-title">Cost Reduction / Value Engineering Pipeline</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Track savings initiatives from identified through realized — the same pipeline finance wants to see before crediting a cost-down number to the forecast.</p>
+      <p class="tool-desc" style="color:var(--text-mid); margin-bottom:20px;">Track savings initiatives from identified through realized — the same pipeline finance wants to see before crediting a cost-down number to the forecast.</p>
 
       <div class="panel" style="margin-bottom:20px;">
         <h2>Savings Initiatives</h2>
@@ -1359,7 +1396,7 @@
     <!-- EVM -->
     <div id="tool-evm" class="tool-view active">
       <h2 class="tool-title">Earned Value Management System (EVMS)</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Track program performance using standard EVM cost and schedule variance indices.</p>
+      <p class="tool-desc" style="color:var(--text-mid); margin-bottom:20px;">Track program performance using standard EVM cost and schedule variance indices.</p>
       <div class="board">
         <div class="light-card"><div class="light-row"><span class="light-dot" id="dot-cpi" style="background:var(--red);"></span><span class="light-label">Cost Efficiency</span></div><div class="light-value" id="val-cpi">0.90</div><div class="light-status">CPI Metric</div></div>
         <div class="light-card"><div class="light-row"><span class="light-dot" id="dot-spi" style="background:var(--amber);"></span><span class="light-label">Schedule Efficiency</span></div><div class="light-value" id="val-spi">0.93</div><div class="light-status">SPI Metric</div></div>
@@ -1388,7 +1425,7 @@
     <!-- EOQ & Reorder Point -->
     <div id="tool-eoq" class="tool-view">
       <h2 class="tool-title">Economic Order Quantity (EOQ) &amp; Safety Stock Engine</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Optimize lot sizing, inventory holding costs, and automated stock replenishment points.</p>
+      <p class="tool-desc" style="color:var(--text-mid); margin-bottom:20px;">Optimize lot sizing, inventory holding costs, and automated stock replenishment points.</p>
       <div class="grid">
         <div class="panel">
           <h2>Inventory Parameters</h2>
@@ -1411,7 +1448,7 @@
     <!-- Demand Forecast Accuracy -->
     <div id="tool-forecastacc" class="tool-view">
       <h2 class="tool-title">Demand Forecast Accuracy (MAPE)</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Track forecast vs. actual by SKU or period — a wide MAPE or a persistent bias is what actually drives the safety stock in the EOQ engine, so this is worth checking before you trust that buffer.</p>
+      <p class="tool-desc" style="color:var(--text-mid); margin-bottom:20px;">Track forecast vs. actual by SKU or period — a wide MAPE or a persistent bias is what actually drives the safety stock in the EOQ engine, so this is worth checking before you trust that buffer.</p>
 
       <div class="panel" style="margin-bottom:20px;">
         <h2>Forecast vs. Actual Log</h2>
@@ -1451,7 +1488,7 @@
     <!-- FPY / PPM -->
     <div id="tool-fpy" class="tool-view">
       <h2 class="tool-title">Factory First Pass Yield (FPY) &amp; Defect Rate (PPM)</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Calculate cumulative yield across multi-stage assembly lines and convert to Parts Per Million defects.</p>
+      <p class="tool-desc" style="color:var(--text-mid); margin-bottom:20px;">Calculate cumulative yield across multi-stage assembly lines and convert to Parts Per Million defects.</p>
       <div class="grid">
         <div class="panel">
           <h2>Stage Yield Inputs (%)</h2>
@@ -1470,7 +1507,7 @@
     <!-- OEE / Downtime Tracker -->
     <div id="tool-oee" class="tool-view">
       <h2 class="tool-title">OEE / Machine Downtime Tracker</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Availability × Performance × Quality, per line or shift, with a downtime log to see where the hours are actually going.</p>
+      <p class="tool-desc" style="color:var(--text-mid); margin-bottom:20px;">Availability × Performance × Quality, per line or shift, with a downtime log to see where the hours are actually going.</p>
 
       <div class="panel" style="margin-bottom:20px;">
         <h2>Line / Shift Log</h2>
@@ -1510,7 +1547,7 @@
     <!-- Budget KPI Dashboard -->
     <div id="tool-budgetkpi" class="tool-view">
       <h2 class="tool-title">Budget KPI Dashboard</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Track scoped budget vs. actual spend, burn rate, cost variance, revenue growth, and forecast accuracy in one place.</p>
+      <p class="tool-desc" style="color:var(--text-mid); margin-bottom:20px;">Track scoped budget vs. actual spend, burn rate, cost variance, revenue growth, and forecast accuracy in one place.</p>
       <div class="board">
         <div class="light-card"><div class="light-row"><span class="light-dot" id="bk-dot-variance" style="background:var(--green);"></span><span class="light-label">Budget Health</span></div><div class="light-value" id="bk-val-variance-pct">0.0%</div><div class="light-status">Variance vs. Scoped</div></div>
         <div class="light-card"><div class="light-row"><span class="light-dot" id="bk-dot-burn" style="background:var(--amber);"></span><span class="light-label">Burn Rate</span></div><div class="light-value" id="bk-val-burn">$0</div><div class="light-status">Per Month</div></div>
@@ -1557,7 +1594,7 @@
     <!-- Data Cut / Report Builder -->
     <div id="tool-datacut" class="tool-view">
       <h2 class="tool-title">Data Cut / Report Builder</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Paste a wide export straight out of Excel or your GL/ERP/inventory system, then cut it by any column — GL Code, Cost Center, Part Number, Location, whatever headers are actually in your data. Parsed 100% locally, nothing leaves the browser.</p>
+      <p class="tool-desc" style="color:var(--text-mid); margin-bottom:20px;">Paste a wide export straight out of Excel or your GL/ERP/inventory system, then cut it by any column — GL Code, Cost Center, Part Number, Location, whatever headers are actually in your data. Parsed 100% locally, nothing leaves the browser.</p>
 
       <div class="panel" style="margin-bottom:20px;">
         <h2>1. Paste Data</h2>
@@ -1605,7 +1642,7 @@
     <!-- CapEx/OpEx & Direct/Indirect Classifier -->
     <div id="tool-capexopex" class="tool-view">
       <h2 class="tool-title">CapEx/OpEx &amp; Direct/Indirect Cost Classifier</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Log cost line items and classify each on two axes — capital vs. operating, direct vs. indirect — to get a rollup Finance can use straight for CAPEX/OPEX budget tracking.</p>
+      <p class="tool-desc" style="color:var(--text-mid); margin-bottom:20px;">Log cost line items and classify each on two axes — capital vs. operating, direct vs. indirect — to get a rollup Finance can use straight for CAPEX/OPEX budget tracking.</p>
 
       <div class="panel" style="margin-bottom:20px;">
         <h2>Cost Line Items</h2>
@@ -1653,7 +1690,7 @@
     <!-- Inventory Record Accuracy / Cycle Count -->
     <div id="tool-cyclecount" class="tool-view">
       <h2 class="tool-title">Inventory Record Accuracy / Cycle Count</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Compare system quantity to physical count by location and see whether your ERP/MRP data is trustworthy enough to plan against.</p>
+      <p class="tool-desc" style="color:var(--text-mid); margin-bottom:20px;">Compare system quantity to physical count by location and see whether your ERP/MRP data is trustworthy enough to plan against.</p>
 
       <div class="panel" style="margin-bottom:20px;">
         <h2>Cycle Count Data</h2>
@@ -1703,7 +1740,7 @@
     <!-- RMA & Warranty -->
     <div id="tool-rma" class="tool-view active">
       <h2 class="tool-title">RMA &amp; Warranty Field Loss Risk Engine</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Model return rates, field failure trends, warranty terms, return disposition, and warranty reserve liabilities.</p>
+      <p class="tool-desc" style="color:var(--text-mid); margin-bottom:20px;">Model return rates, field failure trends, warranty terms, return disposition, and warranty reserve liabilities.</p>
       <div class="grid">
         <div class="panel">
           <h2>Field Deployment &amp; Warranty Terms</h2>
@@ -1757,7 +1794,7 @@
     <!-- Alternate Part Qualification -->
     <div id="tool-altpart" class="tool-view">
       <h2 class="tool-title">Alternate Part / Form-Fit-Function (FFF) Qualifier</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Evaluate drop-in component replacements for obsolescence or cost reduction.</p>
+      <p class="tool-desc" style="color:var(--text-mid); margin-bottom:20px;">Evaluate drop-in component replacements for obsolescence or cost reduction.</p>
       <div class="grid">
         <div class="panel">
           <h2>Substitute / Alternate Part Identification</h2>
@@ -1799,7 +1836,7 @@
     <!-- EOL & LTB Planner -->
     <div id="tool-eol" class="tool-view">
       <h2 class="tool-title">End-of-Life (EOL) &amp; Last Time Buy (LTB) Planner</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">EOL and LTB are related but distinct disciplines — EOL manages the phase-out of what's already on hand (scrap risk), while LTB secures the final lifetime supply from the vendor (stockout risk). Plan both sides separately below.</p>
+      <p class="tool-desc" style="color:var(--text-mid); margin-bottom:20px;">EOL and LTB are related but distinct disciplines — EOL manages the phase-out of what's already on hand (scrap risk), while LTB secures the final lifetime supply from the vendor (stockout risk). Plan both sides separately below.</p>
 
       <div class="panel" style="margin-bottom:20px;">
         <h2>Planning Strategy</h2>
@@ -1946,7 +1983,7 @@
     <!-- Supplier Qualification / Onboarding -->
     <div id="tool-suppqual" class="tool-view active">
       <h2 class="tool-title">Supplier Qualification &amp; Onboarding Scorecard</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Gate new/candidate suppliers before you award business — separate from the Performance Scorecard, which tracks suppliers you're already running.</p>
+      <p class="tool-desc" style="color:var(--text-mid); margin-bottom:20px;">Gate new/candidate suppliers before you award business — separate from the Performance Scorecard, which tracks suppliers you're already running.</p>
 
       <div class="panel" style="margin-bottom:20px;">
         <h2>Candidate Suppliers</h2>
@@ -1989,7 +2026,7 @@
     <!-- Supplier Performance Scorecard -->
     <div id="tool-suppscore" class="tool-view">
       <h2 class="tool-title">Supplier Performance Scorecard</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Rank your supply base on a weighted composite of delivery, quality, cost, and responsiveness — add as many suppliers as you're tracking.</p>
+      <p class="tool-desc" style="color:var(--text-mid); margin-bottom:20px;">Rank your supply base on a weighted composite of delivery, quality, cost, and responsiveness — add as many suppliers as you're tracking.</p>
 
       <div class="panel" style="margin-bottom:20px;">
         <h2>Composite Score Weights</h2>
@@ -2047,7 +2084,7 @@
     <!-- Program Risk Register -->
     <div id="tool-riskreg" class="tool-view">
       <h2 class="tool-title">Program Risk Register</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Track cost, schedule, technical, supplier, and quality risks with a probability-weighted dollar exposure — the same math behind a BCR/LRE conversation.</p>
+      <p class="tool-desc" style="color:var(--text-mid); margin-bottom:20px;">Track cost, schedule, technical, supplier, and quality risks with a probability-weighted dollar exposure — the same math behind a BCR/LRE conversation.</p>
 
       <div class="panel" style="margin-bottom:20px;">
         <h2>Risk Log</h2>
@@ -2089,7 +2126,7 @@
     <!-- Supplier Segmentation (Kraljic Matrix) -->
     <div id="tool-kraljic" class="tool-view">
       <h2 class="tool-title">Supplier Segmentation (Kraljic Matrix)</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Plot each supplier or category on supply risk vs. business impact to decide where to partner closely, negotiate hard, secure alternates, or simplify.</p>
+      <p class="tool-desc" style="color:var(--text-mid); margin-bottom:20px;">Plot each supplier or category on supply risk vs. business impact to decide where to partner closely, negotiate hard, secure alternates, or simplify.</p>
 
       <div class="panel" style="margin-bottom:20px;">
         <h2>Supplier / Category Positioning</h2>
@@ -2134,7 +2171,7 @@
     <!-- Contract Renewal Tracker -->
     <div id="tool-contracts" class="tool-view">
       <h2 class="tool-title">Contract Renewal Tracker</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Track upcoming renewals against their notice periods so an auto-renewal clause never catches you after the window has closed.</p>
+      <p class="tool-desc" style="color:var(--text-mid); margin-bottom:20px;">Track upcoming renewals against their notice periods so an auto-renewal clause never catches you after the window has closed.</p>
 
       <div class="panel" style="margin-bottom:20px;">
         <h2>Contracts</h2>
@@ -2177,7 +2214,7 @@
     <!-- Supplier Audit / Compliance Scorecard -->
     <div id="tool-suppaudit" class="tool-view">
       <h2 class="tool-title">Supplier Audit / Compliance Scorecard</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Log periodic supplier audits — quality system, labor/social compliance, business continuity, and environmental — and turn them into a pass/conditional/fail call.</p>
+      <p class="tool-desc" style="color:var(--text-mid); margin-bottom:20px;">Log periodic supplier audits — quality system, labor/social compliance, business continuity, and environmental — and turn them into a pass/conditional/fail call.</p>
 
       <div class="panel" style="margin-bottom:20px;">
         <h2>Audit Log</h2>
@@ -2230,7 +2267,7 @@
     <!-- Process Capability -->
     <div id="tool-cpk" class="tool-view active">
       <h2 class="tool-title">Process Capability (Cp/Cpk, Pp/Ppk)</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Standard SPC capability indices from a spec window and process spread, with an estimated out-of-spec defect rate.</p>
+      <p class="tool-desc" style="color:var(--text-mid); margin-bottom:20px;">Standard SPC capability indices from a spec window and process spread, with an estimated out-of-spec defect rate.</p>
       <div class="grid">
         <div class="panel">
           <h2>Specification &amp; Process Inputs</h2>
@@ -2263,7 +2300,7 @@
     <!-- FMEA / 8D Tracker -->
     <div id="tool-pfmea" class="tool-view">
       <h2 class="tool-title">FMEA / 8D Corrective Action Tracker</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Score failure modes by Severity × Occurrence × Detection (RPN) and track them through 8D-style corrective action to closure. One register for Design, System, and Process FMEA side by side — the RPN math is identical across all three; what differs is where the failure mode comes from.</p>
+      <p class="tool-desc" style="color:var(--text-mid); margin-bottom:20px;">Score failure modes by Severity × Occurrence × Detection (RPN) and track them through 8D-style corrective action to closure. One register for Design, System, and Process FMEA side by side — the RPN math is identical across all three; what differs is where the failure mode comes from.</p>
 
       <div class="panel" style="margin-bottom:20px;">
         <h2>Failure Mode Log</h2>
@@ -2307,7 +2344,7 @@
     <!-- Factory Defect Pareto / RCA Tracker -->
     <div id="tool-factorydefect" class="tool-view">
       <h2 class="tool-title">Factory Defect Pareto &amp; RCA Workflow Tracker</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Reactive, not proactive: log defects actually found on the line, rank them by how much factory yield each one is destroying, and move each through containment → root cause → ECO → verification. This complements FMEA/8D (which scores anticipated risk) rather than replacing it.</p>
+      <p class="tool-desc" style="color:var(--text-mid); margin-bottom:20px;">Reactive, not proactive: log defects actually found on the line, rank them by how much factory yield each one is destroying, and move each through containment → root cause → ECO → verification. This complements FMEA/8D (which scores anticipated risk) rather than replacing it.</p>
 
       <div class="panel" style="margin-bottom:20px;">
         <div class="grid" style="grid-template-columns: repeat(3, 1fr);">
@@ -2359,7 +2396,7 @@
     <!-- Reliability Prediction -->
     <div id="tool-reliability" class="tool-view">
       <h2 class="tool-title">Reliability Prediction (MTBF / FIT Rate)</h2>
-      <p style="color:var(--text-mid); margin-bottom:20px;">Constant-failure-rate (exponential) reliability model from observed field or test data — the standard basis for spares planning and warranty reserve sizing.</p>
+      <p class="tool-desc" style="color:var(--text-mid); margin-bottom:20px;">Constant-failure-rate (exponential) reliability model from observed field or test data — the standard basis for spares planning and warranty reserve sizing.</p>
       <div class="grid">
         <div class="panel">
           <h2>Field / Test Data Inputs</h2>
@@ -2409,6 +2446,9 @@ function switchPillar(pillarId, btn) {
   document.getElementById('pillar-' + pillarId).classList.add('active');
   btn.classList.add('active');
   btn.setAttribute('aria-selected', 'true');
+  // Re-scan every time the Command Center is opened so it never shows stale flags from
+  // before the user's latest edits elsewhere in the app.
+  if (pillarId === 'command' && typeof renderCommandCenter === 'function') renderCommandCenter();
 }
 
 function switchTool(pillarId, toolId, btn) {
@@ -5332,6 +5372,27 @@ function toggleTheme() {
   initTheme();
 }
 
+// --- COMPACT MODE (hides per-tool description blurbs and field hints) ---
+function initDensity() {
+  let isCompact = false;
+  try { isCompact = localStorage.getItem('hoas-density') === 'compact'; } catch (e) {}
+  if (isCompact) document.documentElement.setAttribute('data-density', 'compact');
+  const btn = document.getElementById('densityToggleBtn');
+  if (btn) btn.innerHTML = isCompact ? '▤ Full Detail' : '▤ Compact Mode';
+}
+
+function toggleDensity() {
+  const isCompact = document.documentElement.getAttribute('data-density') === 'compact';
+  if (isCompact) {
+    document.documentElement.removeAttribute('data-density');
+    try { localStorage.setItem('hoas-density', 'full'); } catch (e) {}
+  } else {
+    document.documentElement.setAttribute('data-density', 'compact');
+    try { localStorage.setItem('hoas-density', 'compact'); } catch (e) {}
+  }
+  initDensity();
+}
+
 // --- COST REDUCTION / VE PIPELINE ---
 let veRowCount = 0;
 function addVeRow(vals) {
@@ -6981,6 +7042,138 @@ const DYNAMIC_TABLES = [
 ];
 const SCENARIO_EXCLUDE_IDS = new Set(['fb-type', 'fb-message', 'fb-email', 'fileInput', 'mq-fileinput', 'scenarioFileInput']);
 
+// --- RISK & FLAGS COMMAND CENTER ---
+// Every tool's warning list follows the same convention: real flags are <li><strong>Title:</strong>
+// text</li>; empty states are a plain <li> with no <strong>. That lets one generic scanner cover
+// all 41 tools instead of each tool having to report into some separate risk API.
+const RISK_LIST_REGISTRY = [
+  { id: 'sg-risk-list', pillar: 'npi', tool: 'stagegate', label: 'Stage-Gate Exit Verification' },
+  { id: 'eco-risk-list', pillar: 'npi', tool: 'eco', label: 'ECO Impact Triage' },
+  { id: 'br-risk-list', pillar: 'npi', tool: 'buildready', label: 'NPI Build Readiness Scorecard' },
+  { id: 'fs-risk-list', pillar: 'npi', tool: 'fatsat', label: 'FAT/SAT Qualification Tracker' },
+  { id: 'std-risk-list', pillar: 'npi', tool: 'standards', label: 'Standards & Compliance Checklist' },
+  { id: 'fm-risk-list', pillar: 'sourcing', tool: 'freightmode', label: 'Freight Mode Comparator' },
+  { id: 'risk-flags-list', pillar: 'sourcing', tool: 'custom-part-breakdown', label: 'Custom Part & NPI Quote Breakdown' },
+  { id: 'lt-schedule-flags', pillar: 'sourcing', tool: 'leadtime', label: 'Procurement Lead Time' },
+  { id: 'mvb-risk-list', pillar: 'sourcing', tool: 'makevsbuy', label: 'Make-vs-Buy Analysis' },
+  { id: 'dd-risk-list', pillar: 'sourcing', tool: 'dutydrawback', label: 'Duty Drawback / Tariff Impact' },
+  { id: 've-risk-list', pillar: 'sourcing', tool: 'vepipeline', label: 'Cost Reduction / VE Pipeline' },
+  { id: 'df-risk-list', pillar: 'ops', tool: 'forecastacc', label: 'Demand Forecast Accuracy' },
+  { id: 'oee-risk-list', pillar: 'ops', tool: 'oee', label: 'OEE / Downtime Tracker' },
+  { id: 'bk-risk-list', pillar: 'ops', tool: 'budgetkpi', label: 'Budget KPI Dashboard' },
+  { id: 'co-risk-list', pillar: 'ops', tool: 'capexopex', label: 'CapEx/OpEx Classifier' },
+  { id: 'cc-risk-list', pillar: 'ops', tool: 'cyclecount', label: 'Inventory Record Accuracy' },
+  { id: 'rma-risk-list', pillar: 'sustaining', tool: 'rma', label: 'RMA & Warranty Field Loss' },
+  { id: 'fff-risk-list', pillar: 'sustaining', tool: 'altpart', label: 'Alternate Part / FFF Qualifier' },
+  { id: 'eol-risk-list', pillar: 'sustaining', tool: 'eol', label: 'EOL Phase-Out Planner' },
+  { id: 'ltb-risk-list', pillar: 'sustaining', tool: 'eol', label: 'Last Time Buy Planner' },
+  { id: 'cov-risk-list', pillar: 'sustaining', tool: 'eol', label: 'Generation Cut-Over Planning' },
+  { id: 'sq-risk-list', pillar: 'supplierrisk', tool: 'suppqual', label: 'Supplier Qualification' },
+  { id: 'ss-risk-list', pillar: 'supplierrisk', tool: 'suppscore', label: 'Supplier Performance Scorecard' },
+  { id: 'rr-risk-list', pillar: 'supplierrisk', tool: 'riskreg', label: 'Program Risk Register' },
+  { id: 'kr-risk-list', pillar: 'supplierrisk', tool: 'kraljic', label: 'Supplier Segmentation (Kraljic)' },
+  { id: 'ct-risk-list', pillar: 'supplierrisk', tool: 'contracts', label: 'Contract Renewal Tracker' },
+  { id: 'sa-risk-list', pillar: 'supplierrisk', tool: 'suppaudit', label: 'Supplier Audit / Compliance' },
+  { id: 'cpk-risk-list', pillar: 'quality', tool: 'cpk', label: 'Process Capability (Cp/Cpk)' },
+  { id: 'pf-risk-list', pillar: 'quality', tool: 'pfmea', label: 'FMEA / 8D Tracker' },
+  { id: 'fd-risk-list', pillar: 'quality', tool: 'factorydefect', label: 'Factory Defect Pareto / RCA' },
+  { id: 'rel-risk-list', pillar: 'quality', tool: 'reliability', label: 'Reliability Prediction' }
+];
+
+function goToTool(pillarId, toolId) {
+  const pillarBtn = document.querySelector(`.pillar-btn[onclick*="switchPillar('${pillarId}'"]`);
+  if (pillarBtn) switchPillar(pillarId, pillarBtn);
+  const toolBtn = document.querySelector(`#pillar-${pillarId} .sub-btn[onclick*="switchTool('${pillarId}', '${toolId}'"]`);
+  if (toolBtn) switchTool(pillarId, toolId, toolBtn);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function scanRiskFlags() {
+  // Severity isn't a structured field on these flags (they were written as free-text warnings
+  // long before this dashboard existed) -- an inline red style on the <strong> catches the
+  // handful that were deliberately colored, but most severe flags just use strong, uncolored
+  // language instead. Catch both: an explicit red style anywhere in the item, or hard-block
+  // wording in the flag's own title.
+  const CRITICAL_WORDS = /\b(CRITICAL|FAILED?|BLOCK(ED|S|ING)?|DO NOT|CANNOT|MUST NOT|NO-GO|SHUT ?DOWN|HARD GATE)\b/i;
+  const byTool = [];
+  RISK_LIST_REGISTRY.forEach(entry => {
+    const el = document.getElementById(entry.id);
+    if (!el) return;
+    const flagItems = Array.from(el.querySelectorAll('li')).filter(li => li.querySelector('strong'));
+    if (flagItems.length === 0) return;
+    byTool.push({
+      pillar: entry.pillar,
+      tool: entry.tool,
+      label: entry.label,
+      flags: flagItems.map(li => {
+        const strongEl = li.querySelector('strong');
+        const hasRedStyle = /color:\s*var\(--red\)/i.test(li.innerHTML);
+        const hasCriticalWording = CRITICAL_WORDS.test(strongEl.innerText);
+        return { html: li.innerHTML, critical: hasRedStyle || hasCriticalWording };
+      })
+    });
+  });
+  return byTool;
+}
+
+function renderCommandCenter() {
+  const byTool = scanRiskFlags();
+  const allFlags = byTool.flatMap(t => t.flags.map(f => ({ ...f, pillar: t.pillar, tool: t.tool, label: t.label })));
+  const criticalFlags = allFlags.filter(f => f.critical);
+
+  document.getElementById('cmd-out-critical').innerText = criticalFlags.length;
+  document.getElementById('cmd-out-total').innerText = allFlags.length;
+  document.getElementById('cmd-out-toolcount').innerText = byTool.length + ' / ' + RISK_LIST_REGISTRY.length;
+  document.getElementById('cmd-dot-critical').style.background = criticalFlags.length > 0 ? 'var(--red)' : 'var(--green)';
+  document.getElementById('cmd-dot-total').style.background = allFlags.length > 0 ? 'var(--amber)' : 'var(--green)';
+  document.getElementById('cmd-dot-tools').style.background = byTool.length > 0 ? 'var(--amber)' : 'var(--green)';
+
+  const criticalPanel = document.getElementById('cmd-critical-panel');
+  const criticalList = document.getElementById('cmd-critical-list');
+  criticalList.innerHTML = '';
+  if (criticalFlags.length === 0) {
+    criticalPanel.style.display = 'none';
+  } else {
+    criticalPanel.style.display = '';
+    criticalFlags.forEach(f => {
+      const li = document.createElement('li');
+      li.innerHTML = f.html + ` <button type="button" class="btn-goto" style="margin-left:8px;" onclick="goToTool('${f.pillar}', '${f.tool}')">Go to ${f.label} →</button>`;
+      criticalList.appendChild(li);
+    });
+  }
+
+  // Collapsed by default (native <details>, no extra JS state to manage) -- with 26+ tools
+  // potentially flagged at once, showing every flag's full text expanded turns the one screen
+  // meant to fight "overwhelming" into the most overwhelming screen in the app. A scannable
+  // list of tool names + counts, expandable on demand, is the point of a digest.
+  const allListEl = document.getElementById('cmd-all-list');
+  allListEl.innerHTML = '';
+  if (byTool.length === 0) {
+    allListEl.innerHTML = '<p style="color:var(--green);">✓ No active flags anywhere in the suite at current inputs.</p>';
+  } else {
+    byTool.forEach(t => {
+      const details = document.createElement('details');
+      details.style.cssText = 'margin-bottom:8px; border:1px solid var(--grid-line); border-radius:var(--radius); padding:8px 12px;';
+      const summary = document.createElement('summary');
+      summary.style.cssText = 'cursor:pointer; display:flex; justify-content:space-between; align-items:center; list-style:revert;';
+      summary.innerHTML = `<span><strong style="color:var(--text-hi);">${t.label}</strong> <span style="color:var(--amber);">(${t.flags.length})</span></span>`;
+      const goBtn = document.createElement('button');
+      goBtn.type = 'button';
+      goBtn.className = 'btn-goto';
+      goBtn.innerText = 'Go to tool →';
+      goBtn.onclick = (e) => { e.preventDefault(); e.stopPropagation(); goToTool(t.pillar, t.tool); };
+      summary.appendChild(goBtn);
+      const ul = document.createElement('ul');
+      ul.className = 'risk-list';
+      ul.style.marginTop = '8px';
+      t.flags.forEach(f => { const li = document.createElement('li'); li.innerHTML = f.html; ul.appendChild(li); });
+      details.appendChild(summary);
+      details.appendChild(ul);
+      allListEl.appendChild(details);
+    });
+  }
+}
+
 function getFixedFieldIds() {
   const dynamicTbodyIds = new Set(DYNAMIC_TABLES.map(t => t.tbody));
   const ids = [];
@@ -7042,6 +7235,7 @@ function applyScenario(data) {
     });
   }
   recalculateFixedTools();
+  if (typeof renderCommandCenter === 'function') renderCommandCenter();
 }
 
 let autosaveTimer = null;
@@ -7114,12 +7308,14 @@ function resetToExampleData() {
   });
   recalculateFixedTools();
   seedExampleData();
+  renderCommandCenter();
   setAutosaveStatus('Reset to example data.');
 }
 
 window.onload = function() {
   initMultiQuoteUpload();
   initTheme();
+  initDensity();
 
   let restored = false;
   try {
@@ -7138,6 +7334,8 @@ window.onload = function() {
     recalculateFixedTools();
     seedExampleData();
   }
+
+  renderCommandCenter();
 
   document.addEventListener('input', scheduleAutosave);
   document.addEventListener('change', scheduleAutosave);
