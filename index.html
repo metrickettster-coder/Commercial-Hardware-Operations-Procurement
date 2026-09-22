@@ -7669,6 +7669,15 @@ const RISK_LIST_REGISTRY = [
   { id: 'fd-risk-list', pillar: 'quality', tool: 'factorydefect', label: 'Factory Defect Pareto / RCA' },
   { id: 'rel-risk-list', pillar: 'quality', tool: 'reliability', label: 'Reliability Prediction' }
 ];
+const PILLAR_LABELS = {
+  concept: '💡 Concept & Feasibility',
+  npi: '🚀 NPI & Stage-Gate Launch',
+  sourcing: '📦 Sourcing & Costing',
+  ops: '⚙️ Ops & Quality Execution',
+  sustaining: '♻️ Sustaining & EOL Closeout',
+  supplierrisk: '🛡️ Supplier & Risk Mgmt',
+  quality: '🎯 Quality & Reliability'
+};
 
 // Lets code (not just a user click) land on a specific tool -- e.g. after a top-banner
 // upload auto-fills a tool that isn't on screen, or a Command Center flag is clicked.
@@ -7736,34 +7745,54 @@ function renderCommandCenter() {
     });
   }
 
-  // Collapsed by default (native <details>, no extra JS state to manage) -- with 26+ tools
-  // potentially flagged at once, showing every flag's full text expanded turns the one screen
-  // meant to fight "overwhelming" into the most overwhelming screen in the app. A scannable
-  // list of tool names + counts, expandable on demand, is the point of a digest.
+  // Two-level collapse (native <details>, no extra JS state to manage): with up to ~30 tools
+  // flagged at once, even a collapsed one-row-per-tool list is still a tall wall of rows to
+  // scan -- grouping by pillar first cuts the top-level list to at most 7 rows, matching the
+  // main nav, with tool-level detail nested one click deeper for whoever needs it.
   const allListEl = document.getElementById('cmd-all-list');
   allListEl.innerHTML = '';
   if (byTool.length === 0) {
     allListEl.innerHTML = '<p style="color:var(--green);">✓ No active flags anywhere in the suite at current inputs.</p>';
   } else {
-    byTool.forEach(t => {
-      const details = document.createElement('details');
-      details.style.cssText = 'margin-bottom:8px; border:1px solid var(--grid-line); border-radius:var(--radius); padding:8px 12px;';
-      const summary = document.createElement('summary');
-      summary.style.cssText = 'cursor:pointer; display:flex; justify-content:space-between; align-items:center; list-style:revert;';
-      summary.innerHTML = `<span><strong style="color:var(--text-hi);">${t.label}</strong> <span style="color:var(--amber);">(${t.flags.length})</span></span>`;
-      const goBtn = document.createElement('button');
-      goBtn.type = 'button';
-      goBtn.className = 'btn-goto';
-      goBtn.innerText = 'Go to tool →';
-      goBtn.onclick = (e) => { e.preventDefault(); e.stopPropagation(); goToTool(t.pillar, t.tool); };
-      summary.appendChild(goBtn);
-      const ul = document.createElement('ul');
-      ul.className = 'risk-list';
-      ul.style.marginTop = '8px';
-      t.flags.forEach(f => { const li = document.createElement('li'); li.innerHTML = f.html; ul.appendChild(li); });
-      details.appendChild(summary);
-      details.appendChild(ul);
-      allListEl.appendChild(details);
+    const byPillar = {};
+    byTool.forEach(t => { (byPillar[t.pillar] = byPillar[t.pillar] || []).push(t); });
+    const pillarIds = Object.keys(byPillar).sort((a, b) => {
+      const countOf = id => byPillar[id].reduce((sum, t) => sum + t.flags.length, 0);
+      return countOf(b) - countOf(a);
+    });
+    pillarIds.forEach(pillarId => {
+      const tools = byPillar[pillarId];
+      const pillarCount = tools.reduce((sum, t) => sum + t.flags.length, 0);
+      const pillarDetails = document.createElement('details');
+      pillarDetails.style.cssText = 'margin-bottom:8px; border:1px solid var(--grid-line); border-radius:var(--radius); padding:10px 14px;';
+      const pillarSummary = document.createElement('summary');
+      pillarSummary.style.cssText = 'cursor:pointer; display:flex; justify-content:space-between; align-items:center; list-style:revert;';
+      pillarSummary.innerHTML = `<span><strong style="color:var(--text-hi);">${PILLAR_LABELS[pillarId] || pillarId}</strong></span><span style="color:var(--amber); font-family:'IBM Plex Mono', monospace; font-size:12px;">${pillarCount} flag${pillarCount === 1 ? '' : 's'} · ${tools.length} tool${tools.length === 1 ? '' : 's'}</span>`;
+      pillarDetails.appendChild(pillarSummary);
+      const toolWrap = document.createElement('div');
+      toolWrap.style.cssText = 'margin-top:10px; padding-left:14px; border-left:2px solid var(--grid-line);';
+      tools.forEach(t => {
+        const details = document.createElement('details');
+        details.style.cssText = 'margin-bottom:6px; border:1px solid var(--grid-line); border-radius:var(--radius); padding:8px 12px;';
+        const summary = document.createElement('summary');
+        summary.style.cssText = 'cursor:pointer; display:flex; justify-content:space-between; align-items:center; list-style:revert;';
+        summary.innerHTML = `<span><strong style="color:var(--text-hi);">${t.label}</strong> <span style="color:var(--amber);">(${t.flags.length})</span></span>`;
+        const goBtn = document.createElement('button');
+        goBtn.type = 'button';
+        goBtn.className = 'btn-goto';
+        goBtn.innerText = 'Go to tool →';
+        goBtn.onclick = (e) => { e.preventDefault(); e.stopPropagation(); goToTool(t.pillar, t.tool); };
+        summary.appendChild(goBtn);
+        const ul = document.createElement('ul');
+        ul.className = 'risk-list';
+        ul.style.marginTop = '8px';
+        t.flags.forEach(f => { const li = document.createElement('li'); li.innerHTML = f.html; ul.appendChild(li); });
+        details.appendChild(summary);
+        details.appendChild(ul);
+        toolWrap.appendChild(details);
+      });
+      pillarDetails.appendChild(toolWrap);
+      allListEl.appendChild(pillarDetails);
     });
   }
 }
