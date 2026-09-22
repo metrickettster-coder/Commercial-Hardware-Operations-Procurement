@@ -23,7 +23,7 @@
 <script>
   (function() {
     try {
-      if (localStorage.getItem('hoas-theme') === 'light') {
+      if (localStorage.getItem('hoas-theme') !== 'dark') {
         document.documentElement.setAttribute('data-theme', 'light');
       }
       if (localStorage.getItem('hoas-density') === 'compact') {
